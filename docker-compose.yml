@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: picksleagues-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: picksleagues
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

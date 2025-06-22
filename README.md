@@ -21,19 +21,31 @@ RESTful API, with some exceptions for uis that would be shared accross clients a
 
 1. Copy .env.example to .env and fill in the values
 
-2. Install dependencies:
+2. Run a local database. This is setup to use docker compose, but you could also use a local postgres instance:
+
+   ```bash
+   docker compose up -d
+   ```
+
+3. Run the migrations:
+
+   ```bash
+   npm run db:migrate
+   ```
+
+4. Install dependencies:
 
    ```bash
    npm install
    ```
 
-3. Start the development server:
+5. Start the development server:
 
    ```bash
    npm run dev
    ```
 
-4. For production build:
+6. For production build:
    ```bash
    npm run build
    npm start

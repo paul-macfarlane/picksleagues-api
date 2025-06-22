@@ -9,21 +9,30 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "format": "prettier --write .",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "dotenv": "^16.5.0",
-    "express": "^5.1.0"
+    "drizzle-orm": "^0.44.2",
+    "express": "^5.1.0",
+    "pg": "^8.16.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
     "@types/express": "^5.0.3",
     "@types/node": "^24.0.3",
+    "@types/pg": "^8.15.4",
+    "drizzle-kit": "^0.31.1",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
     "globals": "^16.2.0",
     "prettier": "3.5.3",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.34.1"
   }
