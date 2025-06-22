@@ -19,4 +19,22 @@ RESTful API, with some exceptions for uis that would be shared accross clients a
 
 ## Running Locally
 
-TODO
+1. Copy .env.example to .env and fill in the values
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+4. For production build:
+   ```bash
+   npm run build
+   npm start
+   ```
