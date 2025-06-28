@@ -23,8 +23,11 @@ app.use(express.json());
 
 app.use("/api", apiRouter);
 
-app.get("/", (_req: Request, res: Response) => {
-  res.json({ message: "ok" });
+// Redirect all non-API GET requests to the frontend
+app.get("*splat", (req: Request, res: Response) => {
+  if (!req.path.startsWith("/api")) {
+    res.redirect(`${process.env.WEB_FRONTEND_URL}${req.path}`);
+  }
 });
 
 // For local development
