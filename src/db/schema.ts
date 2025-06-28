@@ -12,7 +12,9 @@ export const usersTable = pgTable("users", {
 
 export const sessionsTable = pgTable("sessions", {
   id: text("id").primaryKey(),
-  userId: text("user_id").references(() => usersTable.id),
+  userId: text("user_id").references(() => usersTable.id, {
+    onDelete: "cascade",
+  }),
   token: text("token").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   ipAddress: text("ip_address"),
@@ -23,7 +25,9 @@ export const sessionsTable = pgTable("sessions", {
 
 export const accountsTable = pgTable("accounts", {
   id: text("id").primaryKey(),
-  userId: text("user_id").references(() => usersTable.id),
+  userId: text("user_id").references(() => usersTable.id, {
+    onDelete: "cascade",
+  }),
   accountId: text("account_id").notNull(),
   providerId: text("provider_id").notNull(),
   accessToken: text("access_token"),
