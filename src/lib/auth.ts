@@ -38,4 +38,10 @@ export const auth = betterAuth({
     "https://appleid.apple.com", // for Sign In with Apple flows
     // process.env.EXPO_URL!, // uncomment when expo app is ready
   ],
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: process.env.CROSS_SUB_DOMAIN_COOKIE_DOMAIN!,
+    },
+  },
 });
