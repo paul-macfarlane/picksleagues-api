@@ -4,23 +4,18 @@ import express, { Request, Response } from "express";
 import apiRouter from "./routes";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "../lib/auth";
+import cors from "cors";
 
 const app = express();
 const port = process.env.EXPRESS_PORT || 3001;
 
-// Enable CORS in development only
-if (process.env.NODE_ENV !== "production") {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const cors = require("cors");
-  app.use(
-    cors({
-      origin: [process.env.WEB_FRONTEND_URL!],
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-      credentials: true,
-    }),
-  );
-  console.log("CORS enabled in development mode");
-}
+app.use(
+  cors({
+    origin: [process.env.WEB_FRONTEND_URL!],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    credentials: true,
+  }),
+);
 
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
