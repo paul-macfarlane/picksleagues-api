@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import express from "express";
+import express, { Request, Response } from "express";
 import apiRouter from "./routes";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "../lib/auth";
@@ -27,6 +27,10 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use(express.json());
 
 app.use("/api", apiRouter);
+
+app.get("/", (_req: Request, res: Response) => {
+  res.json({ message: "ok" });
+});
 
 // For local development
 if (process.env.NODE_ENV !== "production") {
