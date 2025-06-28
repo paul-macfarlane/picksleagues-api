@@ -5,7 +5,7 @@ const apiRouter = Router();
 
 // this approach only works for mobile, and web but only web web is on the same domain
 apiRouter.get("/post-oauth-callback", (_req: Request, res: Response) => {
-  res.redirect(`${process.env.WEB_FRONTEND_URL!}/app`);
+  res.redirect(`${process.env.WEB_FRONTEND_URL!}`);
 });
 
 apiRouter.use("/v1", v1Router);

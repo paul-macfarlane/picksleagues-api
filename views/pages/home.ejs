@@ -1,0 +1,73 @@
+<%- contentFor('additionalStyles') %>
+<style>
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    text-align: left;
+    min-height: calc(100vh - 80px); /* Account for footer */
+    padding: 0 2rem;
+  }
+
+  .hero h1 {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(to right, var(--accent), #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    font-size: 1.5rem;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+    max-width: 600px;
+    color: var(--text-secondary);
+  }
+
+  .cta-button {
+    font-size: 1.25rem;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(to right, var(--accent), #60a5fa);
+    border-radius: 9999px;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+    font-weight: 600;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(to right, #2563eb, #3b82f6);
+  }
+
+  @media (max-width: 768px) {
+    .hero {
+      padding: 2rem 1rem;
+      text-align: center;
+      align-items: center;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+    }
+
+    .hero p {
+      font-size: 1.25rem;
+    }
+  }
+</style>
+
+<div class="hero">
+  <h1>Welcome to<br />PicksLeagues</h1>
+  <p>
+    Join the ultimate sports prediction platform. Make your picks, compete with
+    friends, and prove your sports knowledge.
+  </p>
+  <a href="/login" class="cta-button">Get Started</a>
+</div>
