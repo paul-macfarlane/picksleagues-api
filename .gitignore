@@ -41,3 +41,4 @@ temp/
 # credentials
 google-credentials.json
 *.p8
+.vercel
