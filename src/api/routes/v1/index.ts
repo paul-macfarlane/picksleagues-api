@@ -1,8 +1,8 @@
 import { Router } from "express";
-import meV1Router from "./me";
+import profileRouter from "./profile";
 
-const v1Router = Router();
+const router = Router();
 
-v1Router.use("/me", meV1Router);
+router.use("/profile", profileRouter);
 
-export default v1Router;
+export default router;
