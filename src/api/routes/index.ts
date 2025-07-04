@@ -6,6 +6,7 @@ import { DBUser, profilesTable, usersTable } from "../../db/schema";
 import { db } from "../../db";
 import { eq } from "drizzle-orm";
 import { generateFromEmail } from "unique-username-generator/dist";
+import { MAX_USERNAME_LENGTH } from "./v1/profile";
 
 const apiRouter = Router();
 
@@ -25,10 +26,11 @@ apiRouter.get("/post-oauth-callback", async (req: Request, res: Response) => {
       return result.length > 0;
     }
 
-    let username = generateFromEmail(session.user.email);
+
+    let username = generateFromEmail(session.user.email).slice(0, MAX_USERNAME_LENGTH);
     let i = 1;
     while (await emailExists(username)) {
-      username = generateFromEmail(session.user.email, i);
+      username = generateFromEmail(session.user.email, i).slice(0, MAX_USERNAME_LENGTH);
       i++;
     }
 
