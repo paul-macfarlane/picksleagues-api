@@ -102,7 +102,7 @@ router.put("/", async (req: Request, res: Response) => {
       console.error(
         `Username ${profileData.username} already exists for user ${session.user.id}`,
       );
-      res.status(400).json({ error: "Username already exists" });
+      res.status(409).json({ error: "Username already exists" });
       return;
     }
   }
