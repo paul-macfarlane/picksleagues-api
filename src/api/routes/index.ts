@@ -7,6 +7,7 @@ import { db } from "../../db";
 import { eq } from "drizzle-orm";
 import { generateFromEmail } from "unique-username-generator/dist";
 import { MAX_USERNAME_LENGTH } from "./v1/profile";
+import cronRouter from "./crons";
 
 const apiRouter = Router();
 
@@ -52,6 +53,7 @@ apiRouter.get("/post-oauth-callback", async (req: Request, res: Response) => {
   res.redirect(`${process.env.WEB_FRONTEND_URL!}`);
 });
 
+apiRouter.use("/crons", cronRouter);
 apiRouter.use("/v1", v1Router);
 
 export default apiRouter;
