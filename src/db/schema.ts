@@ -6,6 +6,7 @@ import {
   primaryKey,
   uuid,
   jsonb,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
@@ -211,3 +212,24 @@ export const externalSeasonsTable = pgTable(
 export type DBExternalSeason = typeof externalSeasonsTable.$inferSelect;
 export type DBExternalSeasonInsert = typeof externalSeasonsTable.$inferInsert;
 export type DBExternalSeasonUpdate = Partial<DBExternalSeasonInsert>;
+
+export const phaseTemplatesTable = pgTable("phase_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sportLeagueId: uuid("sport_league_id")
+    .references(() => sportsLeaguesTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  label: text("label").notNull(),
+  sequence: integer("sequence").notNull(),
+  type: text("type").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type DBPhaseTemplate = typeof phaseTemplatesTable.$inferSelect;
+export type DBPhaseTemplateInsert = typeof phaseTemplatesTable.$inferInsert;
+export type DBPhaseTemplateUpdate = Partial<DBPhaseTemplateInsert>;

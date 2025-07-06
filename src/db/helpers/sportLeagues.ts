@@ -35,6 +35,18 @@ export async function updateSportLeague(
   return sportLeague[0];
 }
 
+export async function getSportLeagueByName(
+  dbOrTx: DBOrTx,
+  name: string,
+): Promise<DBSportLeague | undefined> {
+  const sportLeague = await dbOrTx
+    .select()
+    .from(sportsLeaguesTable)
+    .where(eq(sportsLeaguesTable.name, name))
+    .limit(1);
+  return sportLeague[0];
+}
+
 export async function getExternalSportLeagueBySourceAndId(
   dbOrTx: DBOrTx,
   sourceId: string,

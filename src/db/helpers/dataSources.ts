@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { dataSourcesTable, DBDataSource } from "../schema";
-import { db, DBOrTx } from "..";
+import { DBOrTx } from "..";
 
 export async function getDataSourceByName(
   dbOrTx: DBOrTx,
@@ -14,8 +14,11 @@ export async function getDataSourceByName(
   return dataSource[0];
 }
 
-export async function insertDataSource(name: string): Promise<DBDataSource> {
-  const dataSources = await db
+export async function insertDataSource(
+  dbOrTx: DBOrTx,
+  name: string,
+): Promise<DBDataSource> {
+  const dataSources = await dbOrTx
     .insert(dataSourcesTable)
     .values({
       name,
