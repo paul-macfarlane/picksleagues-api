@@ -1,15 +1,19 @@
 import { db } from "..";
-import { dataSourcesTable, DBDataSource } from "../schema";
-
-async function createDataSource(name: string): Promise<DBDataSource> {
-  const dataSources = await db.insert(dataSourcesTable).values({
-    name,
-  }).returning();
-  return dataSources[0];
-}
+import { getDataSourceByName, insertDataSource } from "../helpers/dataSources";
+import { DBDataSource } from "../schema";
 
 export async function seedDataSources(): Promise<DBDataSource[]> {
-  const espnDataSource = await createDataSource("ESPN");
-  
+  const existingDataSource = await getDataSourceByName(db, "ESPN");
+  if (existingDataSource) {
+    console.log(
+      `DataSource already exists as ${JSON.stringify(existingDataSource)}`,
+    );
+    return [existingDataSource];
+  }
+
+  console.log("Creating ESPN data source");
+  const espnDataSource = await insertDataSource("ESPN");
+  console.log(`Created ESPN data source as ${JSON.stringify(espnDataSource)}`);
+
   return [espnDataSource];
 }

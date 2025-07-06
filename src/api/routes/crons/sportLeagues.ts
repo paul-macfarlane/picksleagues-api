@@ -1,112 +1,17 @@
 import { Router, Request, Response } from "express";
 import { db } from "../../../db";
+import { getESPNLeague } from "../../../lib/external/espn/leagues";
+import { getDataSourceByName } from "../../../db/helpers/dataSources";
 import {
-  ESPN_SPORT_SLUGS,
-  ESPN_LEAGUE_SLUGS,
-  getESPNLeague,
-} from "../../../lib/external/espn/leagues";
-import { eq, and } from "drizzle-orm";
-import * as schema from "../../../db/schema";
-import { NodePgDatabase, NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
-import { PgTransaction } from "drizzle-orm/pg-core";
-import { ExtractTablesWithRelations } from "drizzle-orm";
+  getExternalSportLeagueBySourceAndId,
+  insertExternalSportLeague,
+  insertSportLeague,
+  updateExternalSportLeague,
+  updateSportLeague,
+} from "../../../db/helpers/sportLeagues";
+import { ESPN_DESIRED_LEAGUES } from "../../../lib/external/espn/shared";
 
 const router = Router();
-
-export type DBOrTx =
-  | NodePgDatabase<typeof schema>
-  | PgTransaction<NodePgQueryResultHKT, typeof schema, ExtractTablesWithRelations<typeof schema>>;
-
-async function getDataSourceByName(
-  dbOrTx: DBOrTx,
-  name: string,
-): Promise<schema.DBDataSource | undefined> {
-  const dataSource = await dbOrTx
-    .select()
-    .from(schema.dataSourcesTable)
-    .where(eq(schema.dataSourcesTable.name, name))
-    .limit(1);
-  return dataSource[0];
-}
-
-async function getExternalSportLeagueBySourceAndId(
-  dbOrTx: DBOrTx,
-  sourceId: string,
-  externalId: string,
-): Promise<schema.DBExternalSportLeague | undefined> {
-  const externalSportLeague = await dbOrTx
-    .select()
-    .from(schema.externalSportLeaguesTable)
-    .where(
-      and(
-        eq(schema.externalSportLeaguesTable.dataSourceId, sourceId),
-        eq(schema.externalSportLeaguesTable.externalId, externalId),
-      ),
-    )
-    .limit(1);
-  return externalSportLeague[0];
-}
-
-async function createSportLeague(
-  dbOrTx: DBOrTx,
-  params: schema.DBSportLeagueInsert,
-): Promise<schema.DBSportLeague> {
-  const sportLeague = await dbOrTx
-    .insert(schema.sportsLeaguesTable)
-    .values(params)
-    .returning();
-  return sportLeague[0];
-}
-
-async function createExternalSportLeague(
-  dbOrTx: DBOrTx,
-  params: schema.DBExternalSportLeagueInsert,
-): Promise<schema.DBExternalSportLeague> {
-  const externalSportLeague = await dbOrTx
-    .insert(schema.externalSportLeaguesTable)
-    .values(params)
-    .returning();
-  return externalSportLeague[0];
-}
-
-async function updateExternalSportLeague(
-  dbOrTx: DBOrTx,
-  dataSourceId: string,
-  externalId: string,
-  params: schema.DBExternalSportLeagueUpdate,
-): Promise<schema.DBExternalSportLeague> {
-  const externalSportLeague = await dbOrTx
-    .update(schema.externalSportLeaguesTable)
-    .set(params)
-    .where(
-      and(
-        eq(schema.externalSportLeaguesTable.dataSourceId, dataSourceId),
-        eq(schema.externalSportLeaguesTable.externalId, externalId),
-      ),
-    )
-    .returning();
-  return externalSportLeague[0];
-}
-
-async function updateSportLeague(
-  dbOrTx: DBOrTx,
-  sportLeagueId: string,
-  params: schema.DBSportLeagueUpdate,
-): Promise<schema.DBSportLeague> {
-  const sportLeague = await dbOrTx
-    .update(schema.sportsLeaguesTable)
-    .set(params)
-    .where(eq(schema.sportsLeaguesTable.id, sportLeagueId))
-    .returning();
-  return sportLeague[0];
-}
-
-const DESIRED_LEAGUES = [
-  {
-    sportSlug: ESPN_SPORT_SLUGS.FOOTBALL,
-    leagueSlug: ESPN_LEAGUE_SLUGS.NFL,
-  },
-];
 
 router.get("/", async (_req: Request, res: Response) => {
   console.log("Starting sport leagues cron");
@@ -120,68 +25,83 @@ router.get("/", async (_req: Request, res: Response) => {
         throw new Error("ESPN data source not found");
       }
 
-      for (const league of DESIRED_LEAGUES) {
-        const externalLeague = await getESPNLeague(
-          league.sportSlug,
-          league.leagueSlug,
+      for (const desiredLeague of ESPN_DESIRED_LEAGUES) {
+        const espnLeague = await getESPNLeague(
+          desiredLeague.sportSlug,
+          desiredLeague.leagueSlug,
         );
-        if (!externalLeague) {
+        if (!espnLeague) {
           console.error(
-            `League with sport ${league.sportSlug} and league slug ${league.leagueSlug} not found, skipping`,
+            `League with sport ${desiredLeague.sportSlug} and league slug ${desiredLeague.leagueSlug} not found, skipping`,
           );
           continue;
         }
 
         console.log(
-          `Processing league for sport ${league.sportSlug} and league slug ${league.leagueSlug} with external id ${externalLeague.id} from ${dataSource.name}`,
+          `Processing league for sport ${desiredLeague.sportSlug} and league slug ${desiredLeague.leagueSlug} with external id ${espnLeague.id} from ${dataSource.name}`,
         );
 
-        const existingExternalLeague = await getExternalSportLeagueBySourceAndId(
-          tx,
-          dataSource.id,
-          externalLeague.id,
-        );
+        const existingExternalLeague =
+          await getExternalSportLeagueBySourceAndId(
+            tx,
+            dataSource.id,
+            espnLeague.id,
+          );
         if (existingExternalLeague) {
           console.log(
-            `League ${league.sportSlug}:${league.leagueSlug} already exists, updating`,
+            `League ${desiredLeague.sportSlug}:${desiredLeague.leagueSlug} already exists, updating`,
           );
-          await updateExternalSportLeague(tx, dataSource.id, externalLeague.id, {
-            metadata: {
-              slug: externalLeague.slug,
+
+          const updatedExternalSportLeague = await updateExternalSportLeague(
+            tx,
+            dataSource.id,
+            espnLeague.id,
+            {
+              metadata: {
+                slug: espnLeague.slug,
+              },
             },
-          });
-          if (!existingExternalLeague.sportLeagueId) {
-            console.error(
-              `League ${league.sportSlug}:${league.leagueSlug} has no sport league id, skipping`,
-            );
-            continue;
-          }
+          );
 
-          const updatedSportLeague = await updateSportLeague(tx, existingExternalLeague.sportLeagueId!, {
-            name: externalLeague.displayName,
-          });
+          console.log(
+            `Updated external sport league ${JSON.stringify(
+              updatedExternalSportLeague,
+            )}`,
+          );
 
+          const updatedSportLeague = await updateSportLeague(
+            tx,
+            existingExternalLeague.sportLeagueId!,
+            {
+              name: espnLeague.displayName,
+            },
+          );
           console.log(
             `Updated sport league ${JSON.stringify(updatedSportLeague)}`,
           );
         } else {
           console.log(
-            `Creating new sport league with for sport ${league.sportSlug} and league slug ${league.leagueSlug} with name ${externalLeague.displayName}`,
+            `Creating new sport league with for sport ${desiredLeague.sportSlug} and league slug ${desiredLeague.leagueSlug} with name ${espnLeague.displayName}`,
           );
 
-          const sportLeague = await createSportLeague(tx, {
-            name: externalLeague.displayName,
+          const newSportLeague = await insertSportLeague(tx, {
+            name: espnLeague.displayName,
           });
-          await createExternalSportLeague(tx, {
+
+          console.log(`Created sport league ${JSON.stringify(newSportLeague)}`);
+
+          const newExternalSportLeague = await insertExternalSportLeague(tx, {
             dataSourceId: dataSource.id,
-            externalId: externalLeague.id,
-            sportLeagueId: sportLeague.id,
+            externalId: espnLeague.id,
+            sportLeagueId: newSportLeague.id,
             metadata: {
-              slug: externalLeague.slug,
+              slug: espnLeague.slug,
             },
           });
 
-          console.log(`Created sport league ${JSON.stringify(sportLeague)}`);
+          console.log(
+            `Created sport league ${JSON.stringify(newExternalSportLeague)}`,
+          );
         }
       }
 
