@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1751500530505,
-      "tag": "0000_lean_nightshade",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1751754362388,
-      "tag": "0001_unusual_the_santerians",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1751771219696,
-      "tag": "0002_melted_korath",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1751777541185,
-      "tag": "0003_futuristic_supreme_intelligence",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1751817429924,
-      "tag": "0004_motionless_stephen_strange",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1751820122648,
-      "tag": "0005_boring_baron_zemo",
+      "when": 1751820727463,
+      "tag": "0000_smooth_jack_power",
       "breakpoints": true
     }
   ]
