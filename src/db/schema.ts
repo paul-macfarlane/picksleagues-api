@@ -112,7 +112,7 @@ export type DBProfileUpdate = Partial<DBProfileInsert>;
 
 export const dataSourcesTable = pgTable("data_sources", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
+  name: text("name").notNull().unique(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()
@@ -126,7 +126,7 @@ export type DBDataSourceUpdate = Partial<DBDataSourceInsert>;
 
 export const sportsLeaguesTable = pgTable("sports_leagues", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
+  name: text("name").notNull().unique(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()
@@ -233,3 +233,58 @@ export const phaseTemplatesTable = pgTable("phase_templates", {
 export type DBPhaseTemplate = typeof phaseTemplatesTable.$inferSelect;
 export type DBPhaseTemplateInsert = typeof phaseTemplatesTable.$inferInsert;
 export type DBPhaseTemplateUpdate = Partial<DBPhaseTemplateInsert>;
+
+export const phasesTable = pgTable("phases", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  seasonId: uuid("season_id")
+    .references(() => seasonsTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  phaseTemplateId: uuid("phase_template_id")
+    .references(() => phaseTemplatesTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  type: text("type").notNull(),
+  sequence: integer("sequence").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type DBPhase = typeof phasesTable.$inferSelect;
+export type DBPhaseInsert = typeof phasesTable.$inferInsert;
+export type DBPhaseUpdate = Partial<DBPhaseInsert>;
+
+export const externalPhasesTable = pgTable(
+  "external_phases",
+  {
+    dataSourceId: uuid("data_source_id")
+      .references(() => dataSourcesTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    externalId: text("external_id").notNull(),
+    phaseId: uuid("phase_id")
+      .references(() => phasesTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [primaryKey({ columns: [table.externalId, table.dataSourceId] })],
+);
+
+export type DBExternalPhase = typeof externalPhasesTable.$inferSelect;
+export type DBExternalPhaseInsert = typeof externalPhasesTable.$inferInsert;
+export type DBExternalPhaseUpdate = Partial<DBExternalPhaseInsert>;

@@ -1,6 +1,11 @@
 import axios from "axios";
 import { ESPN_LEAGUE_SLUGS, ESPN_SPORT_SLUGS } from "./leagues";
-import { ESPNRef, ESPNRefList } from "./shared";
+import {
+  ESPN_SEASON_TYPES,
+  ESPNRef,
+  ESPNRefList,
+  getAllRefUrlsFromESPNListUrl,
+} from "./shared";
 
 type ESPNSeasonWeek = {
   $ref: string;
@@ -64,6 +69,7 @@ async function getESPNSportLeagueSeasonsRefs(
   sportSlug: ESPN_SPORT_SLUGS,
   leagueSlug: ESPN_LEAGUE_SLUGS,
 ): Promise<ESPNRef[]> {
+  // no need to paginate here because there are only 2 seasons at most that we care about
   const response = await axios.get<ESPNRefList>(
     `https://sports.core.api.espn.com/v2/sports/${sportSlug}/leagues/${leagueSlug}/seasons?lang=en&region=us`,
   );
@@ -102,4 +108,54 @@ export async function getESPNLeagueSeasons(
   }
 
   return [latestSeason.data, secondLatestSeason.data];
+}
+
+export type ESPNWeek = {
+  $ref: string;
+  number: number;
+  startDate: string;
+  endDate: string;
+  text: string;
+  rankings: ESPNRef;
+  events: ESPNRef;
+};
+
+async function getESPNWeeksRefs(
+  sportSlug: ESPN_SPORT_SLUGS,
+  leagueSlug: ESPN_LEAGUE_SLUGS,
+  seasonId: string,
+  type: ESPN_SEASON_TYPES,
+): Promise<ESPNRef[]> {
+  const weekRefs = await getAllRefUrlsFromESPNListUrl(
+    `https://sports.core.api.espn.com/v2/sports/${sportSlug}/leagues/${leagueSlug}/seasons/${seasonId}/types/${type}/weeks?lang=en&region=us`,
+  );
+
+  return weekRefs.map((weekRef) => ({
+    $ref: weekRef,
+  }));
+}
+
+export async function getESPNWeeks(
+  sportSlug: ESPN_SPORT_SLUGS,
+  leagueSlug: ESPN_LEAGUE_SLUGS,
+  seasonId: string,
+  type: ESPN_SEASON_TYPES,
+): Promise<ESPNWeek[]> {
+  const weekRefs = await getESPNWeeksRefs(
+    sportSlug,
+    leagueSlug,
+    seasonId,
+    type,
+  );
+
+  const weeks: ESPNWeek[] = [];
+
+  for (const weekRef of weekRefs) {
+    const week = await axios.get<ESPNWeek>(
+      weekRef.$ref.replace("http://", "https://"),
+    );
+    weeks.push(week.data);
+  }
+
+  return weeks;
 }

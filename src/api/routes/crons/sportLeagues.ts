@@ -110,9 +110,7 @@ router.get("/", async (_req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("Error in sport leagues cron:", err);
-    if (!res.headersSent) {
-      res.status(500).json({ message: "Internal server error" });
-    }
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

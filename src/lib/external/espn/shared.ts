@@ -50,7 +50,9 @@ export async function getAllRefUrlsFromESPNListUrl(
   let refs = response.data.items.map((item) => item.$ref);
   while (response.data.pageIndex < response.data.pageCount) {
     response = await axios.get<ESPNRefList>(
-      `${listUrl}&page=${response.data.pageIndex + 1}`,
+      `${listUrl.replace("http://", "https://")}&page=${
+        response.data.pageIndex + 1
+      }`,
     );
 
     refs = [...refs, ...response.data.items.map((item) => item.$ref)];
@@ -64,4 +66,16 @@ export const ESPN_DESIRED_LEAGUES = [
     sportSlug: ESPN_SPORT_SLUGS.FOOTBALL,
     leagueSlug: ESPN_LEAGUE_SLUGS.NFL,
   },
+];
+
+export enum ESPN_SEASON_TYPES {
+  PRE_SEASON = 1,
+  REGULAR_SEASON = 2,
+  POST_SEASON = 3,
+  OFF_SEASON = 4,
+}
+
+export const ESPN_DESIRED_SEASON_TYPES = [
+  ESPN_SEASON_TYPES.REGULAR_SEASON,
+  ESPN_SEASON_TYPES.POST_SEASON,
 ];
