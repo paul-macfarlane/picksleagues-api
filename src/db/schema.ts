@@ -8,6 +8,16 @@ import {
   jsonb,
   integer,
 } from "drizzle-orm/pg-core";
+import {
+  LEAGUE_MEMBER_ROLES,
+  LEAGUE_VISIBILITIES,
+} from "../lib/models/leagues";
+import {
+  LEAGUE_TYPE_NAMES,
+  LEAGUE_TYPE_SLUGS,
+} from "../lib/models/leagueTypes";
+import { PHASE_TYPES } from "../lib/models/phases";
+import { DATA_SOURCE_NAMES } from "../lib/models/dataSources";
 
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -112,7 +122,11 @@ export type DBProfileUpdate = Partial<DBProfileInsert>;
 
 export const dataSourcesTable = pgTable("data_sources", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull().unique(),
+  name: text("name", {
+    enum: [DATA_SOURCE_NAMES.ESPN],
+  })
+    .notNull()
+    .unique(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()
@@ -222,7 +236,9 @@ export const phaseTemplatesTable = pgTable("phase_templates", {
     .notNull(),
   label: text("label").notNull(),
   sequence: integer("sequence").notNull(),
-  type: text("type").notNull(),
+  type: text("type", {
+    enum: [PHASE_TYPES.WEEK],
+  }).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()
@@ -246,7 +262,6 @@ export const phasesTable = pgTable("phases", {
       onDelete: "cascade",
     })
     .notNull(),
-  type: text("type").notNull(),
   sequence: integer("sequence").notNull(),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
@@ -288,3 +303,100 @@ export const externalPhasesTable = pgTable(
 export type DBExternalPhase = typeof externalPhasesTable.$inferSelect;
 export type DBExternalPhaseInsert = typeof externalPhasesTable.$inferInsert;
 export type DBExternalPhaseUpdate = Partial<DBExternalPhaseInsert>;
+
+// leagues
+
+export const leaguesTable = pgTable("leagues", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  image: text("image"),
+  leagueTypeId: uuid("league_type_id")
+    .references(() => leagueTypesTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  startPhaseTemplateId: uuid("start_phase_template_id").references(
+    () => phaseTemplatesTable.id,
+    {
+      onDelete: "cascade",
+    },
+  ),
+  endPhaseTemplateId: uuid("end_phase_template_id").references(
+    () => phaseTemplatesTable.id,
+    {
+      onDelete: "cascade",
+    },
+  ),
+  visibility: text("visibility", {
+    enum: [LEAGUE_VISIBILITIES.PRIVATE],
+  }).notNull(),
+  size: integer("size").notNull(),
+  settings: jsonb("settings").default({}),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type DBLeague = typeof leaguesTable.$inferSelect;
+export type DBLeagueInsert = typeof leaguesTable.$inferInsert;
+export type DBLeagueUpdate = Partial<DBLeagueInsert>;
+
+export const leagueMembersTable = pgTable(
+  "league_members",
+  {
+    leagueId: uuid("league_id")
+      .references(() => leaguesTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    userId: text("user_id")
+      .references(() => usersTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    role: text("role", {
+      enum: [LEAGUE_MEMBER_ROLES.COMMISSIONER, LEAGUE_MEMBER_ROLES.MEMBER],
+    }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [primaryKey({ columns: [table.leagueId, table.userId] })],
+);
+
+export type DBLeagueMember = typeof leagueMembersTable.$inferSelect;
+export type DBLeagueMemberInsert = typeof leagueMembersTable.$inferInsert;
+export type DBLeagueMemberUpdate = Partial<DBLeagueMemberInsert>;
+
+export const leagueTypesTable = pgTable("league_types", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug", {
+    enum: [LEAGUE_TYPE_SLUGS.PICK_EM],
+  })
+    .notNull()
+    .unique(),
+  name: text("name", {
+    enum: [LEAGUE_TYPE_NAMES.PICK_EM],
+  })
+    .notNull()
+    .unique(),
+  description: text("description"),
+  sportLeagueId: uuid("sport_league_id")
+    .references(() => sportsLeaguesTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type DBLeagueType = typeof leagueTypesTable.$inferSelect;
+export type DBLeagueTypeInsert = typeof leagueTypesTable.$inferInsert;
+export type DBLeagueTypeUpdate = Partial<DBLeagueTypeInsert>;

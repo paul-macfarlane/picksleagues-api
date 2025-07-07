@@ -17,6 +17,17 @@ export async function insertPhaseTemplate(
   return phaseTemplates[0];
 }
 
+export async function getPhaseTemplatesBySportLeagueId(
+  dbOrTx: DBOrTx,
+  sportLeagueId: string,
+): Promise<DBPhaseTemplate[]> {
+  const phaseTemplates = await dbOrTx
+    .select()
+    .from(phaseTemplatesTable)
+    .where(eq(phaseTemplatesTable.sportLeagueId, sportLeagueId));
+  return phaseTemplates;
+}
+
 export async function getPhaseTemplateBySportLeagueAndLabel(
   dbOrTx: DBOrTx,
   sportLeagueId: string,

@@ -10,6 +10,7 @@ import {
   updateSportLeague,
 } from "../../../db/helpers/sportLeagues";
 import { ESPN_DESIRED_LEAGUES } from "../../../lib/external/espn/shared";
+import { DATA_SOURCE_NAMES } from "../../../lib/models/dataSources";
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.get("/", async (_req: Request, res: Response) => {
 
   try {
     await db.transaction(async (tx) => {
-      const dataSource = await getDataSourceByName(tx, "ESPN");
+      const dataSource = await getDataSourceByName(tx, DATA_SOURCE_NAMES.ESPN);
       if (!dataSource) {
         res.status(500).json({ message: "ESPN data source not found" });
         // Throw to rollback transaction and exit

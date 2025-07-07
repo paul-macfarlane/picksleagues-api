@@ -25,6 +25,7 @@ import {
 } from "../../../db/helpers/phases";
 import { updatePhase } from "../../../db/helpers/phases";
 import { getPhaseTemplateBySportLeagueAndLabel } from "../../../db/helpers/phaseTemplates";
+import { DATA_SOURCE_NAMES } from "../../../lib/models/dataSources";
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.get("/", async (_req: Request, res: Response) => {
 
   try {
     await db.transaction(async (tx) => {
-      const dataSource = await getDataSourceByName(tx, "ESPN");
+      const dataSource = await getDataSourceByName(tx, DATA_SOURCE_NAMES.ESPN);
       if (!dataSource) {
         throw new Error("ESPN data source not found");
       }
@@ -182,7 +183,6 @@ router.get("/", async (_req: Request, res: Response) => {
                 tx,
                 existingExternalPhase.phaseId,
                 {
-                  type: "week",
                   sequence: index + 1,
                   startDate: new Date(espnWeek.startDate),
                   endDate: new Date(espnWeek.endDate),
@@ -221,7 +221,6 @@ router.get("/", async (_req: Request, res: Response) => {
               const insertedPhase = await insertPhase(tx, {
                 seasonId,
                 phaseTemplateId: phaseTemplate.id,
-                type: "week",
                 sequence: index + 1,
                 startDate: new Date(espnWeek.startDate),
                 endDate: new Date(espnWeek.endDate),
