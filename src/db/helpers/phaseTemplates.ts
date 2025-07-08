@@ -45,3 +45,14 @@ export async function getPhaseTemplateBySportLeagueAndLabel(
     .limit(1);
   return phaseTemplate[0];
 }
+
+export async function getPhaseTemplateById(
+  dbOrTx: DBOrTx,
+  id: string,
+): Promise<DBPhaseTemplate | undefined> {
+  const phaseTemplate = await dbOrTx
+    .select()
+    .from(phaseTemplatesTable)
+    .where(eq(phaseTemplatesTable.id, id));
+  return phaseTemplate[0];
+}

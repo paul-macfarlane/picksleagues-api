@@ -1,8 +1,18 @@
 import { z } from "zod";
 import { LEAGUE_TYPE_SLUGS } from "./leagueTypes";
 
+export const MIN_PICKS_PER_PHASE = 1;
+export const MAX_PICKS_PER_PHASE = 16;
+
 export const pickEmLeagueSettingsSchema = z.object({
-  picksPerPhase: z.number().min(1).max(16),
+  picksPerPhase: z
+    .number()
+    .min(MIN_PICKS_PER_PHASE, {
+      message: `Picks per phase must be at least ${MIN_PICKS_PER_PHASE}`,
+    })
+    .max(MAX_PICKS_PER_PHASE, {
+      message: `Picks per phase must be at most ${MAX_PICKS_PER_PHASE}`,
+    }),
 });
 
 export type PickEmLeagueSettings = z.infer<typeof pickEmLeagueSettingsSchema>;
@@ -19,13 +29,30 @@ export enum LEAGUE_VISIBILITIES {
 }
 
 export const createLeagueSchema = z.object({
-  name: z.string().min(MIN_LEAGUE_NAME_LENGTH).max(MAX_LEAGUE_NAME_LENGTH),
-  image: z.union([z.string().url().optional(), z.literal(""), z.null()]),
+  name: z
+    .string()
+    .min(MIN_LEAGUE_NAME_LENGTH, {
+      message: `Name must be at least ${MIN_LEAGUE_NAME_LENGTH} characters`,
+    })
+    .max(MAX_LEAGUE_NAME_LENGTH, {
+      message: `Name must be at most ${MAX_LEAGUE_NAME_LENGTH} characters`,
+    })
+    .trim(),
+  image: z
+    .union([z.string().url().optional(), z.literal(""), z.null()])
+    .transform((val) => val?.trim() ?? null),
   leagueTypeSlug: z.enum([LEAGUE_TYPE_SLUGS.PICK_EM]),
   startPhaseTemplateId: z.string().min(1).uuid(),
   endPhaseTemplateId: z.string().min(1).uuid(),
   visibility: z.enum([LEAGUE_VISIBILITIES.PRIVATE]),
-  size: z.number().min(MIN_LEAGUE_SIZE).max(MAX_LEAGUE_SIZE),
+  size: z
+    .number()
+    .min(MIN_LEAGUE_SIZE, {
+      message: `Size must be at least ${MIN_LEAGUE_SIZE}`,
+    })
+    .max(MAX_LEAGUE_SIZE, {
+      message: `Size must be at most ${MAX_LEAGUE_SIZE}`,
+    }),
 });
 
 export type CreateLeague = z.infer<typeof createLeagueSchema>;

@@ -11,6 +11,7 @@ import { db } from "../../../db";
 import { getLeagueTypeBySlug } from "../../../db/helpers/leagueTypes";
 import { LEAGUE_TYPE_NAMES } from "../../../lib/models/leagueTypes";
 import { insertLeague, insertLeagueMember } from "../../../db/helpers/leauges";
+import { getPhaseTemplateById } from "../../../db/helpers/phaseTemplates";
 
 const router = Router();
 
@@ -26,7 +27,10 @@ router.post("/", async (req: Request, res: Response) => {
 
     const bodyParsed = createLeagueSchema.safeParse(req.body);
     if (!bodyParsed.success) {
-      res.status(400).json({ error: "Invalid request body" });
+      res.status(400).json({
+        error: "Invalid request body",
+        details: bodyParsed.error.issues,
+      });
       return;
     }
 
@@ -57,6 +61,32 @@ router.post("/", async (req: Request, res: Response) => {
         default:
           res.status(400).json({ error: "Invalid league type" });
           return;
+      }
+
+      const startPhaseTemplate = await getPhaseTemplateById(
+        tx,
+        bodyParsed.data.startPhaseTemplateId,
+      );
+      if (!startPhaseTemplate) {
+        res.status(400).json({ error: "Invalid start phase template" });
+        return;
+      }
+
+      const endPhaseTemplate = await getPhaseTemplateById(
+        tx,
+        bodyParsed.data.endPhaseTemplateId,
+      );
+      if (!endPhaseTemplate) {
+        res.status(400).json({ error: "Invalid end phase template" });
+        return;
+      }
+
+      if (startPhaseTemplate.sequence > endPhaseTemplate.sequence) {
+        res.status(400).json({
+          error:
+            "Start phase template must be before or equal to end phase template",
+        });
+        return;
       }
 
       const league = await insertLeague(tx, {
