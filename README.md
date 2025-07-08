@@ -54,7 +54,7 @@ RESTful API, with some exceptions for uis that would be shared accross clients a
 7. Run the cron jobs for sport league data:
 
    ```bash
-   curl http://localhost:3001/api/crons/sportLeagues --header "x-cron-api-key: <api-key>"
+   curl http://localhost:3001/api/crons/sport-leagues --header "x-cron-api-key: <api-key>"
    ```
 
 8. Re-run the seed job to insert phase templates:

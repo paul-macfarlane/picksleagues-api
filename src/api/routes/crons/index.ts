@@ -1,5 +1,5 @@
 import { Router } from "express";
-import sportLeaguesRouter from "./sportLeagues";
+import sportLeaguesRouter from "./sport-leagues";
 import seasonsRouter from "./seasons";
 
 const router = Router();
@@ -19,7 +19,7 @@ router.use((req, res, next) => {
   next();
 });
 
-router.use("/sportLeagues", sportLeaguesRouter);
+router.use("/sport-leagues", sportLeaguesRouter);
 router.use("/seasons", seasonsRouter);
 
 export default router;

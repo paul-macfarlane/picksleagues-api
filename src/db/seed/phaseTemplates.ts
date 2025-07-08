@@ -1,3 +1,4 @@
+import { PHASE_TYPES } from "../../lib/models/phases";
 import { DBOrTx } from "..";
 import {
   getPhaseTemplateBySportLeagueAndLabel,
@@ -6,96 +7,35 @@ import {
 import { getSportLeagueByName } from "../helpers/sportLeagues";
 import { DBPhaseTemplate } from "../schema";
 
-const NFL_PHASE_TEMPLATES = [
-  {
-    label: "Week 1",
-    type: "week",
-  },
-  {
-    label: "Week 2",
-    type: "week",
-  },
-  {
-    label: "Week 3",
-    type: "week",
-  },
-  {
-    label: "Week 4",
-    type: "week",
-  },
-  {
-    label: "Week 5",
-    type: "week",
-  },
-  {
-    label: "Week 6",
-    type: "week",
-  },
-  {
-    label: "Week 7",
-    type: "week",
-  },
-  {
-    label: "Week 8",
-    type: "week",
-  },
-  {
-    label: "Week 9",
-    type: "week",
-  },
-  {
-    label: "Week 10",
-    type: "week",
-  },
-  {
-    label: "Week 11",
-    type: "week",
-  },
-  {
-    label: "Week 12",
-    type: "week",
-  },
-  {
-    label: "Week 13",
-    type: "week",
-  },
-  {
-    label: "Week 14",
-    type: "week",
-  },
-  {
-    label: "Week 15",
-    type: "week",
-  },
-  {
-    label: "Week 16",
-    type: "week",
-  },
-  {
-    label: "Week 17",
-    type: "week",
-  },
-  {
-    label: "Week 18",
-    type: "week",
-  },
-  {
-    label: "Wild Card",
-    type: "week",
-  },
-  {
-    label: "Divisional Round",
-    type: "week",
-  },
-  {
-    label: "Conference Championship",
-    type: "week",
-  },
-  {
-    label: "Super Bowl",
-    type: "week",
-  },
+const NFL_WEEK_PHASE_LABELS = [
+  "Week 1",
+  "Week 2",
+  "Week 3",
+  "Week 4",
+  "Week 5",
+  "Week 6",
+  "Week 7",
+  "Week 8",
+  "Week 9",
+  "Week 10",
+  "Week 11",
+  "Week 12",
+  "Week 13",
+  "Week 14",
+  "Week 15",
+  "Week 16",
+  "Week 17",
+  "Week 18",
+  "Wild Card",
+  "Divisional Round",
+  "Conference Championship",
+  "Super Bowl",
 ];
+
+const NFL_PHASE_TEMPLATES = NFL_WEEK_PHASE_LABELS.map((label) => ({
+  label,
+  type: PHASE_TYPES.WEEK,
+}));
 
 export async function seedPhaseTemplates(
   dbOrTx: DBOrTx,
