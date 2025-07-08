@@ -1,3 +1,4 @@
+import { and, eq } from "drizzle-orm";
 import { DBOrTx } from "..";
 import {
   DBLeagueMemberInsert,
@@ -25,4 +26,28 @@ export async function insertLeagueMember(
     .values(leagueMember)
     .returning();
   return leagueMembers[0];
+}
+
+export async function getLeaguesByUserIdAndLeagueTypeId(
+  dbOrTx: DBOrTx,
+  userId: string,
+  leagueTypeId: string,
+): Promise<DBLeague[]> {
+  const leagues = await dbOrTx
+    .select({
+      league: leaguesTable,
+    })
+    .from(leaguesTable)
+    .innerJoin(
+      leagueMembersTable,
+      eq(leaguesTable.id, leagueMembersTable.leagueId),
+    )
+    .where(
+      and(
+        eq(leaguesTable.leagueTypeId, leagueTypeId),
+        eq(leagueMembersTable.userId, userId),
+      ),
+    );
+
+  return leagues.map((league) => league.league);
 }
