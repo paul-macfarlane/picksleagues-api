@@ -72,11 +72,9 @@ router.post("/", async (req: Request, res: Response) => {
 
       let invite: DBLeagueInvite;
 
-      const expiresAt = parseInvite.data.expiresInDays
-        ? new Date(
-            Date.now() + parseInvite.data.expiresInDays * 24 * 60 * 60 * 1000,
-          )
-        : null;
+      const expiresAt = new Date(
+        Date.now() + parseInvite.data.expiresInDays * 24 * 60 * 60 * 1000,
+      );
 
       if (parseInvite.data.type === LEAGUE_INVITE_TYPES.DIRECT) {
         invite = await insertLeagueInvite(tx, {

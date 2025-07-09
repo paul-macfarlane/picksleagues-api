@@ -425,7 +425,7 @@ export const leagueInvitesTable = pgTable("league_invites", {
   })
     .notNull()
     .default(LEAGUE_INVITE_STATUSES.PENDING),
-  expiresAt: timestamp("expires_at"),
+  expiresAt: timestamp("expires_at").notNull(),
   role: text("role", {
     enum: [LEAGUE_MEMBER_ROLES.COMMISSIONER, LEAGUE_MEMBER_ROLES.MEMBER],
   }).notNull(), // todo maybe in the future roles aren't a static enum, but a table with permissions, but for now this is fine

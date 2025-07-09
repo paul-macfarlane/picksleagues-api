@@ -45,8 +45,7 @@ export const CREATE_LEAGUE_INVITE_SCHEMA = z
       })
       .max(MAX_LEAGUE_INVITE_EXPIRATION_DAYS, {
         message: `Expires in days must be at most ${MAX_LEAGUE_INVITE_EXPIRATION_DAYS}`,
-      })
-      .optional(),
+      }),
   })
   .superRefine((data, ctx) => {
     // if the invite type is link, then maxUses is required
@@ -72,6 +71,7 @@ export const CREATE_LEAGUE_INVITE_SCHEMA = z
     return true;
   });
 
+// not sure schemas should be cased like this, but it's fine for now
 export const RESPOND_TO_LEAGUE_INVITE_SCHEMA = z.object({
   response: z.enum([
     LEAGUE_INVITE_STATUSES.ACCEPTED,
