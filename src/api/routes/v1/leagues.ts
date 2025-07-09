@@ -4,7 +4,6 @@ import { fromNodeHeaders } from "better-auth/node";
 import { DBUser } from "../../../db/schema";
 import {
   createLeagueSchema,
-  LEAGUE_MEMBER_ROLES,
   pickEmLeagueSettingsSchema,
 } from "../../../lib/models/leagues";
 import { db } from "../../../db";
@@ -12,6 +11,7 @@ import { getLeagueTypeBySlug } from "../../../db/helpers/leagueTypes";
 import { LEAGUE_TYPE_NAMES } from "../../../lib/models/leagueTypes";
 import { insertLeague, insertLeagueMember } from "../../../db/helpers/leauges";
 import { getPhaseTemplateById } from "../../../db/helpers/phaseTemplates";
+import { LEAGUE_MEMBER_ROLES } from "../../../lib/models/leagueMembers";
 
 const router = Router();
 

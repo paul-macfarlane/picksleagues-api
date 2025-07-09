@@ -1,0 +1,61 @@
+import { and, eq } from "drizzle-orm";
+import { DBOrTx } from "..";
+import {
+  DBLeagueInvite,
+  DBLeagueInviteUpdate,
+  type DBLeagueInviteInsert,
+  leagueInvitesTable,
+} from "../schema";
+import { LEAGUE_INVITE_STATUSES } from "../../lib/models/leagueInvites";
+
+export async function insertLeagueInvite(
+  dbOrTx: DBOrTx,
+  invite: DBLeagueInviteInsert,
+): Promise<DBLeagueInvite> {
+  const invites = await dbOrTx
+    .insert(leagueInvitesTable)
+    .values(invite)
+    .returning();
+  return invites[0];
+}
+
+export async function updateLeagueInvite(
+  dbOrTx: DBOrTx,
+  inviteId: string,
+  invite: DBLeagueInviteUpdate,
+): Promise<DBLeagueInvite> {
+  const invites = await dbOrTx
+    .update(leagueInvitesTable)
+    .set(invite)
+    .where(eq(leagueInvitesTable.id, inviteId))
+    .returning();
+  return invites[0];
+}
+
+export async function getLeagueInviteById(
+  dbOrTx: DBOrTx,
+  inviteId: string,
+): Promise<DBLeagueInvite | undefined> {
+  const invites = await dbOrTx
+    .select()
+    .from(leagueInvitesTable)
+    .where(eq(leagueInvitesTable.id, inviteId));
+  return invites[0];
+}
+
+export async function getInvitesByInviteeIdAndOptionalStatus(
+  dbOrTx: DBOrTx,
+  inviteeId: string,
+  status: LEAGUE_INVITE_STATUSES | undefined,
+): Promise<DBLeagueInvite[]> {
+  const invites = await dbOrTx
+    .select()
+    .from(leagueInvitesTable)
+    .where(
+      and(
+        eq(leagueInvitesTable.inviteeId, inviteeId),
+        status ? eq(leagueInvitesTable.status, status) : undefined,
+      ),
+    );
+  return invites;
+}
