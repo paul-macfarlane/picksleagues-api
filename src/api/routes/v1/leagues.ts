@@ -9,9 +9,17 @@ import {
 import { db } from "../../../db";
 import { getLeagueTypeBySlug } from "../../../db/helpers/leagueTypes";
 import { LEAGUE_TYPE_NAMES } from "../../../lib/models/leagueTypes";
-import { insertLeague, insertLeagueMember } from "../../../db/helpers/leauges";
+import {
+  getLeagueById,
+  insertLeague,
+  insertLeagueMember,
+} from "../../../db/helpers/leauges";
+import { getLeagueMembersWithProfileByLeagueId } from "../../../db/helpers/leagueMembers";
 import { getPhaseTemplateById } from "../../../db/helpers/phaseTemplates";
 import { LEAGUE_MEMBER_ROLES } from "../../../lib/models/leagueMembers";
+import { z } from "zod";
+import { getLeagueMemberByLeagueAndUserId } from "../../../db/helpers/leagueMembers";
+import { getLeagueInvitesByLeagueId } from "../../../db/helpers/leagueInvites";
 
 const router = Router();
 
@@ -105,6 +113,128 @@ router.post("/", async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("Error in leagues post:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/:leagueId", async (req: Request, res: Response) => {
+  try {
+    const session = (await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    })) as { user: DBUser };
+    if (!session) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const parseLeagueId = z.string().uuid().safeParse(req.params.leagueId);
+    if (!parseLeagueId.success) {
+      res.status(400).json({ error: "Invalid league ID" });
+      return;
+    }
+
+    const league = await getLeagueById(db, parseLeagueId.data);
+    if (!league) {
+      res.status(404).json({ error: "League not found" });
+      return;
+    }
+
+    const member = await getLeagueMemberByLeagueAndUserId(
+      db,
+      parseLeagueId.data,
+      session.user.id,
+    );
+    if (!member) {
+      res.status(403).json({ error: "You are not a member of this league" });
+      return;
+    }
+
+    res.status(200).json(league);
+  } catch (err) {
+    console.error("Error in leagues get:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/:leagueId/members", async (req: Request, res: Response) => {
+  try {
+    const session = (await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    })) as { user: DBUser };
+    if (!session) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const parseLeagueId = z.string().uuid().safeParse(req.params.leagueId);
+    if (!parseLeagueId.success) {
+      res.status(400).json({ error: "Invalid league ID" });
+      return;
+    }
+
+    const league = await getLeagueById(db, parseLeagueId.data);
+    if (!league) {
+      res.status(404).json({ error: "League not found" });
+      return;
+    }
+
+    const members = await getLeagueMembersWithProfileByLeagueId(
+      db,
+      parseLeagueId.data,
+    );
+
+    res.status(200).json(members);
+  } catch (err) {
+    console.error("Error in leagues get members:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/:leagueId/invites", async (req: Request, res: Response) => {
+  try {
+    const session = (await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    })) as { user: DBUser };
+    if (!session) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const parseLeagueId = z.string().uuid().safeParse(req.params.leagueId);
+    if (!parseLeagueId.success) {
+      res.status(400).json({ error: "Invalid league ID" });
+      return;
+    }
+
+    const league = await getLeagueById(db, parseLeagueId.data);
+    if (!league) {
+      res.status(404).json({ error: "League not found" });
+      return;
+    }
+
+    const member = await getLeagueMemberByLeagueAndUserId(
+      db,
+      parseLeagueId.data,
+      session.user.id,
+    );
+    if (!member) {
+      res.status(403).json({ error: "You are not a member of this league" });
+      return;
+    }
+
+    if (member.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER) {
+      res
+        .status(403)
+        .json({ error: "You are not a commissioner of this league" });
+      return;
+    }
+    // make sure frontend doesn't try to get invites for a league they're not a commissioner
+
+    const invites = await getLeagueInvitesByLeagueId(db, parseLeagueId.data);
+
+    res.status(200).json(invites);
+  } catch (err) {
+    console.error("Error in leagues get invites:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });

@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { DBOrTx } from "..";
-import { leagueMembersTable } from "../schema";
+import { DBProfile, leagueMembersTable, profilesTable } from "../schema";
 import { DBLeagueMember } from "../schema";
 
 export async function getLeagueMemberByLeagueAndUserId(
@@ -18,4 +18,29 @@ export async function getLeagueMemberByLeagueAndUserId(
       ),
     );
   return leagueMember[0];
+}
+
+export type LeagueMemberWithProfile = DBLeagueMember & {
+  profile: DBProfile;
+};
+
+export async function getLeagueMembersWithProfileByLeagueId(
+  dbOrTx: DBOrTx,
+  leagueId: string,
+): Promise<LeagueMemberWithProfile[]> {
+  const members = await dbOrTx
+    .select({
+      leagueMember: leagueMembersTable,
+      profile: profilesTable,
+    })
+    .from(leagueMembersTable)
+    .where(eq(leagueMembersTable.leagueId, leagueId))
+    .innerJoin(
+      profilesTable,
+      eq(leagueMembersTable.userId, profilesTable.userId),
+    );
+  return members.map((member) => ({
+    ...member.leagueMember,
+    profile: member.profile,
+  }));
 }

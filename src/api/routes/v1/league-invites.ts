@@ -3,7 +3,6 @@ import { auth } from "../../../lib/auth";
 import { DBLeagueInvite, DBUser } from "../../../db/schema";
 import {
   CREATE_LEAGUE_INVITE_SCHEMA,
-  DEFAULT_LEAGUE_INVITE_EXPIRATION_TIME_MS,
   LEAGUE_INVITE_STATUSES,
   LEAGUE_INVITE_TYPES,
   RESPOND_TO_LEAGUE_INVITE_SCHEMA,
@@ -15,6 +14,7 @@ import {
   getInvitesByInviteeIdAndOptionalStatus,
   getLeagueInviteById,
   insertLeagueInvite,
+  deleteLeagueInvite,
   updateLeagueInvite,
 } from "../../../db/helpers/leagueInvites";
 import { z } from "zod";
@@ -71,9 +71,13 @@ router.post("/", async (req: Request, res: Response) => {
       }
 
       let invite: DBLeagueInvite;
-      const expiresAt = new Date(
-        Date.now() + DEFAULT_LEAGUE_INVITE_EXPIRATION_TIME_MS,
-      );
+
+      const expiresAt = parseInvite.data.expiresInDays
+        ? new Date(
+            Date.now() + parseInvite.data.expiresInDays * 24 * 60 * 60 * 1000,
+          )
+        : null;
+
       if (parseInvite.data.type === LEAGUE_INVITE_TYPES.DIRECT) {
         invite = await insertLeagueInvite(tx, {
           inviterId: session.user.id,
@@ -91,6 +95,7 @@ router.post("/", async (req: Request, res: Response) => {
           type: parseInvite.data.type,
           expiresAt,
           role: parseInvite.data.role,
+          token: crypto.randomUUID(),
         });
       }
 
@@ -162,7 +167,7 @@ router.post("/:inviteId/respond", async (req: Request, res: Response) => {
         status: parseResponse.data.response,
       });
 
-      res.status(200).json({ message: "Invite responded to" });
+      res.status(204);
     });
   } catch (err) {
     console.error("Error in league invites get:", err);
@@ -202,6 +207,54 @@ router.get("/my-invites", async (req: Request, res: Response) => {
     res.status(200).json(invites);
   } catch (err) {
     console.error("Error in league invites get:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/:inviteId", async (req: Request, res: Response) => {
+  try {
+    const session = (await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    })) as { user: DBUser };
+    if (!session) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const parseId = z.string().uuid().safeParse(req.params.inviteId);
+    if (!parseId.success) {
+      res.status(400).json({ error: "Invalid invite ID" });
+      return;
+    }
+
+    const invite = await getLeagueInviteById(db, req.params.inviteId);
+    if (!invite) {
+      res.status(404).json({ error: "Invite not found" });
+      return;
+    }
+
+    const member = await getLeagueMemberByLeagueAndUserId(
+      db,
+      invite.leagueId,
+      session.user.id,
+    );
+    if (!member) {
+      res.status(403).json({ error: "You are not a member of this league" });
+      return;
+    }
+
+    if (member.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER) {
+      res
+        .status(403)
+        .json({ error: "You are not a commissioner of this league" });
+      return;
+    }
+
+    await deleteLeagueInvite(db, req.params.inviteId);
+
+    res.status(204);
+  } catch (err) {
+    console.error("Error in league invites delete:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });

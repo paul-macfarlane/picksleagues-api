@@ -59,3 +59,23 @@ export async function getInvitesByInviteeIdAndOptionalStatus(
     );
   return invites;
 }
+
+export async function getLeagueInvitesByLeagueId(
+  dbOrTx: DBOrTx,
+  leagueId: string,
+): Promise<DBLeagueInvite[]> {
+  const invites = await dbOrTx
+    .select()
+    .from(leagueInvitesTable)
+    .where(eq(leagueInvitesTable.leagueId, leagueId));
+  return invites;
+}
+
+export async function deleteLeagueInvite(
+  dbOrTx: DBOrTx,
+  inviteId: string,
+): Promise<void> {
+  await dbOrTx
+    .delete(leagueInvitesTable)
+    .where(eq(leagueInvitesTable.id, inviteId));
+}
