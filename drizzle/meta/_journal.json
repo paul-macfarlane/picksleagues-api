@@ -19,15 +19,8 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1752016883680,
-      "tag": "0002_demonic_shiver_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1752034356377,
-      "tag": "0003_parallel_absorbing_man",
+      "when": 1752097169818,
+      "tag": "0002_lowly_boom_boom",
       "breakpoints": true
     }
   ]

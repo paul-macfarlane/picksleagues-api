@@ -2,10 +2,10 @@ import { Request, Response, Router } from "express";
 import { auth } from "../../../lib/auth";
 import { DBLeagueInvite, DBUser } from "../../../db/schema";
 import {
-  CREATE_LEAGUE_INVITE_SCHEMA,
+  CreateLeagueInviteSchema,
   LEAGUE_INVITE_STATUSES,
   LEAGUE_INVITE_TYPES,
-  RESPOND_TO_LEAGUE_INVITE_SCHEMA,
+  RespondToLeagueInviteSchema,
 } from "../../../lib/models/leagueInvites";
 import { db } from "../../../db";
 import { getLeagueMemberByLeagueAndUserId } from "../../../db/helpers/leagueMembers";
@@ -32,7 +32,7 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const parseInvite = CREATE_LEAGUE_INVITE_SCHEMA.safeParse(req.body);
+    const parseInvite = CreateLeagueInviteSchema.safeParse(req.body);
     if (!parseInvite.success) {
       res.status(400).json({
         error: "Invalid request body",
@@ -89,7 +89,6 @@ router.post("/", async (req: Request, res: Response) => {
         invite = await insertLeagueInvite(tx, {
           inviterId: session.user.id,
           leagueId: parseInvite.data.leagueId,
-          maxUses: parseInvite.data.maxUses,
           type: parseInvite.data.type,
           expiresAt,
           role: parseInvite.data.role,
@@ -121,7 +120,7 @@ router.post("/:inviteId/respond", async (req: Request, res: Response) => {
       return;
     }
 
-    const parseResponse = RESPOND_TO_LEAGUE_INVITE_SCHEMA.safeParse(req.body);
+    const parseResponse = RespondToLeagueInviteSchema.safeParse(req.body);
     if (!parseResponse.success) {
       res.status(400).json({ error: "Invalid request body" });
       return;

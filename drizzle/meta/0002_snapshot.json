@@ -1,5 +1,5 @@
 {
-  "id": "9c6d988a-c472-43a9-972a-dd6fcbc164e4",
+  "id": "44cef67f-b661-441a-9d6c-6b091463bb87",
   "prevId": "593a3255-4167-49aa-b064-0fac3c53183a",
   "version": "7",
   "dialect": "postgresql",
@@ -446,18 +446,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
         "expires_at": {
           "name": "expires_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "role": {
           "name": "role",
@@ -485,24 +478,17 @@
           "primaryKey": false,
           "notNull": false
         },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "token": {
           "name": "token",
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "max_uses": {
-          "name": "max_uses",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "uses": {
-          "name": "uses",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
         }
       },
       "indexes": {},

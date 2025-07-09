@@ -3,15 +3,13 @@ CREATE TABLE "league_invites" (
 	"league_id" uuid NOT NULL,
 	"inviter_id" text NOT NULL,
 	"type" text NOT NULL,
-	"status" text DEFAULT 'pending' NOT NULL,
-	"expires_at" timestamp,
+	"expires_at" timestamp NOT NULL,
 	"role" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"invitee_id" text,
+	"status" text,
 	"token" text,
-	"max_uses" integer,
-	"uses" integer DEFAULT 0,
 	CONSTRAINT "league_invites_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint

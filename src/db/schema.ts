@@ -416,15 +416,6 @@ export const leagueInvitesTable = pgTable("league_invites", {
   type: text("type", {
     enum: [LEAGUE_INVITE_TYPES.DIRECT, LEAGUE_INVITE_TYPES.LINK],
   }).notNull(),
-  status: text("status", {
-    enum: [
-      LEAGUE_INVITE_STATUSES.PENDING,
-      LEAGUE_INVITE_STATUSES.ACCEPTED,
-      LEAGUE_INVITE_STATUSES.DECLINED,
-    ],
-  })
-    .notNull()
-    .default(LEAGUE_INVITE_STATUSES.PENDING),
   expiresAt: timestamp("expires_at").notNull(),
   role: text("role", {
     enum: [LEAGUE_MEMBER_ROLES.COMMISSIONER, LEAGUE_MEMBER_ROLES.MEMBER],
@@ -435,17 +426,22 @@ export const leagueInvitesTable = pgTable("league_invites", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 
-  // Nullable fields depending on invite type
+  // Nullable fields that are used depending on invite type
 
   // Direct invite
   inviteeId: text("invitee_id").references(() => usersTable.id, {
     onDelete: "cascade",
   }),
+  status: text("status", {
+    enum: [
+      LEAGUE_INVITE_STATUSES.PENDING,
+      LEAGUE_INVITE_STATUSES.ACCEPTED,
+      LEAGUE_INVITE_STATUSES.DECLINED,
+    ],
+  }),
 
   // Link invites
   token: text("token").unique(),
-  maxUses: integer("max_uses"),
-  uses: integer("uses").default(0),
 });
 
 export type DBLeagueInvite = typeof leagueInvitesTable.$inferSelect;
