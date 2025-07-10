@@ -3,9 +3,10 @@ import { auth } from "../../../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
 import { DBUser, profilesTable } from "../../../db/schema";
 import { db } from "../../../db";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { SearchProfilesSchema } from "../../../lib/models/profiles";
+import { searchProfile as searchProfiles } from "../../../db/helpers/profiles";
 
 const router = Router();
 
@@ -24,28 +25,22 @@ router.get("/search", async (req: Request, res: Response) => {
     return;
   }
 
-  const whereClause = [
-    parseQuery.data.username
-      ? eq(profilesTable.username, parseQuery.data.username)
-      : undefined,
-    parseQuery.data.firstName
-      ? eq(profilesTable.firstName, parseQuery.data.firstName)
-      : undefined,
-    parseQuery.data.lastName
-      ? eq(profilesTable.lastName, parseQuery.data.lastName)
-      : undefined,
-  ].filter(Boolean);
+  if (
+    !parseQuery.data.username &&
+    !parseQuery.data.firstName &&
+    !parseQuery.data.lastName
+  ) {
+    // if no search query, return empty array
+    res.status(200).json([]);
+    return;
+  }
 
-  const queryRows = await db
-    .select()
-    .from(profilesTable)
-    .where(or(...whereClause))
-    .limit(10);
+  const profiles = await searchProfiles(parseQuery.data);
 
-  res.json(queryRows);
+  res.json(profiles);
 });
 
-router.get("/", async (req: Request, res: Response) => {
+router.get("/:userId", async (req: Request, res: Response) => {
   const session = (await auth.api.getSession({
     headers: fromNodeHeaders(req.headers),
   })) as { user: DBUser };
@@ -54,10 +49,16 @@ router.get("/", async (req: Request, res: Response) => {
     return;
   }
 
+  const parseUserId = z.string().trim().safeParse(req.params.userId);
+  if (!parseUserId.success) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
+
   const queryRows = await db
     .select()
     .from(profilesTable)
-    .where(eq(profilesTable.userId, session.user.id))
+    .where(eq(profilesTable.userId, parseUserId.data))
     .limit(1);
   if (!queryRows[0]) {
     res.status(404).json({ error: "Profile not found" });

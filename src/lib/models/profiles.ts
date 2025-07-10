@@ -5,3 +5,5 @@ export const SearchProfilesSchema = z.object({
   firstName: z.string().trim().min(1).optional(),
   lastName: z.string().trim().min(1).optional(),
 });
+
+export type SearchProfiles = z.infer<typeof SearchProfilesSchema>;
