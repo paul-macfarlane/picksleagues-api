@@ -1,6 +1,10 @@
 import z from "zod";
 import { LEAGUE_MEMBER_ROLES } from "./leagueMembers";
 
+export const LeagueInviteIdSchema = z.string().trim().uuid();
+
+export const LeagueInviteTokenSchema = z.string().trim().uuid();
+
 export enum LEAGUE_INVITE_TYPES {
   DIRECT = "direct",
   LINK = "link",

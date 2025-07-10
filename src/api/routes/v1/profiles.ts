@@ -4,8 +4,11 @@ import { fromNodeHeaders } from "better-auth/node";
 import { DBUser, profilesTable } from "../../../db/schema";
 import { db } from "../../../db";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
-import { SearchProfilesSchema } from "../../../lib/models/profiles";
+import {
+  SearchProfilesSchema,
+  UpdateProfileSchema,
+  UserIdSchema,
+} from "../../../lib/models/profiles";
 import { searchProfile as searchProfiles } from "../../../db/helpers/profiles";
 
 const router = Router();
@@ -49,7 +52,7 @@ router.get("/:userId", async (req: Request, res: Response) => {
     return;
   }
 
-  const parseUserId = z.string().trim().safeParse(req.params.userId);
+  const parseUserId = UserIdSchema.safeParse(req.params.userId);
   if (!parseUserId.success) {
     res.status(400).json({ error: "Invalid user ID" });
     return;
@@ -68,39 +71,6 @@ router.get("/:userId", async (req: Request, res: Response) => {
   res.json(queryRows[0]);
 });
 
-export const MIN_USERNAME_LENGTH = 3;
-export const MAX_USERNAME_LENGTH = 50;
-export const MIN_NAME_LENGTH = 1;
-export const MAX_NAME_LENGTH = 50;
-
-export const updateProfileSchema = z.object({
-  username: z
-    .string()
-    .min(MIN_USERNAME_LENGTH, {
-      message: `Username must be at least ${MIN_USERNAME_LENGTH} characters`,
-    })
-    .max(MAX_USERNAME_LENGTH, {
-      message: `Username must be at most ${MAX_USERNAME_LENGTH} characters`,
-    }),
-  firstName: z
-    .string()
-    .min(MIN_NAME_LENGTH, { message: `First name is required ` })
-    .max(MAX_NAME_LENGTH, {
-      message: `First name must be at most ${MAX_NAME_LENGTH} characters`,
-    }),
-  lastName: z
-    .string()
-    .min(MIN_NAME_LENGTH, { message: `Last name is required` })
-    .max(MAX_NAME_LENGTH, {
-      message: `Last name must be at most ${MAX_NAME_LENGTH} characters`,
-    }),
-  avatarUrl: z.union([
-    z.string().trim().url().optional(),
-    z.literal(""),
-    z.null(),
-  ]),
-});
-
 router.put("/", async (req: Request, res: Response) => {
   const session = (await auth.api.getSession({
     headers: fromNodeHeaders(req.headers),
@@ -111,7 +81,7 @@ router.put("/", async (req: Request, res: Response) => {
   }
 
   const { data: profileData, error: parseError } =
-    updateProfileSchema.safeParse(req.body);
+    UpdateProfileSchema.safeParse(req.body);
   if (parseError) {
     console.error(
       `Bad request for user ${session.user.id}: ${parseError.message}`,
