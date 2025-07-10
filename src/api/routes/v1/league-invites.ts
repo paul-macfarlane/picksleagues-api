@@ -16,6 +16,7 @@ import {
   insertLeagueInvite,
   deleteLeagueInvite,
   updateLeagueInvite,
+  getLeagueInviteByInviteeLeagueAndStatus,
 } from "../../../db/helpers/leagueInvites";
 import { z } from "zod";
 import { fromNodeHeaders } from "better-auth/node";
@@ -70,8 +71,21 @@ router.post("/", async (req: Request, res: Response) => {
         return;
       }
 
-      let invite: DBLeagueInvite;
+      // check if user has a pending invite to the league already
+      const existingInvite = await getLeagueInviteByInviteeLeagueAndStatus(
+        tx,
+        session.user.id,
+        parseInvite.data.leagueId,
+        LEAGUE_INVITE_STATUSES.PENDING,
+      );
+      if (existingInvite) {
+        res
+          .status(409)
+          .json({ error: "User has already been invited to the league" });
+        return;
+      }
 
+      let invite: DBLeagueInvite;
       const expiresAt = new Date(
         Date.now() + parseInvite.data.expiresInDays * 24 * 60 * 60 * 1000,
       );

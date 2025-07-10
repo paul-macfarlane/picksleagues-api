@@ -79,3 +79,22 @@ export async function deleteLeagueInvite(
     .delete(leagueInvitesTable)
     .where(eq(leagueInvitesTable.id, inviteId));
 }
+
+export async function getLeagueInviteByInviteeLeagueAndStatus(
+  dbOrTx: DBOrTx,
+  inviteeId: string,
+  leagueId: string,
+  status: LEAGUE_INVITE_STATUSES,
+): Promise<DBLeagueInvite | undefined> {
+  const invites = await dbOrTx
+    .select()
+    .from(leagueInvitesTable)
+    .where(
+      and(
+        eq(leagueInvitesTable.inviteeId, inviteeId),
+        eq(leagueInvitesTable.leagueId, leagueId),
+        eq(leagueInvitesTable.status, status),
+      ),
+    );
+  return invites[0];
+}
