@@ -12,6 +12,7 @@ export enum PICK_EM_PICK_TYPES {
 export const pickEmLeagueSettingsSchema = z.object({
   picksPerPhase: z
     .number()
+    .int()
     .min(MIN_PICKS_PER_PHASE, {
       message: `Picks per week must be at least ${MIN_PICKS_PER_PHASE}`,
     })
@@ -45,14 +46,15 @@ export const createLeagueSchema = z.object({
     })
     .trim(),
   image: z
-    .union([z.string().url().optional(), z.literal(""), z.null()])
+    .union([z.string().trim().url().optional(), z.literal(""), z.null()])
     .transform((val) => val?.trim() ?? null),
   leagueTypeSlug: z.enum([LEAGUE_TYPE_SLUGS.PICK_EM]),
-  startPhaseTemplateId: z.string().min(1).uuid(),
-  endPhaseTemplateId: z.string().min(1).uuid(),
+  startPhaseTemplateId: z.string().trim().min(1).uuid(),
+  endPhaseTemplateId: z.string().trim().min(1).uuid(),
   visibility: z.enum([LEAGUE_VISIBILITIES.PRIVATE]),
   size: z
     .number()
+    .int()
     .min(MIN_LEAGUE_SIZE, {
       message: `Size must be at least ${MIN_LEAGUE_SIZE}`,
     })
@@ -68,8 +70,3 @@ export const createPickEmLeagueSchema = createLeagueSchema.extend({
 });
 
 export type CreatePickEmLeague = z.infer<typeof createPickEmLeagueSchema>;
-
-export enum LEAGUE_MEMBER_ROLES {
-  COMMISSIONER = "commissioner",
-  MEMBER = "member",
-}

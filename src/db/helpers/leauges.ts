@@ -51,3 +51,14 @@ export async function getLeaguesByUserIdAndLeagueTypeId(
 
   return leagues.map((league) => league.league);
 }
+
+export async function getLeagueById(
+  dbOrTx: DBOrTx,
+  leagueId: string,
+): Promise<DBLeague | undefined> {
+  const leagues = await dbOrTx
+    .select()
+    .from(leaguesTable)
+    .where(eq(leaguesTable.id, leagueId));
+  return leagues[0];
+}

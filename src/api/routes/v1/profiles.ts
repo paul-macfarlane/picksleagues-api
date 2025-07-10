@@ -5,10 +5,12 @@ import { DBUser, profilesTable } from "../../../db/schema";
 import { db } from "../../../db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { SearchProfilesSchema } from "../../../lib/models/profiles";
+import { searchProfile as searchProfiles } from "../../../db/helpers/profiles";
 
 const router = Router();
 
-router.get("/", async (req: Request, res: Response) => {
+router.get("/search", async (req: Request, res: Response) => {
   const session = (await auth.api.getSession({
     headers: fromNodeHeaders(req.headers),
   })) as { user: DBUser };
@@ -17,10 +19,46 @@ router.get("/", async (req: Request, res: Response) => {
     return;
   }
 
+  const parseQuery = SearchProfilesSchema.safeParse(req.query);
+  if (!parseQuery.success) {
+    res.status(400).json({ error: "Invalid request body" });
+    return;
+  }
+
+  if (
+    !parseQuery.data.username &&
+    !parseQuery.data.firstName &&
+    !parseQuery.data.lastName
+  ) {
+    // if no search query, return empty array
+    res.status(200).json([]);
+    return;
+  }
+
+  const profiles = await searchProfiles(parseQuery.data);
+
+  res.json(profiles);
+});
+
+router.get("/:userId", async (req: Request, res: Response) => {
+  const session = (await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  })) as { user: DBUser };
+  if (!session) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const parseUserId = z.string().trim().safeParse(req.params.userId);
+  if (!parseUserId.success) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
+
   const queryRows = await db
     .select()
     .from(profilesTable)
-    .where(eq(profilesTable.userId, session.user.id))
+    .where(eq(profilesTable.userId, parseUserId.data))
     .limit(1);
   if (!queryRows[0]) {
     res.status(404).json({ error: "Profile not found" });
@@ -35,7 +73,7 @@ export const MAX_USERNAME_LENGTH = 50;
 export const MIN_NAME_LENGTH = 1;
 export const MAX_NAME_LENGTH = 50;
 
-export const updateProfileSchema =  z.object({
+export const updateProfileSchema = z.object({
   username: z
     .string()
     .min(MIN_USERNAME_LENGTH, {
@@ -56,9 +94,12 @@ export const updateProfileSchema =  z.object({
     .max(MAX_NAME_LENGTH, {
       message: `Last name must be at most ${MAX_NAME_LENGTH} characters`,
     }),
-  avatarUrl: z.union([z.string().url().optional(), z.literal(""), z.null()]),
+  avatarUrl: z.union([
+    z.string().trim().url().optional(),
+    z.literal(""),
+    z.null(),
+  ]),
 });
-
 
 router.put("/", async (req: Request, res: Response) => {
   const session = (await auth.api.getSession({

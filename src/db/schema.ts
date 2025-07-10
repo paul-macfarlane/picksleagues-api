@@ -8,16 +8,16 @@ import {
   jsonb,
   integer,
 } from "drizzle-orm/pg-core";
-import {
-  LEAGUE_MEMBER_ROLES,
-  LEAGUE_VISIBILITIES,
-} from "../lib/models/leagues";
+import { LEAGUE_VISIBILITIES } from "../lib/models/leagues";
 import {
   LEAGUE_TYPE_NAMES,
   LEAGUE_TYPE_SLUGS,
 } from "../lib/models/leagueTypes";
 import { PHASE_TYPES } from "../lib/models/phases";
 import { DATA_SOURCE_NAMES } from "../lib/models/dataSources";
+import { LEAGUE_INVITE_TYPES } from "../lib/models/leagueInvites";
+import { LEAGUE_INVITE_STATUSES } from "../lib/models/leagueInvites";
+import { LEAGUE_MEMBER_ROLES } from "../lib/models/leagueMembers";
 
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -400,3 +400,50 @@ export const leagueTypesTable = pgTable("league_types", {
 export type DBLeagueType = typeof leagueTypesTable.$inferSelect;
 export type DBLeagueTypeInsert = typeof leagueTypesTable.$inferInsert;
 export type DBLeagueTypeUpdate = Partial<DBLeagueTypeInsert>;
+
+export const leagueInvitesTable = pgTable("league_invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  leagueId: uuid("league_id")
+    .references(() => leaguesTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  inviterId: text("inviter_id")
+    .references(() => usersTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  type: text("type", {
+    enum: [LEAGUE_INVITE_TYPES.DIRECT, LEAGUE_INVITE_TYPES.LINK],
+  }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  role: text("role", {
+    enum: [LEAGUE_MEMBER_ROLES.COMMISSIONER, LEAGUE_MEMBER_ROLES.MEMBER],
+  }).notNull(), // todo maybe in the future roles aren't a static enum, but a table with permissions, but for now this is fine
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+
+  // Nullable fields that are used depending on invite type
+
+  // Direct invite
+  inviteeId: text("invitee_id").references(() => usersTable.id, {
+    onDelete: "cascade",
+  }),
+  status: text("status", {
+    enum: [
+      LEAGUE_INVITE_STATUSES.PENDING,
+      LEAGUE_INVITE_STATUSES.ACCEPTED,
+      LEAGUE_INVITE_STATUSES.DECLINED,
+    ],
+  }),
+
+  // Link invites
+  token: text("token").unique(),
+});
+
+export type DBLeagueInvite = typeof leagueInvitesTable.$inferSelect;
+export type DBLeagueInviteInsert = typeof leagueInvitesTable.$inferInsert;
+export type DBLeagueInviteUpdate = Partial<DBLeagueInviteInsert>;
