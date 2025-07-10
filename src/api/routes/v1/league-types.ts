@@ -24,7 +24,11 @@ router.get("/:typeIdOrSlug/my-leagues", async (req: Request, res: Response) => {
       return;
     }
 
-    const parseUUID = z.string().uuid().safeParse(req.params.typeIdOrSlug);
+    const parseUUID = z
+      .string()
+      .trim()
+      .uuid()
+      .safeParse(req.params.typeIdOrSlug);
     const parseSlug = z
       .enum([LEAGUE_TYPE_SLUGS.PICK_EM])
       .safeParse(req.params.typeIdOrSlug);
@@ -69,7 +73,11 @@ router.get(
         return;
       }
 
-      const parseUUID = z.string().uuid().safeParse(req.params.typeIdOrSlug);
+      const parseUUID = z
+        .string()
+        .trim()
+        .uuid()
+        .safeParse(req.params.typeIdOrSlug);
       const parseSlug = z
         .enum([LEAGUE_TYPE_SLUGS.PICK_EM])
         .safeParse(req.params.typeIdOrSlug);

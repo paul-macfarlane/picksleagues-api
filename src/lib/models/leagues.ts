@@ -46,11 +46,11 @@ export const createLeagueSchema = z.object({
     })
     .trim(),
   image: z
-    .union([z.string().url().optional(), z.literal(""), z.null()])
+    .union([z.string().trim().url().optional(), z.literal(""), z.null()])
     .transform((val) => val?.trim() ?? null),
   leagueTypeSlug: z.enum([LEAGUE_TYPE_SLUGS.PICK_EM]),
-  startPhaseTemplateId: z.string().min(1).uuid(),
-  endPhaseTemplateId: z.string().min(1).uuid(),
+  startPhaseTemplateId: z.string().trim().min(1).uuid(),
+  endPhaseTemplateId: z.string().trim().min(1).uuid(),
   visibility: z.enum([LEAGUE_VISIBILITIES.PRIVATE]),
   size: z
     .number()

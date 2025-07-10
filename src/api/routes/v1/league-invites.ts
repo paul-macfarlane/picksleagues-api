@@ -114,7 +114,7 @@ router.post("/:inviteId/respond", async (req: Request, res: Response) => {
       return;
     }
 
-    const parseId = z.string().uuid().safeParse(req.params.inviteId);
+    const parseId = z.string().trim().uuid().safeParse(req.params.inviteId);
     if (!parseId.success) {
       res.status(400).json({ error: "Invalid invite ID" });
       return;
@@ -164,7 +164,7 @@ router.post("/:inviteId/respond", async (req: Request, res: Response) => {
         status: parseResponse.data.response,
       });
 
-      res.status(204);
+      res.status(204).send();
     });
   } catch (err) {
     console.error("Error in league invites get:", err);
@@ -218,38 +218,40 @@ router.delete("/:inviteId", async (req: Request, res: Response) => {
       return;
     }
 
-    const parseId = z.string().uuid().safeParse(req.params.inviteId);
+    const parseId = z.string().trim().uuid().safeParse(req.params.inviteId);
     if (!parseId.success) {
       res.status(400).json({ error: "Invalid invite ID" });
       return;
     }
 
-    const invite = await getLeagueInviteById(db, req.params.inviteId);
-    if (!invite) {
-      res.status(404).json({ error: "Invite not found" });
-      return;
-    }
+    await db.transaction(async (tx) => {
+      const invite = await getLeagueInviteById(tx, req.params.inviteId);
+      if (!invite) {
+        res.status(404).json({ error: "Invite not found" });
+        return;
+      }
 
-    const member = await getLeagueMemberByLeagueAndUserId(
-      db,
-      invite.leagueId,
-      session.user.id,
-    );
-    if (!member) {
-      res.status(403).json({ error: "You are not a member of this league" });
-      return;
-    }
+      const member = await getLeagueMemberByLeagueAndUserId(
+        tx,
+        invite.leagueId,
+        session.user.id,
+      );
+      if (!member) {
+        res.status(403).json({ error: "You are not a member of this league" });
+        return;
+      }
 
-    if (member.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER) {
-      res
-        .status(403)
-        .json({ error: "You are not a commissioner of this league" });
-      return;
-    }
+      if (member.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER) {
+        res
+          .status(403)
+          .json({ error: "You are not a commissioner of this league" });
+        return;
+      }
 
-    await deleteLeagueInvite(db, req.params.inviteId);
+      await deleteLeagueInvite(tx, req.params.inviteId);
 
-    res.status(204);
+      res.status(204).send();
+    });
   } catch (err) {
     console.error("Error in league invites delete:", err);
     res.status(500).json({ error: "Internal server error" });

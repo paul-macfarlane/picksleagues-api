@@ -127,7 +127,11 @@ router.get("/:leagueId", async (req: Request, res: Response) => {
       return;
     }
 
-    const parseLeagueId = z.string().uuid().safeParse(req.params.leagueId);
+    const parseLeagueId = z
+      .string()
+      .trim()
+      .uuid()
+      .safeParse(req.params.leagueId);
     if (!parseLeagueId.success) {
       res.status(400).json({ error: "Invalid league ID" });
       return;
@@ -166,7 +170,11 @@ router.get("/:leagueId/members", async (req: Request, res: Response) => {
       return;
     }
 
-    const parseLeagueId = z.string().uuid().safeParse(req.params.leagueId);
+    const parseLeagueId = z
+      .string()
+      .trim()
+      .uuid()
+      .safeParse(req.params.leagueId);
     if (!parseLeagueId.success) {
       res.status(400).json({ error: "Invalid league ID" });
       return;
@@ -200,7 +208,11 @@ router.get("/:leagueId/invites", async (req: Request, res: Response) => {
       return;
     }
 
-    const parseLeagueId = z.string().uuid().safeParse(req.params.leagueId);
+    const parseLeagueId = z
+      .string()
+      .trim()
+      .uuid()
+      .safeParse(req.params.leagueId);
     if (!parseLeagueId.success) {
       res.status(400).json({ error: "Invalid league ID" });
       return;

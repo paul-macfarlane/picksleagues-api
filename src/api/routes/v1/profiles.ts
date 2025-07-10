@@ -3,10 +3,47 @@ import { auth } from "../../../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
 import { DBUser, profilesTable } from "../../../db/schema";
 import { db } from "../../../db";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { z } from "zod";
+import { SearchProfilesSchema } from "../../../lib/models/profiles";
 
 const router = Router();
+
+router.get("/search", async (req: Request, res: Response) => {
+  const session = (await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  })) as { user: DBUser };
+  if (!session) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const parseQuery = SearchProfilesSchema.safeParse(req.query);
+  if (!parseQuery.success) {
+    res.status(400).json({ error: "Invalid request body" });
+    return;
+  }
+
+  const whereClause = [
+    parseQuery.data.username
+      ? eq(profilesTable.username, parseQuery.data.username)
+      : undefined,
+    parseQuery.data.firstName
+      ? eq(profilesTable.firstName, parseQuery.data.firstName)
+      : undefined,
+    parseQuery.data.lastName
+      ? eq(profilesTable.lastName, parseQuery.data.lastName)
+      : undefined,
+  ].filter(Boolean);
+
+  const queryRows = await db
+    .select()
+    .from(profilesTable)
+    .where(or(...whereClause))
+    .limit(10);
+
+  res.json(queryRows);
+});
 
 router.get("/", async (req: Request, res: Response) => {
   const session = (await auth.api.getSession({
@@ -35,7 +72,7 @@ export const MAX_USERNAME_LENGTH = 50;
 export const MIN_NAME_LENGTH = 1;
 export const MAX_NAME_LENGTH = 50;
 
-export const updateProfileSchema =  z.object({
+export const updateProfileSchema = z.object({
   username: z
     .string()
     .min(MIN_USERNAME_LENGTH, {
@@ -56,9 +93,12 @@ export const updateProfileSchema =  z.object({
     .max(MAX_NAME_LENGTH, {
       message: `Last name must be at most ${MAX_NAME_LENGTH} characters`,
     }),
-  avatarUrl: z.union([z.string().url().optional(), z.literal(""), z.null()]),
+  avatarUrl: z.union([
+    z.string().trim().url().optional(),
+    z.literal(""),
+    z.null(),
+  ]),
 });
-
 
 router.put("/", async (req: Request, res: Response) => {
   const session = (await auth.api.getSession({
