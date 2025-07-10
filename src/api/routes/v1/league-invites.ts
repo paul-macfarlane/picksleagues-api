@@ -11,12 +11,12 @@ import { db } from "../../../db";
 import { getLeagueMemberByLeagueAndUserId } from "../../../db/helpers/leagueMembers";
 import { LEAGUE_MEMBER_ROLES } from "../../../lib/models/leagueMembers";
 import {
-  getInvitesByInviteeIdAndOptionalStatus,
   getLeagueInviteById,
   insertLeagueInvite,
   deleteLeagueInvite,
   updateLeagueInvite,
   getLeagueInviteByInviteeLeagueAndStatus,
+  getInvitesWithLeagueAndTypeByInviteeIdAndOptionalStatus,
 } from "../../../db/helpers/leagueInvites";
 import { z } from "zod";
 import { fromNodeHeaders } from "better-auth/node";
@@ -98,6 +98,7 @@ router.post("/", async (req: Request, res: Response) => {
           type: parseInvite.data.type,
           expiresAt,
           role: parseInvite.data.role,
+          status: LEAGUE_INVITE_STATUSES.PENDING,
         });
       } else {
         invite = await insertLeagueInvite(tx, {
@@ -196,24 +197,12 @@ router.get("/my-invites", async (req: Request, res: Response) => {
       return;
     }
 
-    const parseStatus = z
-      .enum([
+    const invites =
+      await getInvitesWithLeagueAndTypeByInviteeIdAndOptionalStatus(
+        db,
+        session.user.id,
         LEAGUE_INVITE_STATUSES.PENDING,
-        LEAGUE_INVITE_STATUSES.ACCEPTED,
-        LEAGUE_INVITE_STATUSES.DECLINED,
-      ])
-      .optional()
-      .safeParse(req.query.status);
-    if (!parseStatus.success) {
-      res.status(400).json({ error: "Invalid status" });
-      return;
-    }
-
-    const invites = await getInvitesByInviteeIdAndOptionalStatus(
-      db,
-      session.user.id,
-      parseStatus.data ?? undefined,
-    );
+      );
 
     res.status(200).json(invites);
   } catch (err) {

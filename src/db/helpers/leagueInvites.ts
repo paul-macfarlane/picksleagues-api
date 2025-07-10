@@ -5,6 +5,10 @@ import {
   DBLeagueInviteUpdate,
   type DBLeagueInviteInsert,
   leagueInvitesTable,
+  DBLeague,
+  leaguesTable,
+  DBLeagueType,
+  leagueTypesTable,
 } from "../schema";
 import { LEAGUE_INVITE_STATUSES } from "../../lib/models/leagueInvites";
 
@@ -43,21 +47,37 @@ export async function getLeagueInviteById(
   return invites[0];
 }
 
-export async function getInvitesByInviteeIdAndOptionalStatus(
+export async function getInvitesWithLeagueAndTypeByInviteeIdAndOptionalStatus(
   dbOrTx: DBOrTx,
   inviteeId: string,
   status: LEAGUE_INVITE_STATUSES | undefined,
-): Promise<DBLeagueInvite[]> {
+): Promise<
+  (DBLeagueInvite & { league: DBLeague; leagueType: DBLeagueType })[]
+> {
   const invites = await dbOrTx
-    .select()
+    .select({
+      league: leaguesTable,
+      invite: leagueInvitesTable,
+      leagueType: leagueTypesTable,
+    })
     .from(leagueInvitesTable)
+    .innerJoin(leaguesTable, eq(leagueInvitesTable.leagueId, leaguesTable.id))
+    .innerJoin(
+      leagueTypesTable,
+      eq(leaguesTable.leagueTypeId, leagueTypesTable.id),
+    )
     .where(
       and(
         eq(leagueInvitesTable.inviteeId, inviteeId),
         status ? eq(leagueInvitesTable.status, status) : undefined,
       ),
     );
-  return invites;
+
+  return invites.map((invite) => ({
+    ...invite.invite,
+    league: invite.league,
+    leagueType: invite.leagueType,
+  }));
 }
 
 export async function getLeagueInvitesByLeagueId(
