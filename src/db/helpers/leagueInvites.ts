@@ -133,3 +133,44 @@ export async function getLeagueInviteByInviteeLeagueAndStatus(
     );
   return invites[0];
 }
+
+export async function getLeagueInviteByToken(
+  dbOrTx: DBOrTx,
+  token: string,
+): Promise<DBLeagueInvite> {
+  const invites = await dbOrTx
+    .select()
+    .from(leagueInvitesTable)
+    .where(eq(leagueInvitesTable.token, token));
+  return invites[0];
+}
+
+export async function getLeagueInviteWithLeagueAndTypeByToken(
+  dbOrTx: DBOrTx,
+  token: string,
+): Promise<
+  (DBLeagueInvite & { league: DBLeague; leagueType: DBLeagueType }) | undefined
+> {
+  const invites = await dbOrTx
+    .select({
+      league: leaguesTable,
+      invite: leagueInvitesTable,
+      leagueType: leagueTypesTable,
+    })
+    .from(leagueInvitesTable)
+    .innerJoin(leaguesTable, eq(leagueInvitesTable.leagueId, leaguesTable.id))
+    .innerJoin(
+      leagueTypesTable,
+      eq(leaguesTable.leagueTypeId, leagueTypesTable.id),
+    )
+    .where(eq(leagueInvitesTable.token, token));
+  if (invites.length === 0) {
+    return undefined;
+  }
+
+  return {
+    ...invites[0].invite,
+    league: invites[0].league,
+    leagueType: invites[0].leagueType,
+  };
+}

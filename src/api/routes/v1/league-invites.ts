@@ -17,6 +17,8 @@ import {
   updateLeagueInvite,
   getLeagueInviteByInviteeLeagueAndStatus,
   getInvitesWithLeagueAndTypeByInviteeIdAndOptionalStatus,
+  getLeagueInviteWithLeagueAndTypeByToken,
+  getLeagueInviteByToken,
 } from "../../../db/helpers/leagueInvites";
 import { z } from "zod";
 import { fromNodeHeaders } from "better-auth/node";
@@ -264,6 +266,84 @@ router.delete("/:inviteId", async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("Error in league invites delete:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/token/:token", async (req: Request, res: Response) => {
+  try {
+    const parseToken = z.string().trim().uuid().safeParse(req.params.token);
+    if (!parseToken.success) {
+      res.status(400).json({ error: "Invalid token" });
+      return;
+    }
+
+    const invite = await getLeagueInviteWithLeagueAndTypeByToken(
+      db,
+      parseToken.data,
+    );
+    if (!invite) {
+      res.status(404).json({ error: "Invite not found" });
+      return;
+    }
+
+    res.status(200).json(invite);
+  } catch (err) {
+    console.error("Error in league invites get token:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/token/:token/join", async (req: Request, res: Response) => {
+  try {
+    const session = (await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    })) as { user: DBUser };
+    if (!session) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const parseToken = z.string().trim().uuid().safeParse(req.params.token);
+    if (!parseToken.success) {
+      res.status(400).json({ error: "Invalid token" });
+      return;
+    }
+
+    await db.transaction(async (tx) => {
+      const invite = await getLeagueInviteByToken(tx, parseToken.data);
+      if (!invite) {
+        res.status(404).json({ error: "Invite not found" });
+        return;
+      }
+
+      if (invite.expiresAt && invite.expiresAt < new Date()) {
+        res.status(400).json({ error: "Invite has expired" });
+        return;
+      }
+
+      // check if user is already a member of the league
+      const member = await getLeagueMemberByLeagueAndUserId(
+        tx,
+        invite.leagueId,
+        session.user.id,
+      );
+      if (member) {
+        // if user is already a member of the league, then we can just return
+        res.status(204).send();
+        return;
+      }
+
+      await insertLeagueMember(tx, {
+        leagueId: invite.leagueId,
+        userId: session.user.id,
+        role: invite.role,
+      });
+
+      res.status(204).send();
+    });
+  } catch (err) {
+    console.error("Error in league invites post token accept:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
