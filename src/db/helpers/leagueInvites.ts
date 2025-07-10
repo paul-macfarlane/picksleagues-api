@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { DBOrTx } from "..";
 import {
   DBLeagueInvite,
@@ -10,7 +10,10 @@ import {
   DBLeagueType,
   leagueTypesTable,
 } from "../schema";
-import { LEAGUE_INVITE_STATUSES } from "../../lib/models/leagueInvites";
+import {
+  LEAGUE_INVITE_STATUSES,
+  LEAGUE_INVITE_TYPES,
+} from "../../lib/models/leagueInvites";
 
 export async function insertLeagueInvite(
   dbOrTx: DBOrTx,
@@ -80,14 +83,26 @@ export async function getInvitesWithLeagueAndTypeByInviteeIdAndOptionalStatus(
   }));
 }
 
-export async function getLeagueInvitesByLeagueId(
+export async function getPendingLeagueInvitesByLeagueId(
   dbOrTx: DBOrTx,
   leagueId: string,
 ): Promise<DBLeagueInvite[]> {
   const invites = await dbOrTx
     .select()
     .from(leagueInvitesTable)
-    .where(eq(leagueInvitesTable.leagueId, leagueId));
+    .where(
+      and(
+        eq(leagueInvitesTable.leagueId, leagueId),
+        or(
+          eq(leagueInvitesTable.status, LEAGUE_INVITE_STATUSES.PENDING),
+          and(
+            isNull(leagueInvitesTable.status),
+            eq(leagueInvitesTable.type, LEAGUE_INVITE_TYPES.LINK),
+          ),
+        ),
+        gt(leagueInvitesTable.expiresAt, new Date()),
+      ),
+    );
   return invites;
 }
 

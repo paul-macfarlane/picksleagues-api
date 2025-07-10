@@ -1,7 +1,23 @@
 import { and, eq } from "drizzle-orm";
 import { DBOrTx } from "..";
-import { DBProfile, leagueMembersTable, profilesTable } from "../schema";
-import { DBLeagueMember } from "../schema";
+import {
+  DBLeagueMemberInsert,
+  DBProfile,
+  leagueMembersTable,
+  profilesTable,
+  DBLeagueMember,
+} from "../schema";
+
+export async function insertLeagueMember(
+  dbOrTx: DBOrTx,
+  data: DBLeagueMemberInsert,
+): Promise<DBLeagueMember> {
+  const [leagueMember] = await dbOrTx
+    .insert(leagueMembersTable)
+    .values(data)
+    .returning();
+  return leagueMember;
+}
 
 export async function getLeagueMemberByLeagueAndUserId(
   dbOrTx: DBOrTx,

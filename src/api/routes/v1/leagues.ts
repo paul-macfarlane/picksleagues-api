@@ -19,7 +19,7 @@ import { getPhaseTemplateById } from "../../../db/helpers/phaseTemplates";
 import { LEAGUE_MEMBER_ROLES } from "../../../lib/models/leagueMembers";
 import { z } from "zod";
 import { getLeagueMemberByLeagueAndUserId } from "../../../db/helpers/leagueMembers";
-import { getLeagueInvitesByLeagueId } from "../../../db/helpers/leagueInvites";
+import { getPendingLeagueInvitesByLeagueId } from "../../../db/helpers/leagueInvites";
 
 const router = Router();
 
@@ -242,7 +242,10 @@ router.get("/:leagueId/invites", async (req: Request, res: Response) => {
     }
     // make sure frontend doesn't try to get invites for a league they're not a commissioner
 
-    const invites = await getLeagueInvitesByLeagueId(db, parseLeagueId.data);
+    const invites = await getPendingLeagueInvitesByLeagueId(
+      db,
+      parseLeagueId.data,
+    );
 
     res.status(200).json(invites);
   } catch (err) {

@@ -20,6 +20,7 @@ import {
 } from "../../../db/helpers/leagueInvites";
 import { z } from "zod";
 import { fromNodeHeaders } from "better-auth/node";
+import { insertLeagueMember } from "../../../db/helpers/leagueMembers";
 
 const router = Router();
 
@@ -177,6 +178,12 @@ router.post("/:inviteId/respond", async (req: Request, res: Response) => {
 
       await updateLeagueInvite(tx, req.params.inviteId, {
         status: parseResponse.data.response,
+      });
+
+      await insertLeagueMember(tx, {
+        leagueId: invite.leagueId,
+        userId: session.user.id,
+        role: invite.role,
       });
 
       res.status(204).send();
