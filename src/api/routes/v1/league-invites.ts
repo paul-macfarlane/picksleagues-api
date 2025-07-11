@@ -1,17 +1,19 @@
 import { Request, Response, Router } from "express";
 import { auth } from "../../../lib/auth";
-import { DBLeagueInvite, DBUser } from "../../../db/schema";
+import { DBUser } from "../../../lib/models/users/db";
 import {
   CreateLeagueInviteSchema,
-  LEAGUE_INVITE_STATUSES,
-  LEAGUE_INVITE_TYPES,
   LeagueInviteIdSchema,
   LeagueInviteTokenSchema,
   RespondToLeagueInviteSchema,
-} from "../../../lib/models/leagueInvites";
+} from "../../../lib/models/leagueInvites/validations";
+import {
+  LEAGUE_INVITE_STATUSES,
+  LEAGUE_INVITE_TYPES,
+} from "../../../lib/models/leagueInvites/constants";
 import { db } from "../../../db";
 import { getLeagueMemberByLeagueAndUserId } from "../../../db/helpers/leagueMembers";
-import { LEAGUE_MEMBER_ROLES } from "../../../lib/models/leagueMembers";
+import { LEAGUE_MEMBER_ROLES } from "../../../lib/models/leagueMembers/constants";
 import {
   getLeagueInviteById,
   insertLeagueInvite,
@@ -24,6 +26,7 @@ import {
 } from "../../../db/helpers/leagueInvites";
 import { fromNodeHeaders } from "better-auth/node";
 import { insertLeagueMember } from "../../../db/helpers/leagueMembers";
+import { DBLeagueInvite } from "../../../lib/models/leagueInvites/db";
 
 const router = Router();
 

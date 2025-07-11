@@ -4,10 +4,14 @@ import { getSportLeagueByName } from "../helpers/sportLeagues";
 import {
   LEAGUE_TYPE_NAMES,
   LEAGUE_TYPE_SLUGS,
-} from "../../lib/models/leagueTypes";
+} from "../../lib/models/leagueTypes/constants";
+import { SPORT_LEAGUE_NAMES } from "../../lib/models/sportLeagues/constants";
 
 export const seedLeagueTypes = async (dbOrTx: DBOrTx) => {
-  const nflSportLeague = await getSportLeagueByName(dbOrTx, "NFL");
+  const nflSportLeague = await getSportLeagueByName(
+    dbOrTx,
+    SPORT_LEAGUE_NAMES.NFL,
+  );
   if (!nflSportLeague) {
     console.warn("NFL sport league not found");
     return;

@@ -1,9 +1,9 @@
 import { Router, Request, Response } from "express";
 import { auth } from "../../../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
-import { DBLeagueType, DBUser } from "../../../db/schema";
+import { DBUser } from "../../../lib/models/users/db";
 import { z } from "zod";
-import { LEAGUE_TYPE_SLUGS } from "../../../lib/models/leagueTypes";
+import { LEAGUE_TYPE_SLUGS } from "../../../lib/models/leagueTypes/constants";
 import { db } from "../../../db";
 import {
   getLeagueTypeById,
@@ -11,6 +11,7 @@ import {
 } from "../../../db/helpers/leagueTypes";
 import { getPhaseTemplatesBySportLeagueId } from "../../../db/helpers/phaseTemplates";
 import { getLeaguesByUserIdAndLeagueTypeId } from "../../../db/helpers/leauges";
+import { DBLeagueType } from "../../../lib/models/leagueTypes/db";
 
 const router = Router();
 

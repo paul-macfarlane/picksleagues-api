@@ -1,13 +1,10 @@
 import { and, eq } from "drizzle-orm";
 import { DBOrTx } from "..";
-import {
-  DBLeagueMemberInsert,
-  DBLeagueMember,
-  leagueMembersTable,
-  leaguesTable,
-} from "../schema";
-import { DBLeague } from "../schema";
-import { DBLeagueInsert } from "../schema";
+import { leagueMembersTable, leaguesTable } from "../schema";
+import { DBLeague } from "../../lib/models/leagues/db";
+import { DBLeagueInsert } from "../../lib/models/leagues/db";
+import { DBLeagueMember } from "../../lib/models/leagueMembers/db";
+import { DBLeagueMemberInsert } from "../../lib/models/leagueMembers/db";
 
 export async function insertLeague(
   dbOrTx: DBOrTx,

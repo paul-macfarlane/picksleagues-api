@@ -1,16 +1,18 @@
 import { Router, Request, Response } from "express";
 import { db } from "../../../db";
-import { getESPNLeague } from "../../../lib/external/espn/leagues";
+import { getESPNLeague } from "../../../lib/external/espn/api/leagues";
 import { getDataSourceByName } from "../../../db/helpers/dataSources";
 import {
-  getExternalSportLeagueBySourceAndId,
-  insertExternalSportLeague,
   insertSportLeague,
-  updateExternalSportLeague,
   updateSportLeague,
 } from "../../../db/helpers/sportLeagues";
-import { ESPN_DESIRED_LEAGUES } from "../../../lib/external/espn/shared";
-import { DATA_SOURCE_NAMES } from "../../../lib/models/dataSources";
+import { ESPN_DESIRED_LEAGUES } from "../../../lib/external/espn/models/leagues/constants";
+import { DATA_SOURCE_NAMES } from "../../../lib/models/dataSources/constants";
+import {
+  getExternalSportLeagueBySourceAndId,
+  updateExternalSportLeague,
+  insertExternalSportLeague,
+} from "../../../db/helpers/externalSportLeagues";
 
 const router = Router();
 

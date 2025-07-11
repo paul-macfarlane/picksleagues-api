@@ -1,15 +1,16 @@
 import { Request, Response, Router } from "express";
 import { auth } from "../../../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
-import { DBUser, profilesTable } from "../../../db/schema";
+import { profilesTable } from "../../../db/schema";
 import { db } from "../../../db";
 import { eq } from "drizzle-orm";
 import {
   SearchProfilesSchema,
   UpdateProfileSchema,
   UserIdSchema,
-} from "../../../lib/models/profiles";
-import { searchProfile as searchProfiles } from "../../../db/helpers/profiles";
+} from "../../../lib/models/profiles/validations";
+import { searchProfiles as searchProfiles } from "../../../db/helpers/profiles";
+import { DBUser } from "../../../lib/models/users/db";
 
 const router = Router();
 

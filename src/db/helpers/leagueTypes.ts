@@ -1,7 +1,9 @@
 import { eq } from "drizzle-orm";
 import { DBOrTx } from "..";
-import { DBLeagueType, DBLeagueTypeInsert, leagueTypesTable } from "../schema";
-import { LEAGUE_TYPE_SLUGS } from "../../lib/models/leagueTypes";
+import { leagueTypesTable } from "../schema";
+import { LEAGUE_TYPE_SLUGS } from "../../lib/models/leagueTypes/constants";
+import { DBLeagueType } from "../../lib/models/leagueTypes/db";
+import { DBLeagueTypeInsert } from "../../lib/models/leagueTypes/db";
 
 export async function insertLeagueType(
   dbOrTx: DBOrTx,

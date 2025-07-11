@@ -1,11 +1,12 @@
-import { z } from "zod";
+import z from "zod";
+import {
+  MIN_USERNAME_LENGTH,
+  MAX_USERNAME_LENGTH,
+  MIN_NAME_LENGTH,
+  MAX_NAME_LENGTH,
+} from "./constants";
 
 export const UserIdSchema = z.string().trim();
-
-export const MIN_USERNAME_LENGTH = 3;
-export const MAX_USERNAME_LENGTH = 50;
-export const MIN_NAME_LENGTH = 1;
-export const MAX_NAME_LENGTH = 50;
 
 export const UpdateProfileSchema = z.object({
   username: z
@@ -40,5 +41,3 @@ export const SearchProfilesSchema = z.object({
   firstName: z.string().trim().min(1).optional(),
   lastName: z.string().trim().min(1).optional(),
 });
-
-export type SearchProfiles = z.infer<typeof SearchProfilesSchema>;

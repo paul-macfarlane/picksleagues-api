@@ -1,31 +1,26 @@
 import { Router, Request, Response } from "express";
 import { db } from "../../../db";
 import { getDataSourceByName } from "../../../db/helpers/dataSources";
-import {
-  getESPNLeagueSeasons,
-  getESPNWeeks,
-} from "../../../lib/external/espn/seasons";
-import {
-  ESPN_DESIRED_LEAGUES,
-  ESPN_SEASON_TYPES,
-} from "../../../lib/external/espn/shared";
-import {
-  getExternalSeasonBySourceAndId,
-  insertExternalSeason,
-  insertSeason,
-  updateExternalSeason,
-  updateSeason,
-} from "../../../db/helpers/seasons";
-import { getExternalSportLeagueBySourceAndMetadata } from "../../../db/helpers/sportLeagues";
+import { insertSeason, updateSeason } from "../../../db/helpers/seasons";
+import { insertPhase } from "../../../db/helpers/phases";
+import { updatePhase } from "../../../db/helpers/phases";
+import { getPhaseTemplateBySportLeagueAndLabel } from "../../../db/helpers/phaseTemplates";
+import { DATA_SOURCE_NAMES } from "../../../lib/models/dataSources/constants";
+import { getESPNLeagueSeasons } from "../../../lib/external/espn/api/seasons";
+import { getESPNWeeks } from "../../../lib/external/espn/api/weeks";
+import { ESPN_DESIRED_LEAGUES } from "../../../lib/external/espn/models/leagues/constants";
+import { ESPN_SEASON_TYPES } from "../../../lib/external/espn/models/seasons/constants";
 import {
   getExternalPhaseBySourceAndId,
   insertExternalPhase,
-  insertPhase,
   updateExternalPhase,
-} from "../../../db/helpers/phases";
-import { updatePhase } from "../../../db/helpers/phases";
-import { getPhaseTemplateBySportLeagueAndLabel } from "../../../db/helpers/phaseTemplates";
-import { DATA_SOURCE_NAMES } from "../../../lib/models/dataSources";
+} from "../../../db/helpers/externalPhases";
+import {
+  getExternalSeasonBySourceAndId,
+  updateExternalSeason,
+  insertExternalSeason,
+} from "../../../db/helpers/externalSeasons";
+import { getExternalSportLeagueBySourceAndMetadata } from "../../../db/helpers/externalSportLeagues";
 
 const router = Router();
 

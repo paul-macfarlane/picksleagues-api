@@ -1,14 +1,14 @@
 import { Router, Request, Response } from "express";
 import { auth } from "../../../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
-import { DBUser } from "../../../db/schema";
+import { DBUser } from "../../../lib/models/users/db";
 import {
-  createLeagueSchema,
-  pickEmLeagueSettingsSchema,
-} from "../../../lib/models/leagues";
+  CreateLeagueSchema,
+  PickEmLeagueSettingsSchema,
+} from "../../../lib/models/leagues/validations";
 import { db } from "../../../db";
 import { getLeagueTypeBySlug } from "../../../db/helpers/leagueTypes";
-import { LEAGUE_TYPE_NAMES } from "../../../lib/models/leagueTypes";
+import { LEAGUE_TYPE_NAMES } from "../../../lib/models/leagueTypes/constants";
 import {
   getLeagueById,
   insertLeague,
@@ -16,7 +16,7 @@ import {
 } from "../../../db/helpers/leauges";
 import { getLeagueMembersWithProfileByLeagueId } from "../../../db/helpers/leagueMembers";
 import { getPhaseTemplateById } from "../../../db/helpers/phaseTemplates";
-import { LEAGUE_MEMBER_ROLES } from "../../../lib/models/leagueMembers";
+import { LEAGUE_MEMBER_ROLES } from "../../../lib/models/leagueMembers/constants";
 import { z } from "zod";
 import { getLeagueMemberByLeagueAndUserId } from "../../../db/helpers/leagueMembers";
 import { getPendingLeagueInvitesByLeagueId } from "../../../db/helpers/leagueInvites";
@@ -33,7 +33,7 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const bodyParsed = createLeagueSchema.safeParse(req.body);
+    const bodyParsed = CreateLeagueSchema.safeParse(req.body);
     if (!bodyParsed.success) {
       res.status(400).json({
         error: "Invalid request body",
@@ -55,7 +55,7 @@ router.post("/", async (req: Request, res: Response) => {
       let settings: unknown;
       switch (leagueType.name) {
         case LEAGUE_TYPE_NAMES.PICK_EM: {
-          const settingsParsed = pickEmLeagueSettingsSchema.safeParse(
+          const settingsParsed = PickEmLeagueSettingsSchema.safeParse(
             req.body.settings,
           );
           if (!settingsParsed.success) {

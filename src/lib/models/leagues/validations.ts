@@ -1,15 +1,17 @@
 import { z } from "zod";
-import { LEAGUE_TYPE_SLUGS } from "./leagueTypes";
+import {
+  MAX_PICKS_PER_PHASE,
+  MIN_PICKS_PER_PHASE,
+  PICK_EM_PICK_TYPES,
+  MIN_LEAGUE_NAME_LENGTH,
+  MAX_LEAGUE_NAME_LENGTH,
+  MIN_LEAGUE_SIZE,
+  MAX_LEAGUE_SIZE,
+  LEAGUE_VISIBILITIES,
+} from "./constants";
+import { LEAGUE_TYPE_SLUGS } from "../leagueTypes/constants";
 
-export const MIN_PICKS_PER_PHASE = 1;
-export const MAX_PICKS_PER_PHASE = 16;
-
-export enum PICK_EM_PICK_TYPES {
-  SPREAD = "spread",
-  STRAIGHT_UP = "straight-up",
-}
-
-export const pickEmLeagueSettingsSchema = z.object({
+export const PickEmLeagueSettingsSchema = z.object({
   picksPerPhase: z
     .number()
     .int()
@@ -22,20 +24,7 @@ export const pickEmLeagueSettingsSchema = z.object({
   pickType: z.enum([PICK_EM_PICK_TYPES.STRAIGHT_UP, PICK_EM_PICK_TYPES.SPREAD]),
 });
 
-export type PickEmLeagueSettings = z.infer<typeof pickEmLeagueSettingsSchema>;
-
-const MIN_LEAGUE_NAME_LENGTH = 3;
-const MAX_LEAGUE_NAME_LENGTH = 50;
-
-const MIN_LEAGUE_SIZE = 2;
-const MAX_LEAGUE_SIZE = 20;
-
-export enum LEAGUE_VISIBILITIES {
-  // PUBLIC = "public", will add public leagues later
-  PRIVATE = "private",
-}
-
-export const createLeagueSchema = z.object({
+export const CreateLeagueSchema = z.object({
   name: z
     .string()
     .min(MIN_LEAGUE_NAME_LENGTH, {
@@ -62,11 +51,3 @@ export const createLeagueSchema = z.object({
       message: `Size must be at most ${MAX_LEAGUE_SIZE}`,
     }),
 });
-
-export type CreateLeague = z.infer<typeof createLeagueSchema>;
-
-export const createPickEmLeagueSchema = createLeagueSchema.extend({
-  settings: pickEmLeagueSettingsSchema,
-});
-
-export type CreatePickEmLeague = z.infer<typeof createPickEmLeagueSchema>;

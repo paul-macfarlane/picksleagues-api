@@ -1,19 +1,16 @@
 import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { DBOrTx } from "..";
-import {
-  DBLeagueInvite,
-  DBLeagueInviteUpdate,
-  type DBLeagueInviteInsert,
-  leagueInvitesTable,
-  DBLeague,
-  leaguesTable,
-  DBLeagueType,
-  leagueTypesTable,
-} from "../schema";
+import { leagueInvitesTable, leaguesTable, leagueTypesTable } from "../schema";
 import {
   LEAGUE_INVITE_STATUSES,
   LEAGUE_INVITE_TYPES,
-} from "../../lib/models/leagueInvites";
+} from "../../lib/models/leagueInvites/constants";
+import {
+  DBLeagueInvite,
+  DBLeagueInviteInsert,
+  DBLeagueInviteUpdate,
+  LeagueInviteWithLeagueAndType,
+} from "../../lib/models/leagueInvites/db";
 
 export async function insertLeagueInvite(
   dbOrTx: DBOrTx,
@@ -54,9 +51,7 @@ export async function getInvitesWithLeagueAndTypeByInviteeIdAndOptionalStatus(
   dbOrTx: DBOrTx,
   inviteeId: string,
   status: LEAGUE_INVITE_STATUSES | undefined,
-): Promise<
-  (DBLeagueInvite & { league: DBLeague; leagueType: DBLeagueType })[]
-> {
+): Promise<LeagueInviteWithLeagueAndType[]> {
   const invites = await dbOrTx
     .select({
       league: leaguesTable,
@@ -148,9 +143,7 @@ export async function getLeagueInviteByToken(
 export async function getLeagueInviteWithLeagueAndTypeByToken(
   dbOrTx: DBOrTx,
   token: string,
-): Promise<
-  (DBLeagueInvite & { league: DBLeague; leagueType: DBLeagueType }) | undefined
-> {
+): Promise<LeagueInviteWithLeagueAndType | undefined> {
   const invites = await dbOrTx
     .select({
       league: leaguesTable,

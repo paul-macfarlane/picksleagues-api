@@ -1,10 +1,10 @@
 import { and, eq } from "drizzle-orm";
 import { DBOrTx } from "..";
+import { phaseTemplatesTable } from "../schema";
 import {
   DBPhaseTemplate,
   DBPhaseTemplateInsert,
-  phaseTemplatesTable,
-} from "../schema";
+} from "../../lib/models/phaseTemplates/db";
 
 export async function insertPhaseTemplate(
   dbOrTx: DBOrTx,

@@ -8,16 +8,18 @@ import {
   jsonb,
   integer,
 } from "drizzle-orm/pg-core";
-import { LEAGUE_VISIBILITIES } from "../lib/models/leagues";
+import { LEAGUE_VISIBILITIES } from "../lib/models/leagues/constants";
 import {
   LEAGUE_TYPE_NAMES,
   LEAGUE_TYPE_SLUGS,
-} from "../lib/models/leagueTypes";
-import { PHASE_TYPES } from "../lib/models/phases";
-import { DATA_SOURCE_NAMES } from "../lib/models/dataSources";
-import { LEAGUE_INVITE_TYPES } from "../lib/models/leagueInvites";
-import { LEAGUE_INVITE_STATUSES } from "../lib/models/leagueInvites";
-import { LEAGUE_MEMBER_ROLES } from "../lib/models/leagueMembers";
+} from "../lib/models/leagueTypes/constants";
+import { PHASE_TYPES } from "../lib/models/phases/constants";
+import { DATA_SOURCE_NAMES } from "../lib/models/dataSources/constants";
+import {
+  LEAGUE_INVITE_TYPES,
+  LEAGUE_INVITE_STATUSES,
+} from "../lib/models/leagueInvites/constants";
+import { LEAGUE_MEMBER_ROLES } from "../lib/models/leagueMembers/constants";
 
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -31,10 +33,6 @@ export const usersTable = pgTable("users", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
-
-export type DBUser = typeof usersTable.$inferSelect;
-export type DBUserInsert = typeof usersTable.$inferInsert;
-export type DBUserUpdate = Partial<DBUserInsert>;
 
 export const sessionsTable = pgTable("sessions", {
   id: text("id").primaryKey(),
@@ -51,10 +49,6 @@ export const sessionsTable = pgTable("sessions", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
-
-export type DBSession = typeof sessionsTable.$inferSelect;
-export type DBSessionInsert = typeof sessionsTable.$inferInsert;
-export type DBSessionUpdate = Partial<DBSessionInsert>;
 
 export const accountsTable = pgTable("accounts", {
   id: text("id").primaryKey(),
@@ -77,10 +71,6 @@ export const accountsTable = pgTable("accounts", {
     .$onUpdate(() => new Date()),
 });
 
-export type DBAccount = typeof accountsTable.$inferSelect;
-export type DBAccountInsert = typeof accountsTable.$inferInsert;
-export type DBAccountUpdate = Partial<DBAccountInsert>;
-
 export const verificationTable = pgTable("verification", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
@@ -92,10 +82,6 @@ export const verificationTable = pgTable("verification", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
-
-export type DBVerification = typeof verificationTable.$inferSelect;
-export type DBVerificationInsert = typeof verificationTable.$inferInsert;
-export type DBVerificationUpdate = Partial<DBVerificationInsert>;
 
 export const profilesTable = pgTable("profiles", {
   userId: text("user_id")
@@ -114,10 +100,6 @@ export const profilesTable = pgTable("profiles", {
     .$onUpdate(() => new Date()),
 });
 
-export type DBProfile = typeof profilesTable.$inferSelect;
-export type DBProfileInsert = typeof profilesTable.$inferInsert;
-export type DBProfileUpdate = Partial<DBProfileInsert>;
-
 //------- Sports Data -------
 
 export const dataSourcesTable = pgTable("data_sources", {
@@ -134,10 +116,6 @@ export const dataSourcesTable = pgTable("data_sources", {
     .$onUpdate(() => new Date()),
 });
 
-export type DBDataSource = typeof dataSourcesTable.$inferSelect;
-export type DBDataSourceInsert = typeof dataSourcesTable.$inferInsert;
-export type DBDataSourceUpdate = Partial<DBDataSourceInsert>;
-
 export const sportsLeaguesTable = pgTable("sports_leagues", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
@@ -147,10 +125,6 @@ export const sportsLeaguesTable = pgTable("sports_leagues", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
-
-export type DBSportLeague = typeof sportsLeaguesTable.$inferSelect;
-export type DBSportLeagueInsert = typeof sportsLeaguesTable.$inferInsert;
-export type DBSportLeagueUpdate = Partial<DBSportLeagueInsert>;
 
 export const externalSportLeaguesTable = pgTable(
   "external_sport_leagues",
@@ -176,12 +150,6 @@ export const externalSportLeaguesTable = pgTable(
   (table) => [primaryKey({ columns: [table.externalId, table.dataSourceId] })],
 );
 
-export type DBExternalSportLeague =
-  typeof externalSportLeaguesTable.$inferSelect;
-export type DBExternalSportLeagueInsert =
-  typeof externalSportLeaguesTable.$inferInsert;
-export type DBExternalSportLeagueUpdate = Partial<DBExternalSportLeagueInsert>;
-
 export const seasonsTable = pgTable("seasons", {
   id: uuid("id").primaryKey().defaultRandom(),
   sportLeagueId: uuid("sport_league_id")
@@ -194,10 +162,6 @@ export const seasonsTable = pgTable("seasons", {
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
 });
-
-export type DBSeason = typeof seasonsTable.$inferSelect;
-export type DBSeasonInsert = typeof seasonsTable.$inferInsert;
-export type DBSeasonUpdate = Partial<DBSeasonInsert>;
 
 export const externalSeasonsTable = pgTable(
   "external_seasons",
@@ -223,10 +187,6 @@ export const externalSeasonsTable = pgTable(
   (table) => [primaryKey({ columns: [table.externalId, table.dataSourceId] })],
 );
 
-export type DBExternalSeason = typeof externalSeasonsTable.$inferSelect;
-export type DBExternalSeasonInsert = typeof externalSeasonsTable.$inferInsert;
-export type DBExternalSeasonUpdate = Partial<DBExternalSeasonInsert>;
-
 export const phaseTemplatesTable = pgTable("phase_templates", {
   id: uuid("id").primaryKey().defaultRandom(),
   sportLeagueId: uuid("sport_league_id")
@@ -245,10 +205,6 @@ export const phaseTemplatesTable = pgTable("phase_templates", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
-
-export type DBPhaseTemplate = typeof phaseTemplatesTable.$inferSelect;
-export type DBPhaseTemplateInsert = typeof phaseTemplatesTable.$inferInsert;
-export type DBPhaseTemplateUpdate = Partial<DBPhaseTemplateInsert>;
 
 export const phasesTable = pgTable("phases", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -271,10 +227,6 @@ export const phasesTable = pgTable("phases", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
-
-export type DBPhase = typeof phasesTable.$inferSelect;
-export type DBPhaseInsert = typeof phasesTable.$inferInsert;
-export type DBPhaseUpdate = Partial<DBPhaseInsert>;
 
 export const externalPhasesTable = pgTable(
   "external_phases",
@@ -299,10 +251,6 @@ export const externalPhasesTable = pgTable(
   },
   (table) => [primaryKey({ columns: [table.externalId, table.dataSourceId] })],
 );
-
-export type DBExternalPhase = typeof externalPhasesTable.$inferSelect;
-export type DBExternalPhaseInsert = typeof externalPhasesTable.$inferInsert;
-export type DBExternalPhaseUpdate = Partial<DBExternalPhaseInsert>;
 
 // leagues
 
@@ -339,10 +287,6 @@ export const leaguesTable = pgTable("leagues", {
     .$onUpdate(() => new Date()),
 });
 
-export type DBLeague = typeof leaguesTable.$inferSelect;
-export type DBLeagueInsert = typeof leaguesTable.$inferInsert;
-export type DBLeagueUpdate = Partial<DBLeagueInsert>;
-
 export const leagueMembersTable = pgTable(
   "league_members",
   {
@@ -368,10 +312,6 @@ export const leagueMembersTable = pgTable(
   (table) => [primaryKey({ columns: [table.leagueId, table.userId] })],
 );
 
-export type DBLeagueMember = typeof leagueMembersTable.$inferSelect;
-export type DBLeagueMemberInsert = typeof leagueMembersTable.$inferInsert;
-export type DBLeagueMemberUpdate = Partial<DBLeagueMemberInsert>;
-
 export const leagueTypesTable = pgTable("league_types", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug", {
@@ -396,10 +336,6 @@ export const leagueTypesTable = pgTable("league_types", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
-
-export type DBLeagueType = typeof leagueTypesTable.$inferSelect;
-export type DBLeagueTypeInsert = typeof leagueTypesTable.$inferInsert;
-export type DBLeagueTypeUpdate = Partial<DBLeagueTypeInsert>;
 
 export const leagueInvitesTable = pgTable("league_invites", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -443,7 +379,3 @@ export const leagueInvitesTable = pgTable("league_invites", {
   // Link invites
   token: text("token").unique(),
 });
-
-export type DBLeagueInvite = typeof leagueInvitesTable.$inferSelect;
-export type DBLeagueInviteInsert = typeof leagueInvitesTable.$inferInsert;
-export type DBLeagueInviteUpdate = Partial<DBLeagueInviteInsert>;
