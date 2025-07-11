@@ -33,19 +33,19 @@ src/features/leagues/
 ├── leagues.router.ts      # (Router) Handles HTTP req/res, calls service.
 ├── leagues.service.ts     # (Service) Core business logic, orchestrates repository.
 ├── leagues.repository.ts  # (Repository) All database interactions for this feature.
-├── leagues.types.ts       # All TypeScript types and interfaces for this feature.
-├── leagues.validators.ts  # Zod schemas for request validation.
+├── leagues.types.ts       # (Types) Zod schemas, TS types, and constants.
 └── adapters/              # (Optional) For connecting to external services.
 ```
 
 - **Router:** The thinnest possible layer. Its only job is to parse the request, call a single service function, and format the response or error. It is the only layer that should depend on `express`.
 - **Service:** The core of the feature. Contains all business logic, validation, and orchestration. It is framework-agnostic (no `req`/`res`).
 - **Repository:** The database access layer. All Drizzle ORM queries related to the feature live here.
+- **Types:** Defines the data contract for the feature. Contains Zod schemas for validation, infers TypeScript types from them, and holds any feature-specific constants.
 
 ### 1.4. Cross-Feature Communication
 
 - **Rule:** A feature may only communicate with another feature by importing from its **service** file. Never directly access another feature's repository. This treats each feature as a "black box" with a well-defined public API.
-- **Data Models:** A feature that "owns" a data model (e.g., `profiles` owns the `Profile` type) is the source of truth for that type. Other features should import types directly from the owning feature's `.types.ts` file.
+- **Data Models:** A feature that "owns" a data model (e.g., `profiles` owns the `Profile` type) is the source of truth for that type. Other features should import types and schemas directly from the owning feature's `.types.ts` file.
 
 ### 1.5. External Services (The Adapter Pattern)
 
@@ -141,38 +141,4 @@ Use standard HTTP status codes to indicate the outcome of a request.
 - `401 Unauthorized`: The request requires authentication, but none was provided.
 - `403 Forbidden`: The authenticated user does not have permission to perform the action.
 - `404 Not Found`: The requested resource does not exist.
-- `409 Conflict`: The request could not be completed because of a conflict with the current state of the resource (e.g., creating a user with an email that already exists).
-- `500 Internal Server Error`: An unexpected error occurred on the server.
-
-### 2.6. Common Features
-
-These features should be implemented consistently _when required_ by a client application.
-
-#### Pagination
-
-For endpoints that return a list of items, use `limit` and `offset` query parameters.
-
-- `limit`: The maximum number of items to return. Defaults to `25`. Max value `100`.
-- `offset`: The number of items to skip from the beginning of the list. Defaults to `0`.
-
-_Example_: `GET /leagues/abc-123/members?limit=50&offset=50`
-
-#### Filtering
-
-Use simple key-value query parameters for basic filtering.
-
-_Example_: `GET /leagues?status=active`
-
-#### Including Related Resources
-
-To avoid "chatty" API calls, allow clients to request related data to be embedded in the response using an `include` parameter.
-
-- The value is a comma-separated list of resources to embed.
-- **Dot notation** can be used to include nested relationships.
-
-_Example 1: Simple Include_
-`GET /leagues/:leagueId?include=commissioner,members`
-
-_Example 2: Nested Include_
-`GET /leagues/:leagueId?include=members.profile`
-This would return the league, with its list of members embedded, and each of those member objects would have its `profile` object embedded.
+- `
