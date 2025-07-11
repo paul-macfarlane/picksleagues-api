@@ -21,49 +21,51 @@ apiRouter.get("/post-oauth-callback", async (req: Request, res: Response) => {
     return;
   }
 
-  const profile = await db
-    .select()
-    .from(profilesTable)
-    .where(eq(profilesTable.userId, session.user.id))
-    .limit(1);
-  if (!profile[0]) {
-    async function emailExists(email: string) {
-      const result = await db
-        .select()
-        .from(usersTable)
-        .where(eq(usersTable.email, email));
-      return result.length > 0;
-    }
+  await db.transaction(async (tx) => {
+    const profile = await tx
+      .select()
+      .from(profilesTable)
+      .where(eq(profilesTable.userId, session.user.id))
+      .limit(1);
+    if (!profile[0]) {
+      async function emailExists(email: string) {
+        const result = await tx
+          .select()
+          .from(usersTable)
+          .where(eq(usersTable.email, email));
+        return result.length > 0;
+      }
 
-    let username = generateFromEmail(session.user.email).slice(
-      0,
-      MAX_USERNAME_LENGTH,
-    );
-    let i = 1;
-    while (await emailExists(username)) {
-      username = generateFromEmail(session.user.email, i).slice(
+      let username = generateFromEmail(session.user.email).slice(
         0,
         MAX_USERNAME_LENGTH,
       );
-      i++;
+      let i = 1;
+      while (await emailExists(username)) {
+        username = generateFromEmail(session.user.email, i).slice(
+          0,
+          MAX_USERNAME_LENGTH,
+        );
+        i++;
+      }
+
+      const guessFirstName = session.user.name?.split(" ")[0] ?? "First";
+      const guessLastName = session.user.name?.split(" ")[1] ?? "Last";
+
+      await tx.insert(profilesTable).values({
+        userId: session.user.id,
+        username,
+        firstName: guessFirstName,
+        lastName: guessLastName,
+        avatarUrl: session.user.image,
+      });
+
+      res.redirect(`${process.env.WEB_FRONTEND_URL!}/profile?setup=true`);
+      return;
     }
 
-    const guessFirstName = session.user.name?.split(" ")[0] ?? "First";
-    const guessLastName = session.user.name?.split(" ")[1] ?? "Last";
-
-    await db.insert(profilesTable).values({
-      userId: session.user.id,
-      username,
-      firstName: guessFirstName,
-      lastName: guessLastName,
-      avatarUrl: session.user.image,
-    });
-
-    res.redirect(`${process.env.WEB_FRONTEND_URL!}/profile?setup=true`);
-    return;
-  }
-
-  res.redirect(`${process.env.WEB_FRONTEND_URL!}`);
+    res.redirect(`${process.env.WEB_FRONTEND_URL!}`);
+  });
 });
 
 apiRouter.use("/crons", cronRouter);
