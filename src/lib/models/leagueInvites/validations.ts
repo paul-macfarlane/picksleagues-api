@@ -1,22 +1,15 @@
-import z from "zod";
-import { LEAGUE_MEMBER_ROLES } from "./leagueMembers";
+import { z } from "zod";
+import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/constants";
+import {
+  LEAGUE_INVITE_TYPES,
+  LEAGUE_INVITE_STATUSES,
+  MIN_LEAGUE_INVITE_EXPIRATION_DAYS,
+  MAX_LEAGUE_INVITE_EXPIRATION_DAYS,
+} from "./constants";
 
-export enum LEAGUE_INVITE_TYPES {
-  DIRECT = "direct",
-  LINK = "link",
-}
+export const LeagueInviteIdSchema = z.string().trim().uuid();
 
-export enum LEAGUE_INVITE_STATUSES {
-  PENDING = "pending",
-  ACCEPTED = "accepted",
-  DECLINED = "declined",
-}
-
-export const MIN_LEAGUE_INVITE_USES = 1;
-export const MAX_LEAGUE_INVITE_USES = 10;
-
-export const MIN_LEAGUE_INVITE_EXPIRATION_DAYS = 1;
-export const MAX_LEAGUE_INVITE_EXPIRATION_DAYS = 30;
+export const LeagueInviteTokenSchema = z.string().trim().uuid();
 
 export const CreateLeagueInviteSchema = z
   .object({

@@ -2,12 +2,13 @@ import { Request, Response, Router } from "express";
 import v1Router from "./v1";
 import { auth } from "../../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
-import { DBUser, profilesTable, usersTable } from "../../db/schema";
+import { profilesTable, usersTable } from "../../db/schema";
 import { db } from "../../db";
 import { eq } from "drizzle-orm";
 import { generateFromEmail } from "unique-username-generator/dist";
-import { MAX_USERNAME_LENGTH } from "./v1/profiles";
+import { MAX_USERNAME_LENGTH } from "../../lib/models/profiles/constants";
 import cronRouter from "./crons";
+import { DBUser } from "../../lib/models/users/db";
 
 const apiRouter = Router();
 

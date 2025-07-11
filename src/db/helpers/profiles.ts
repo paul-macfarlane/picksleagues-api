@@ -1,13 +1,13 @@
-import { SearchProfiles } from "../../lib/models/profiles";
 import { profilesTable } from "../schema";
 import { like, or } from "drizzle-orm";
 import { db } from "../index";
+import { DBProfile } from "../../lib/models/profiles/db";
 
-export async function searchProfile(search: SearchProfiles) {
-  if (!search.username && !search.firstName && !search.lastName) {
-    return [];
-  }
-
+export async function searchProfiles(search: {
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+}): Promise<DBProfile[]> {
   const whereClause = [
     search.username
       ? like(profilesTable.username, `%${search.username}%`)

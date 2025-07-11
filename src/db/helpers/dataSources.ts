@@ -1,10 +1,15 @@
 import { eq } from "drizzle-orm";
-import { dataSourcesTable, DBDataSource } from "../schema";
 import { DBOrTx } from "..";
+import { DATA_SOURCE_NAMES } from "../../lib/models/dataSources/constants";
+import {
+  DBDataSource,
+  DBDataSourceInsert,
+} from "../../lib/models/dataSources/db";
+import { dataSourcesTable } from "../schema";
 
 export async function getDataSourceByName(
   dbOrTx: DBOrTx,
-  name: string,
+  name: DATA_SOURCE_NAMES,
 ): Promise<DBDataSource | undefined> {
   const dataSource = await dbOrTx
     .select()
@@ -16,13 +21,11 @@ export async function getDataSourceByName(
 
 export async function insertDataSource(
   dbOrTx: DBOrTx,
-  name: string,
+  dataSource: DBDataSourceInsert,
 ): Promise<DBDataSource> {
   const dataSources = await dbOrTx
     .insert(dataSourcesTable)
-    .values({
-      name,
-    })
+    .values(dataSource)
     .returning();
   return dataSources[0];
 }

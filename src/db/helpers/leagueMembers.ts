@@ -1,12 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { DBOrTx } from "..";
+import { leagueMembersTable, profilesTable } from "../schema";
 import {
-  DBLeagueMemberInsert,
-  DBProfile,
-  leagueMembersTable,
-  profilesTable,
   DBLeagueMember,
-} from "../schema";
+  DBLeagueMemberWithProfile,
+} from "../../lib/models/leagueMembers/db";
+import { DBLeagueMemberInsert } from "../../lib/models/leagueMembers/db";
 
 export async function insertLeagueMember(
   dbOrTx: DBOrTx,
@@ -36,14 +35,10 @@ export async function getLeagueMemberByLeagueAndUserId(
   return leagueMember[0];
 }
 
-export type LeagueMemberWithProfile = DBLeagueMember & {
-  profile: DBProfile;
-};
-
 export async function getLeagueMembersWithProfileByLeagueId(
   dbOrTx: DBOrTx,
   leagueId: string,
-): Promise<LeagueMemberWithProfile[]> {
+): Promise<DBLeagueMemberWithProfile[]> {
   const members = await dbOrTx
     .select({
       leagueMember: leagueMembersTable,
