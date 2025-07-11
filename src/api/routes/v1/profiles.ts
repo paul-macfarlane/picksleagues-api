@@ -91,41 +91,42 @@ router.put("/", async (req: Request, res: Response) => {
     return;
   }
 
-  const queryRows = await db
-    .select()
-    .from(profilesTable)
-    .where(eq(profilesTable.userId, session.user.id))
-    .limit(1);
-  if (!queryRows[0]) {
-    console.error(`Profile not found for user ${session.user.id}`);
-    res.status(404).json({ error: "Profile not found" });
-    return;
-  }
-
-  const existingProfile = queryRows[0];
-
-  if (profileData.username !== existingProfile.username) {
-    const usernameExists = await db
+  await db.transaction(async (tx) => {
+    const queryRows = await tx
       .select()
       .from(profilesTable)
-      .where(eq(profilesTable.username, profileData.username))
+      .where(eq(profilesTable.userId, session.user.id))
       .limit(1);
-    if (usernameExists.length > 0) {
-      console.error(
-        `Username ${profileData.username} already exists for user ${session.user.id}`,
-      );
-      res.status(409).json({ error: "Username already exists" });
+    if (!queryRows[0]) {
+      console.error(`Profile not found for user ${session.user.id}`);
+      res.status(404).json({ error: "Profile not found" });
       return;
     }
-  }
 
-  const updateRows = await db
-    .update(profilesTable)
-    .set(profileData)
-    .where(eq(profilesTable.userId, session.user.id))
-    .returning();
+    const existingProfile = queryRows[0];
+    if (profileData.username !== existingProfile.username) {
+      const usernameExists = await tx
+        .select()
+        .from(profilesTable)
+        .where(eq(profilesTable.username, profileData.username))
+        .limit(1);
+      if (usernameExists.length > 0) {
+        console.error(
+          `Username ${profileData.username} already exists for user ${session.user.id}`,
+        );
+        res.status(409).json({ error: "Username already exists" });
+        return;
+      }
+    }
 
-  res.json(updateRows[0]);
+    const updateRows = await tx
+      .update(profilesTable)
+      .set(profileData)
+      .where(eq(profilesTable.userId, session.user.id))
+      .returning();
+
+    res.json(updateRows[0]);
+  });
 });
 
 export default router;
