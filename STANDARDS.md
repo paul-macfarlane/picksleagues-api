@@ -59,38 +59,120 @@ When a feature needs to communicate with an external API (e.g., ESPN), it must u
 
 ## Part 2: API Design Guide
 
-### 2.1. URL Structure & Naming
+### 2.1. URL Structure
 
-- **Plural Nouns:** Use plural nouns for collections (e.g., `/leagues`).
-- **Nesting:** Nest for clear parent-child relationships (e.g., `/leagues/:id/members`).
-- **Versioning:** All endpoints are prefixed with `/v1`.
-- **Case:** Use `camelCase` for all JSON keys and query parameters.
+- **Use Plural Nouns for Collections:**
 
-### 2.2. HTTP Methods
+  - _Good_: `/leagues`, `/users`, `/leagues/abc-123/members`
+  - _Bad_: `/league`, `/getUser`, `/leagueMembers`
 
-- `GET`: Retrieve resources.
-- `POST`: Create a new resource.
-- `PATCH`: Partially update an existing resource.
-- `PUT`: Completely replace an existing resource.
-- `DELETE`: Delete a resource.
+- **Nesting for Relationships**: Nest resources to represent clear parent-child relationships.
 
-### 2.3. Request & Response Format
+  - `GET /leagues/:leagueId/members` - Get all members for a specific league.
+  - `GET /leagues/:leagueId/members/:memberId` - Get a specific member from a specific league.
 
-- **JSON Everywhere:** API accepts and returns JSON. `Content-Type: application/json` is required for requests with a body.
-- **Error Format:** All `4xx` and `5xx` errors **must** return a consistent JSON object:
+- **Versioning**: All API endpoints are prefixed with a version number.
+  - _Example_: `/api/v1/leagues`
+
+### 2.2. Naming Conventions
+
+- **JSON Keys**: Use `camelCase` for all keys in JSON request and response bodies.
   ```json
   {
+    "leagueId": "uuid-goes-here",
+    "createdAt": "2023-10-27T10:00:00Z"
+  }
+  ```
+- **Query Parameters**: Use `camelCase` for query parameters.
+  - _Example_: `/leagues?leagueType=pick-em`
+
+### 2.3. HTTP Methods
+
+Use the standard HTTP methods to describe the action being performed.
+
+- `GET`: Retrieve one or more resources.
+- `POST`: Create a new resource.
+- `PATCH`: Partially update an existing resource. The request body should contain only the fields to be changed.
+- `PUT`: Completely replace an existing resource. The request body should contain the complete resource representation.
+- `DELETE`: Delete a resource.
+
+### 2.4. Request & Response Format
+
+- **JSON Everywhere**: The API accepts and returns JSON exclusively. Clients must send `Content-Type: application/json` for `POST`, `PUT`, and `PATCH` requests with a body.
+
+- **Successful `GET` Response (Single Resource)**
+
+  ```json
+  {
+    "id": "league-uuid-1",
+    "name": "The Grand Tournament",
+    "status": "active"
+  }
+  ```
+
+- **Successful `GET` Response (Collection)**
+
+  ```json
+  [
+    { "id": "league-uuid-1", "name": "The Grand Tournament" },
+    { "id": "league-uuid-2", "name": "The Winter Classic" }
+  ]
+  ```
+
+- **Error Response**: All `4xx` and `5xx` errors **must** return a consistent JSON error object. This allows clients to have a single way of handling all API errors.
+  ```json
+  // Status: 403 Forbidden
+  {
     "error": {
-      "message": "A human-readable error description.",
-      "code": "a_stable_machine_readable_code"
+      "message": "You do not have permission to view these members.",
+      "code": "permission_denied" // A stable, machine-readable error code
     }
   }
   ```
 
-### 2.4. Common Features
+### 2.5. HTTP Status Codes
 
-These features should be implemented consistently _when required_ by a client.
+Use standard HTTP status codes to indicate the outcome of a request.
 
-- **Pagination:** Use `?limit=` (default `25`, max `100`) and `?offset=` (default `0`).
-- **Resource Inclusion:** Use `?include=` with comma-separated values. Use dot notation for nested includes (e.g., `?include=members.profile`).
-- **Filtering:** Use simple, `camelCase` key-value query parameters (e.g., `?status=active`).
+- `200 OK`: The request was successful (used for `GET`, `PUT`, `PATCH`).
+- `201 Created`: The resource was successfully created (used for `POST`).
+- `204 No Content`: The request was successful, but there is no data to return (used for `DELETE`).
+- `400 Bad Request`: The request was malformed (e.g., invalid JSON, missing parameters).
+- `401 Unauthorized`: The request requires authentication, but none was provided.
+- `403 Forbidden`: The authenticated user does not have permission to perform the action.
+- `404 Not Found`: The requested resource does not exist.
+- `409 Conflict`: The request could not be completed because of a conflict with the current state of the resource (e.g., creating a user with an email that already exists).
+- `500 Internal Server Error`: An unexpected error occurred on the server.
+
+### 2.6. Common Features
+
+These features should be implemented consistently _when required_ by a client application.
+
+#### Pagination
+
+For endpoints that return a list of items, use `limit` and `offset` query parameters.
+
+- `limit`: The maximum number of items to return. Defaults to `25`. Max value `100`.
+- `offset`: The number of items to skip from the beginning of the list. Defaults to `0`.
+
+_Example_: `GET /leagues/abc-123/members?limit=50&offset=50`
+
+#### Filtering
+
+Use simple key-value query parameters for basic filtering.
+
+_Example_: `GET /leagues?status=active`
+
+#### Including Related Resources
+
+To avoid "chatty" API calls, allow clients to request related data to be embedded in the response using an `include` parameter.
+
+- The value is a comma-separated list of resources to embed.
+- **Dot notation** can be used to include nested relationships.
+
+_Example 1: Simple Include_
+`GET /leagues/:leagueId?include=commissioner,members`
+
+_Example 2: Nested Include_
+`GET /leagues/:leagueId?include=members.profile`
+This would return the league, with its list of members embedded, and each of those member objects would have its `profile` object embedded.
