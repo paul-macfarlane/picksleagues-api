@@ -27,10 +27,7 @@ This document outlines the tactical steps to refactor the codebase to align with
 
     - **Router:** Move `src/api/routes/v1/profiles.ts` to `src/features/profiles/profiles.router.ts`.
     - **Repository:** Move `src/db/helpers/profiles.ts` to `src/features/profiles/profiles.repository.ts`.
-    - **Models:** Consolidate the contents of `src/lib/models/profiles/` into the new feature directory.
-      - `constants.ts` -> `profiles.types.ts` (or constants can live here too)
-      - `db.ts` -> `profiles.types.ts`
-      - `validations.ts` -> `profiles.validators.ts`
+    - **Types:** Create a new `src/features/profiles/profiles.types.ts` and consolidate the contents of `src/lib/models/profiles/` into it. This includes Zod schemas from `validations.ts` and any related types or constants.
 
 3.  **Create Service Layer:**
 
