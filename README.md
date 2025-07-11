@@ -1,72 +1,84 @@
-# Picks Leagues API
+# PicksLeagues API
 
-## Description
+This repository contains the backend API for the PicksLeagues application, built with Node.js, Express, and TypeScript.
 
-This is the API for the Picks Leagues app.
+## Architecture & Engineering Standards
+
+This project follows a feature-sliced architecture. All new code and architectural decisions should adhere to the official guide defined in [**STANDARDS.md**](./STANDARDS.md). This document is the single source of truth for our engineering practices.
 
 ## Tech Stack
 
-- Node.js
-- Express
-- PostgreSQL
-- TypeScript
-- Drizzle ORM
-- Better Auth
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Database**: PostgreSQL
+- **ORM**: Drizzle ORM
+- **Authentication**: Better Auth
 
-## API Pattern
+## Local Development Setup
 
-RESTful API, with some exceptions for uis that would be shared accross clients and require the same composition of data.
+These steps will guide you through setting up a local development environment.
 
-## Running Locally
+### 1. Environment Variables
 
-1. Copy .env.example to .env and fill in the values
+Copy the example environment file and fill in the required values. The default values are configured to work with the Docker setup below.
 
-2. Run a local database. This is setup to use docker compose, but you could also use a local postgres instance:
+```bash
+cp .env.example .env
+```
 
-   ```bash
-   docker compose up -d
-   ```
+### 2. Start the Database
 
-3. Install dependencies:
+This project includes a Docker Compose configuration for running a local PostgreSQL database.
 
-   ```bash
-   npm install
-   ```
+```bash
+docker compose up -d
+```
 
-4. Run the migrations:
+### 3. Install Dependencies
 
-   ```bash
-   npm run db:migrate
-   ```
+```bash
+npm install
+```
 
-5. Run the initial seed:
+### 4. Run Database Migrations & Seeding
 
-   ```bash
-   npm run db:seed
-   ```
+This command will apply all necessary database migrations and run the initial seed scripts to populate the database with essential data like league types.
 
-6. Start the development server:
+```bash
+npm run setup:dev
+```
 
-   ```bash
-   npm run dev
-   ```
+### 5. Start the Development Server
 
-7. Run the cron jobs for sport league data:
+This will start the API server with hot-reloading enabled.
 
-   ```bash
-   curl http://localhost:3001/api/crons/sport-leagues --header "x-cron-api-key: <api-key>"
-   ```
+```bash
+npm run dev
+```
 
-8. Re-run the seed job to insert phase templates:
+The API will be available at `http://localhost:3001`.
 
-   ```bash
-   npm run db:seed
-   ```
+### 6. (Optional) Populate with Dynamic Sports Data
 
-9. Run the cron jobs for season data:
+To populate the database with real-world sports data (leagues and seasons), you can run the cron job endpoints manually.
 
-   ```bash
-   curl http://localhost:3001/api/crons/seasons --header "x-cron-api-key: <api-key>"
-   ```
+_Note: You will need the `CRON_API_KEY` from your `.env` file._
 
-10. Now you can use the app with some seeded data!
+```bash
+# First, sync the available sport leagues
+curl http://localhost:3001/api/crons/sport-leagues --header "x-cron-api-key: YOUR_KEY_HERE"
+
+# Then, sync the seasons and weeks for those leagues
+curl http://localhost:3001/api/crons/seasons --header "x-cron-api-key: YOUR_KEY_HERE"
+```
+
+## Available Scripts
+
+- `npm run dev`: Starts the development server with hot-reloading.
+- `npm run setup:dev`: Runs database migrations and initial seeds. A great first step.
+- `npm run db:migrate`: Applies pending database migrations.
+- `npm run db:generate`: Generates a new migration based on schema changes.
+- `npm run db:seed`: Runs the seed scripts to populate the database.
+- `npm run db:studio`: Opens Drizzle Studio to view and manage your database.
+- `npm run build`: Compiles the TypeScript code to JavaScript.
+- `npm start`: Starts the compiled application (for production).
