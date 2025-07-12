@@ -36,6 +36,7 @@ This document outlines the tactical steps to refactor the codebase to align with
 
 4.  **Refactor and Update Imports:**
 
+    - **Validation:** Ensure the router uses `zodSchema.parse()` for payload shape validation, and the service layer handles all business rule validation.
     - **Router:** The `profiles.router.ts` should now be a thin wrapper that imports from `profiles.service.ts`.
     - **Service:** The `profiles.service.ts` will import from `profiles.repository.ts`.
     - **Update Main Router:** In `src/api/routes/v1/index.ts`, update the import path to point to the new `profiles.router.ts` location.
@@ -66,8 +67,13 @@ This document outlines the tactical steps to refactor the codebase to align with
     - Modify the service and repository layers to only include that data when a `?include=` parameter is present in the request.
 
 4.  **Implement Common Features (As Needed):**
+
     - Add pagination (`?limit`/`?offset`) to endpoints that return large collections.
     - Add `?include=` support for other desired resources.
+
+5.  **Enforce Explicit Return Types:**
+    - Go through each function in the refactored feature's `service` and `repository` files.
+    - Add explicit return types to all function signatures (e.g., `Promise<DBProfile | null>`, `Promise<void>`).
 
 ---
 

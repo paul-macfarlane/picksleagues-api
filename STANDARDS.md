@@ -42,12 +42,19 @@ src/features/leagues/
 - **Repository:** The database access layer. All Drizzle ORM queries related to the feature live here.
 - **Types:** Defines the data contract for the feature. Contains Zod schemas for validation, infers TypeScript types from them, and holds any feature-specific constants.
 
-### 1.4. Cross-Feature Communication
+### 1.4. Validation Strategy
+
+We employ a two-tiered validation strategy:
+
+- **Shape Validation (in the Router):** The router is responsible for validating the _shape_ and _data types_ of the incoming request payload. It should use `zodSchema.parse()` to achieve this. This ensures that the service layer never receives a malformed request. If parsing fails, a `ZodError` is thrown and handled by our central error handler.
+- **Business Rule Validation (in the Service):** The service is responsible for validating the data against _business rules_ (e.g., checking if a username is already taken). This logic requires application context and often database access.
+
+### 1.5. Cross-Feature Communication
 
 - **Rule:** A feature may only communicate with another feature by importing from its **service** file. Never directly access another feature's repository. This treats each feature as a "black box" with a well-defined public API.
 - **Data Models:** A feature that "owns" a data model (e.g., `profiles` owns the `Profile` type) is the source of truth for that type. Other features should import types and schemas directly from the owning feature's `.types.ts` file.
 
-### 1.5. External Services (The Adapter Pattern)
+### 1.6. External Services (The Adapter Pattern)
 
 When a feature needs to communicate with an external API (e.g., ESPN), it must use the Adapter Pattern.
 
@@ -142,3 +149,32 @@ Use standard HTTP status codes to indicate the outcome of a request.
 - `403 Forbidden`: The authenticated user does not have permission to perform the action.
 - `404 Not Found`: The requested resource does not exist.
 - `
+
+---
+
+## Part 3: TypeScript Best Practices
+
+### 3.1. Return Type Explicitness
+
+We favor explicit return types to act as enforced documentation and prevent accidental data leaks. This is especially critical at architectural boundaries.
+
+#### ALWAYS Use Explicit Return Types For:
+
+1.  **All Functions at Architectural Boundaries:**
+
+    - **Repository Functions:** Must return a clearly defined database model (e.g., `Promise<DBProfile | null>`).
+    - **Service Functions:** Must return a well-defined entity or DTO.
+    - **Router/Controller Handlers:** While often `Promise<void>`, being explicit prevents bugs.
+
+2.  **All Exported Functions (`export function ...`):**
+    - If a function is exported from a file, it is part of that file's public API. Its contract must be explicit.
+
+#### It's OK to Use Implicit Return Types For:
+
+1.  **Short, Single-Line Arrow Functions:**
+
+    - Especially inside other functions like array methods (`.map`, `.filter`). The local context makes the return type obvious.
+    - _Example_: `const userIds = users.map(user => user.id); // Implicit is fine here`
+
+2.  **Private, Internal Helper Functions:**
+    - If a function is not exported and is only used as a simple helper within the same file, inference is acceptable.

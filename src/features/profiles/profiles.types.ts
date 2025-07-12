@@ -1,11 +1,18 @@
 import z from "zod";
-import {
-  MIN_USERNAME_LENGTH,
-  MAX_USERNAME_LENGTH,
-  MIN_NAME_LENGTH,
-  MAX_NAME_LENGTH,
-} from "./constants";
+import { profilesTable } from "../../db/schema";
 
+// Constants
+export const MIN_USERNAME_LENGTH = 3;
+export const MAX_USERNAME_LENGTH = 50;
+export const MIN_NAME_LENGTH = 1;
+export const MAX_NAME_LENGTH = 50;
+
+// DB Types
+export type DBProfile = typeof profilesTable.$inferSelect;
+export type DBProfileInsert = typeof profilesTable.$inferInsert;
+export type DBProfileUpdate = Partial<DBProfileInsert>;
+
+// Validation Schemas
 export const UserIdSchema = z.string().trim();
 
 export const UpdateProfileSchema = z.object({
