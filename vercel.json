@@ -11,5 +11,8 @@
       "source": "/(.*)",
       "destination": "/src/api/index.ts"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": false
+  }
 }
