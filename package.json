@@ -29,7 +29,9 @@
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
+    "inversify": "^7.5.4",
     "pg": "^8.16.2",
+    "reflect-metadata": "^0.2.2",
     "unique-username-generator": "^1.4.0",
     "zod": "^3.25.67"
   },

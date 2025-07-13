@@ -15,34 +15,32 @@ This document outlines the tactical steps to refactor the codebase to align with
 
 **Goal:** Migrate the entire codebase to the feature-sliced architecture. This should be done one feature at a time to ensure stability.
 
+**Guiding Principle:** Each feature should correspond to a single primary data entity (e.g., `leagues` for the `leaguesTable`, `leagueMembers` for the `leagueMembersTable`). When migrating, ensure you are creating granular, single-purpose features.
+
 **Repeat this process for each feature (`profiles`, `leagues`, `leagueInvites`, `sportsData`, etc.):**
 
 ### Example Migration: The `profiles` Feature
 
-1.  **Create Feature Directory:**
+1.  **Consolidate and Move Files:**
 
     - Create `src/features/profiles/`.
-
-2.  **Move and Rename Files:**
-
     - **Router:** Move `src/api/routes/v1/profiles.ts` to `src/features/profiles/profiles.router.ts`.
+    - **Types:** Create a new `src/features/profiles/profiles.types.ts` and consolidate the contents of `src/lib/models/profiles/` and any other related types into it.
     - **Repository:** Move `src/db/helpers/profiles.ts` to `src/features/profiles/profiles.repository.ts`.
-    - **Types:** Create a new `src/features/profiles/profiles.types.ts` and consolidate the contents of `src/lib/models/profiles/` into it. This includes Zod schemas from `validations.ts` and any related types or constants.
 
-3.  **Create Service Layer:**
+2.  **Refactor to Class-Based Architecture:**
 
-    - Create a new `src/features/profiles/profiles.service.ts`.
-    - Extract all business logic from `profiles.router.ts` and move it into service functions within this new file.
+    - **Repository:** Convert the repository from a collection of functions to a `ProfilesRepository` class.
+    - **Service:** Create a new `ProfilesService` class in `src/features/profiles/profiles.service.ts`. Move all business logic into its methods.
+    - **Dependency Injection:** The `ProfilesService` constructor must accept a `ProfilesRepository` instance.
+    - **Router/Composition Root:** Update `profiles.router.ts` to be the "composition root" for the feature. It should instantiate the `ProfilesRepository`, inject it into a new `ProfilesService` instance, and then have its route handlers call methods on the service instance.
 
-4.  **Refactor and Update Imports:**
+3.  **Update Imports and Finalize:**
 
-    - **Validation:** Ensure the router uses `zodSchema.parse()` for payload shape validation, and the service layer handles all business rule validation.
-    - **Router:** The `profiles.router.ts` should now be a thin wrapper that imports from `profiles.service.ts`.
-    - **Service:** The `profiles.service.ts` will import from `profiles.repository.ts`.
-    - **Update Main Router:** In `src/api/routes/v1/index.ts`, update the import path to point to the new `profiles.router.ts` location.
+    - Update the main API router in `src/api/routes/v1/index.ts` to point to the new `profiles.router.ts`.
     - Fix any other broken imports across the application that referenced the moved files.
 
-5.  **Test:**
+4.  **Manual Testing:**
     - Thoroughly test all profile-related endpoints to ensure no regressions were introduced.
 
 ---
@@ -96,3 +94,24 @@ This document outlines the tactical steps to refactor the codebase to align with
 4.  **Refactor Service:**
     - Update `sportsData.service.ts` to depend on the `ISportsDataProvider` interface, not the concrete ESPN adapter.
     - Inject the `espnAdapter` when instantiating the service.
+
+---
+
+## Phase 5: Implement Testing (Future Goal)
+
+**Goal:** Establish a robust testing suite for the application to ensure long-term stability and catch regressions.
+
+**Note:** This phase should only be started after the architectural refactoring is complete. The goal of the current migration is to _enable_ testability.
+
+1.  **Set Up Testing Environment:**
+
+    - Configure a testing framework (e.g., Jest or Vitest).
+    - Create a global setup file to mock the `db` client, preventing unit tests from making real database connections, as detailed in `STANDARDS.md`.
+    - Set up a process for running integration tests against a test database.
+
+2.  **Write Service Unit Tests:**
+
+    - For each feature, write comprehensive unit tests for the service class, mocking its dependencies (repositories and other services).
+
+3.  **Write Repository Integration Tests:**
+    - For each feature, write integration tests for the repository class, verifying its methods against a real database schema.

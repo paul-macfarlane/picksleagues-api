@@ -6,16 +6,15 @@ import {
   UpdateProfileSchema,
   UserIdSchema,
 } from "./profiles.types";
-import { DBUser } from "../../lib/models/users/db";
-import {
-  getProfileByUserId,
-  onboardUser,
-  searchProfiles,
-  updateUserProfile,
-} from "./profiles.service";
+import { DBUser } from "../users/users.types";
+import { ProfilesService } from "./profiles.service";
 import { handleApiError, UnauthorizedError } from "../../lib/errors";
+import { container } from "../../lib/inversify.config";
+import { TYPES } from "../../lib/inversify.types";
 
 const router = Router();
+
+const profilesService = container.get<ProfilesService>(TYPES.ProfilesService);
 
 router.get("/onboard", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -23,18 +22,16 @@ router.get("/onboard", async (req: Request, res: Response): Promise<void> => {
       headers: fromNodeHeaders(req.headers),
     })) as { user: DBUser };
     if (!session) {
-      // If no session, redirect to login
       res.redirect(302, `${process.env.WEB_FRONTEND_URL!}/login`);
       return;
     }
 
-    const result = await onboardUser(session.user);
+    const result = await profilesService.onboard(session.user);
     if (result.status === "created") {
       res.redirect(302, `${process.env.WEB_FRONTEND_URL!}/profile?setup=true`);
       return;
     }
 
-    // For existing users, redirect to the main page
     res.redirect(302, `${process.env.WEB_FRONTEND_URL!}`);
   } catch (err) {
     handleApiError(err, res);
@@ -51,7 +48,7 @@ router.get("/search", async (req: Request, res: Response): Promise<void> => {
     }
 
     const parseQuery = SearchProfilesSchema.parse(req.query);
-    const profiles = await searchProfiles(parseQuery);
+    const profiles = await profilesService.search(parseQuery);
 
     res.json(profiles);
   } catch (err) {
@@ -69,7 +66,7 @@ router.get("/:userId", async (req: Request, res: Response): Promise<void> => {
     }
 
     const userId = UserIdSchema.parse(req.params.userId);
-    const profile = await getProfileByUserId(userId);
+    const profile = await profilesService.getByUserId(userId);
 
     res.json(profile);
   } catch (err) {
@@ -88,7 +85,7 @@ router.patch("/:userId", async (req: Request, res: Response): Promise<void> => {
 
     const userId = UserIdSchema.parse(req.params.userId);
     const parseBody = UpdateProfileSchema.parse(req.body);
-    const updatedProfile = await updateUserProfile(
+    const updatedProfile = await profilesService.update(
       session.user.id,
       userId,
       parseBody,

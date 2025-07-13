@@ -1,0 +1,17 @@
+import { sportsLeaguesTable } from "../../db/schema";
+
+// Constants
+
+export enum SPORT_LEAGUE_NAMES {
+  NFL = "NFL",
+}
+
+// DB Types
+
+export type DBSportLeague = typeof sportsLeaguesTable.$inferSelect;
+
+export type DBSportLeagueInsert = typeof sportsLeaguesTable.$inferInsert;
+
+export type DBSportLeagueUpdate = Partial<DBSportLeagueInsert>;
+
+// Validation Schemas

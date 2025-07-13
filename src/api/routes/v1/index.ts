@@ -1,14 +1,14 @@
 import { Router } from "express";
-import profilesRouter from "../../../features/profiles/profiles.router";
-import leaguesRouter from "./leagues";
-import leagueTypesRouter from "./league-types";
 import leagueInvitesRouter from "./league-invites";
+import leagueTypesRouter from "../../../features/leagueTypes/leagueTypes.router";
+import leaguesRouter from "../../../features/leagues/leagues.router";
+import profilesRouter from "../../../features/profiles/profiles.router";
 
 const router = Router();
 
-router.use("/profiles", profilesRouter);
-router.use("/leagues", leaguesRouter);
-router.use("/league-types", leagueTypesRouter);
 router.use("/league-invites", leagueInvitesRouter);
+router.use("/league-types", leagueTypesRouter);
+router.use("/leagues", leaguesRouter);
+router.use("/profiles", profilesRouter);
 
 export default router;

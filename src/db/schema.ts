@@ -8,11 +8,11 @@ import {
   jsonb,
   integer,
 } from "drizzle-orm/pg-core";
-import { LEAGUE_VISIBILITIES } from "../lib/models/leagues/constants";
+import { LEAGUE_VISIBILITIES } from "../features/leagues/leagues.types";
 import {
   LEAGUE_TYPE_NAMES,
   LEAGUE_TYPE_SLUGS,
-} from "../lib/models/leagueTypes/constants";
+} from "../features/leagueTypes/leagueTypes.types";
 import { PHASE_TYPES } from "../lib/models/phases/constants";
 import { DATA_SOURCE_NAMES } from "../lib/models/dataSources/constants";
 import {

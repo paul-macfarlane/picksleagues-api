@@ -1,0 +1,81 @@
+import "reflect-metadata";
+import { Container } from "inversify";
+import { TYPES } from "./inversify.types";
+import { ProfilesService } from "../features/profiles/profiles.service";
+import { ProfilesRepository } from "../features/profiles/profiles.repository";
+import { LeagueMembersRepository } from "../features/leagueMembers/leagueMembers.repository";
+import { LeagueMembersService } from "../features/leagueMembers/leagueMembers.service";
+import { LeagueInvitesRepository } from "../features/leagueInvites/leagueInvites.repository";
+import { LeagueInvitesService } from "../features/leagueInvites/leagueInvites.service";
+import { LeagueTypesRepository } from "../features/leagueTypes/leagueTypes.repository";
+import { LeagueTypesService } from "../features/leagueTypes/leagueTypes.service";
+import { PhaseTemplatesRepository } from "../features/phaseTemplates/phaseTemplates.repository";
+import { PhaseTemplatesService } from "../features/phaseTemplates/phaseTemplates.service";
+import { UsersRepository } from "../features/users/users.repository";
+import { UsersService } from "../features/users/users.service";
+
+const container = new Container();
+
+// Profiles Bindings
+container
+  .bind<ProfilesRepository>(TYPES.ProfilesRepository)
+  .to(ProfilesRepository)
+  .inSingletonScope();
+container
+  .bind<ProfilesService>(TYPES.ProfilesService)
+  .to(ProfilesService)
+  .inSingletonScope();
+
+// League Members Bindings
+container
+  .bind<LeagueMembersRepository>(TYPES.LeagueMembersRepository)
+  .to(LeagueMembersRepository)
+  .inSingletonScope();
+container
+  .bind<LeagueMembersService>(TYPES.LeagueMembersService)
+  .to(LeagueMembersService)
+  .inSingletonScope();
+
+// League Invites Bindings
+container
+  .bind<LeagueInvitesRepository>(TYPES.LeagueInvitesRepository)
+  .to(LeagueInvitesRepository)
+  .inSingletonScope();
+container
+  .bind<LeagueInvitesService>(TYPES.LeagueInvitesService)
+  .to(LeagueInvitesService)
+  .inSingletonScope();
+
+// League Types Bindings
+container
+  .bind<LeagueTypesRepository>(TYPES.LeagueTypesRepository)
+  .to(LeagueTypesRepository)
+  .inSingletonScope();
+container
+  .bind<LeagueTypesService>(TYPES.LeagueTypesService)
+  .to(LeagueTypesService)
+  .inSingletonScope();
+
+// Phase Templates Bindings
+container
+  .bind<PhaseTemplatesRepository>(TYPES.PhaseTemplatesRepository)
+  .to(PhaseTemplatesRepository)
+  .inSingletonScope();
+container
+  .bind<PhaseTemplatesService>(TYPES.PhaseTemplatesService)
+  .to(PhaseTemplatesService)
+  .inSingletonScope();
+
+// Users Bindings
+container
+  .bind<UsersRepository>(TYPES.UsersRepository)
+  .to(UsersRepository)
+  .inSingletonScope();
+container
+  .bind<UsersService>(TYPES.UsersService)
+  .to(UsersService)
+  .inSingletonScope();
+
+// Add other feature bindings here as we migrate them
+
+export { container };
