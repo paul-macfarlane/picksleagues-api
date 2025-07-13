@@ -3,35 +3,35 @@ const TYPES = {
   ProfilesRepository: Symbol.for("ProfilesRepository"),
   ProfilesService: Symbol.for("ProfilesService"),
 
-  LeagueTypesService: Symbol.for("LeagueTypesService"),
   LeagueTypesRepository: Symbol.for("LeagueTypesRepository"),
+  LeagueTypesService: Symbol.for("LeagueTypesService"),
 
-  LeaguesService: Symbol.for("LeaguesService"),
   LeaguesRepository: Symbol.for("LeaguesRepository"),
+  LeaguesService: Symbol.for("LeaguesService"),
 
-  LeagueMembersService: Symbol.for("LeagueMembersService"),
   LeagueMembersRepository: Symbol.for("LeagueMembersRepository"),
+  LeagueMembersService: Symbol.for("LeagueMembersService"),
 
-  PhaseTemplatesService: Symbol.for("PhaseTemplatesService"),
+  PhasesRepository: Symbol.for("PhasesRepository"),
+  PhasesService: Symbol.for("PhasesService"),
+
   PhaseTemplatesRepository: Symbol.for("PhaseTemplatesRepository"),
+  PhaseTemplatesService: Symbol.for("PhaseTemplatesService"),
 
   UsersService: Symbol.for("UsersService"),
   UsersRepository: Symbol.for("UsersRepository"),
 
+  SeasonsRepository: Symbol.for("SeasonsRepository"),
+  SeasonsService: Symbol.for("SeasonsService"),
+
   LeagueInvitesService: Symbol.for("LeagueInvitesService"),
   LeagueInvitesRepository: Symbol.for("LeagueInvitesRepository"),
 
-  SportLeaguesService: Symbol.for("SportLeaguesService"),
   SportLeaguesRepository: Symbol.for("SportLeaguesRepository"),
+  SportLeaguesService: Symbol.for("SportLeaguesService"),
 
   DataSourcesService: Symbol.for("DataSourcesService"),
   DataSourcesRepository: Symbol.for("DataSourcesRepository"),
-
-  SeasonsService: Symbol.for("SeasonsService"),
-  SeasonsRepository: Symbol.for("SeasonsRepository"),
-
-  PhasesService: Symbol.for("PhasesService"),
-  PhasesRepository: Symbol.for("PhasesRepository"),
 };
 
 export { TYPES };

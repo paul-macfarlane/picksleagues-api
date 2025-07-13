@@ -9,10 +9,16 @@ import { LeagueInvitesRepository } from "../features/leagueInvites/leagueInvites
 import { LeagueInvitesService } from "../features/leagueInvites/leagueInvites.service";
 import { LeagueTypesRepository } from "../features/leagueTypes/leagueTypes.repository";
 import { LeagueTypesService } from "../features/leagueTypes/leagueTypes.service";
+import { LeaguesRepository } from "../features/leagues/leagues.repository";
+import { LeaguesService } from "../features/leagues/leagues.service";
+import { PhasesRepository } from "../features/phases/phases.repository";
+import { PhasesService } from "../features/phases/phases.service";
 import { PhaseTemplatesRepository } from "../features/phaseTemplates/phaseTemplates.repository";
 import { PhaseTemplatesService } from "../features/phaseTemplates/phaseTemplates.service";
 import { UsersRepository } from "../features/users/users.repository";
 import { UsersService } from "../features/users/users.service";
+import { SeasonsRepository } from "../features/seasons/seasons.repository";
+import { SeasonsService } from "../features/seasons/seasons.service";
 import { SportLeaguesRepository } from "../features/sportLeagues/sportLeagues.repository";
 import { SportLeaguesService } from "../features/sportLeagues/sportLeagues.service";
 import { DataSourcesRepository } from "../features/dataSources/dataSources.repository";
@@ -60,6 +66,26 @@ container
   .to(LeagueTypesService)
   .inSingletonScope();
 
+// Leagues Bindings
+container
+  .bind<LeaguesRepository>(TYPES.LeaguesRepository)
+  .to(LeaguesRepository)
+  .inSingletonScope();
+container
+  .bind<LeaguesService>(TYPES.LeaguesService)
+  .to(LeaguesService)
+  .inSingletonScope();
+
+// Phases Bindings
+container
+  .bind<PhasesRepository>(TYPES.PhasesRepository)
+  .to(PhasesRepository)
+  .inSingletonScope();
+container
+  .bind<PhasesService>(TYPES.PhasesService)
+  .to(PhasesService)
+  .inSingletonScope();
+
 // Phase Templates Bindings
 container
   .bind<PhaseTemplatesRepository>(TYPES.PhaseTemplatesRepository)
@@ -78,6 +104,16 @@ container
 container
   .bind<UsersService>(TYPES.UsersService)
   .to(UsersService)
+  .inSingletonScope();
+
+// Seasons Bindings
+container
+  .bind<SeasonsRepository>(TYPES.SeasonsRepository)
+  .to(SeasonsRepository)
+  .inSingletonScope();
+container
+  .bind<SeasonsService>(TYPES.SeasonsService)
+  .to(SeasonsService)
   .inSingletonScope();
 
 // Sport Leagues Bindings

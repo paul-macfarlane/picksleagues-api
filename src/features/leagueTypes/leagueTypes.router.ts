@@ -55,7 +55,7 @@ router.get(
         req.params.typeIdOrSlug,
       );
       const templates =
-        await phaseTemplatesService.getByLeagueTypeIdOrSlug(typeIdOrSlug);
+        await phaseTemplatesService.listByLeagueTypeIdOrSlug(typeIdOrSlug);
 
       res.status(200).json(templates);
     } catch (err) {
