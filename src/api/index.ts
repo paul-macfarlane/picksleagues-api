@@ -2,8 +2,8 @@ import "reflect-metadata";
 import "dotenv/config";
 
 import express, { Request, Response } from "express";
-import apiRouter from "./routes";
-import staticRouter from "./routes/static";
+import apiRouter from "./router";
+import staticRouter from "./static.router";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "../lib/auth";
 import cors from "cors";

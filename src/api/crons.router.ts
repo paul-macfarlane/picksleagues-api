@@ -1,6 +1,6 @@
 import { Router } from "express";
-import sportLeaguesRouter from "./sport-leagues";
-import seasonsRouter from "./seasons";
+import sportLeaguesRouter from "./crons/sport-leagues.cron";
+import seasonsRouter from "./crons/seasons.cron";
 
 const router = Router();
 

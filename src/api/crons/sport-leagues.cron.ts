@@ -1,8 +1,8 @@
 import { Router, Request, Response } from "express";
-import { container } from "../../../lib/inversify.config";
-import { TYPES } from "../../../lib/inversify.types";
-import { SportLeaguesService } from "../../../features/sportLeagues/sportLeagues.service";
-import { handleApiError } from "../../../lib/errors";
+import { container } from "../../lib/inversify.config";
+import { TYPES } from "../../lib/inversify.types";
+import { SportLeaguesService } from "../../features/sportLeagues/sportLeagues.service";
+import { handleApiError } from "../../lib/errors";
 
 const router = Router();
 const sportLeaguesService = container.get<SportLeaguesService>(

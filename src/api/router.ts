@@ -1,6 +1,6 @@
 import { Router } from "express";
-import v1Router from "./v1";
-import cronRouter from "./crons";
+import v1Router from "./v1.router";
+import cronRouter from "./crons.router";
 
 const apiRouter = Router();
 

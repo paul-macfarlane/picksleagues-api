@@ -208,4 +208,40 @@ Use the standard HTTP methods to describe the action being performed.
 
 - **JSON Everywhere**: The API accepts and returns JSON exclusively. Clients must send `Content-Type: application/json` for `POST`, `PUT`, and `PATCH` requests with a body.
 
-- \*\*Successful `GET`
+---
+
+## Part 4: API Versioning Strategy
+
+This section outlines the strategy for evolving the API by introducing new versions without breaking existing clients.
+
+### 4.1. Philosophy: Default + Override
+
+Our versioning strategy is built on a "Default + Override" model. This provides a clear, maintainable path for evolution while maximizing code reuse.
+
+- **The "Default" Implementation**: For any given feature, the primary router file (e.g., `leagues.router.ts`) represents the **current, stable, and recommended implementation**. It is not explicitly versioned in its filename.
+- **The "Override" Implementation**: When a new API version introduces a **breaking change** to a feature, we create a new, version-specific router file (e.g., `profiles.v2.router.ts`). This file acts as an override for that specific version.
+
+This approach ensures that a developer can always find the "main" logic in the default, un-versioned file, and only needs to look at versioned files to understand specific historical changes.
+
+### 4.2. How to Introduce a Breaking Change (e.g., for V2)
+
+The following steps should be followed to introduce a breaking change to an existing V1 endpoint.
+
+1.  **Do Not Modify the V1 Router**: The original router (e.g., `profiles.router.ts`) must remain **untouched** to ensure continued support for all V1 clients.
+
+2.  **Create a Versioned "Override" Router**: In the same feature directory, create a new router with a version suffix. Implement the new, breaking logic here.
+
+    - _Example_: `src/features/profiles/profiles.v2.router.ts`
+
+3.  **Create a New V2 Composition Root**: Create a new aggregator for the V2 API.
+
+    - _Example_: `src/api/v2.router.ts`
+
+4.  **Compose the V2 API**: Inside the new `v2.router.ts`, compose the API by:
+
+    - Importing the **new, version-specific override router** (`profiles.v2.router.ts`) for any feature that has changed.
+    - Importing and **reusing the stable, un-versioned "default" routers** (`leagues.router.ts`, etc.) for all features that have _not_ changed.
+
+5.  **Activate the New Version**: In the main `src/api/router.ts`, import and mount the new V2 router, making it accessible via the `/api/v2` prefix.
+
+This strategy ensures that `GET /api/v1/profiles` and `GET /api/v2/profiles` can be served simultaneously with different logic, while `GET /api/v1/leagues` and `GET /api/v2/leagues` are both served by the same, reusable code.
