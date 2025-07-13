@@ -20,7 +20,7 @@ This document outlines the tactical steps to harden the codebase and ensure it f
     - Replace all old error formats (e.g., `{ error: "..." }`) with the new standard: `{ error: { message: "...", code: "..." } }`.
     - Create a shared `ApiError` class in `src/lib` to make this easier.
 
-2.  **Correct HTTP Methods:**
+2.  **Correct HTTP Methods:** (Completed)
 
     - For any endpoint that performs a partial update (like the profile update), change its method in the router from `PUT` to `PATCH`.
 
