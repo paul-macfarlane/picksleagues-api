@@ -1,60 +1,24 @@
-# API & Architecture Migration Plan
+# API Migration & Hardening Plan
 
-This document outlines the tactical steps to refactor the codebase to align with the new `STANDARDS.md`. It should be executed in the order presented to minimize disruption.
+This document outlines the tactical steps to harden the codebase and ensure it fully aligns with the new `STANDARDS.md`.
 
-## Phase 1: Foundational Setup
+## Phase 1: Architectural Refactor (Completed)
 
-**Goal:** Prepare the workspace for the new architecture.
+**Goal:** Migrate the entire codebase to a feature-sliced, object-oriented, and dependency-injected architecture.
 
-1.  **Create Directories:**
-    - Create the primary `src/features` directory.
-
----
-
-## Phase 2: Architectural Refactoring (Feature by Feature)
-
-**Goal:** Migrate the entire codebase to the feature-sliced architecture. This should be done one feature at a time to ensure stability.
-
-**Repeat this process for each feature (`profiles`, `leagues`, `leagueInvites`, `sportsData`, etc.):**
-
-### Example Migration: The `profiles` Feature
-
-1.  **Create Feature Directory:**
-
-    - Create `src/features/profiles/`.
-
-2.  **Move and Rename Files:**
-
-    - **Router:** Move `src/api/routes/v1/profiles.ts` to `src/features/profiles/profiles.router.ts`.
-    - **Repository:** Move `src/db/helpers/profiles.ts` to `src/features/profiles/profiles.repository.ts`.
-    - **Types:** Create a new `src/features/profiles/profiles.types.ts` and consolidate the contents of `src/lib/models/profiles/` into it. This includes Zod schemas from `validations.ts` and any related types or constants.
-
-3.  **Create Service Layer:**
-
-    - Create a new `src/features/profiles/profiles.service.ts`.
-    - Extract all business logic from `profiles.router.ts` and move it into service functions within this new file.
-
-4.  **Refactor and Update Imports:**
-
-    - **Router:** The `profiles.router.ts` should now be a thin wrapper that imports from `profiles.service.ts`.
-    - **Service:** The `profiles.service.ts` will import from `profiles.repository.ts`.
-    - **Update Main Router:** In `src/api/routes/v1/index.ts`, update the import path to point to the new `profiles.router.ts` location.
-    - Fix any other broken imports across the application that referenced the moved files.
-
-5.  **Test:**
-    - Thoroughly test all profile-related endpoints to ensure no regressions were introduced.
+**Status: ✅ Complete.** All legacy helpers and procedural files have been successfully migrated into `Service` and `Repository` classes within the `src/features` and `src/integrations` directories. The application is now fully testable.
 
 ---
 
-## Phase 3: API Standards Compliance
+## Phase 2: API Standards Compliance
 
-**Goal:** Once the new architecture is in place, iterate through each feature and align its API with the standards guide.
+**Goal:** Now that the new architecture is in place, iterate through each feature and align its API with the standards defined in `Part 3: API Design Guide` and `Part 1.10: Service Layer Method Naming` of the `STANDARDS.md`.
 
 1.  **Standardize Error Responses:**
 
     - Go through each endpoint in every feature.
     - Replace all old error formats (e.g., `{ error: "..." }`) with the new standard: `{ error: { message: "...", code: "..." } }`.
-    - Consider creating a shared `ApiError` class in `src/lib` to make this easier.
+    - Create a shared `ApiError` class in `src/lib` to make this easier.
 
 2.  **Correct HTTP Methods:**
 
@@ -66,27 +30,31 @@ This document outlines the tactical steps to refactor the codebase to align with
     - Modify the service and repository layers to only include that data when a `?include=` parameter is present in the request.
 
 4.  **Implement Common Features (As Needed):**
+
     - Add pagination (`?limit`/`?offset`) to endpoints that return large collections.
     - Add `?include=` support for other desired resources.
 
+5.  **Enforce Explicit Return Types:**
+    - Go through each function in the refactored feature's `service` and `repository` files.
+    - Add explicit return types to all function signatures (e.g., `Promise<DBProfile | null>`, `Promise<void>`).
+
 ---
 
-## Phase 4: External Service Refactoring
+## Phase 3: Implement Testing (Future Goal)
 
-**Goal:** Refactor the ESPN client to use the Adapter Pattern.
+**Goal:** Establish a robust testing suite for the application to ensure long-term stability and catch regressions.
 
-1.  **Isolate `sportsData` Feature:** Ensure all logic related to sports data syncing (from `src/api/routes/crons` and `src/db/helpers`) has been moved into the `src/features/sportsData` directory.
+**Note:** This phase should only be started after the API standards compliance is complete.
 
-2.  **Create Adapter Interface:**
+1.  **Set Up Testing Environment:**
 
-    - Create `src/features/sportsData/adapters/sportsData.provider.ts`.
-    - Define a generic `ISportsDataProvider` interface with methods like `getSeasons`, `getWeeks`, etc.
+    - Configure a testing framework (e.g., Jest or Vitest).
+    - Create a global setup file to mock the `db` client, preventing unit tests from making real database connections, as detailed in `STANDARDS.md`.
+    - Set up a process for running integration tests against a test database.
 
-3.  **Implement ESPN Adapter:**
+2.  **Write Service Unit Tests:**
 
-    - Create `src/features/sportsData/adapters/espn.adapter.ts`.
-    - Move the existing ESPN API client logic into a class that implements the `ISportsDataProvider` interface.
+    - For each feature, write comprehensive unit tests for the service class, mocking its dependencies (repositories and other services).
 
-4.  **Refactor Service:**
-    - Update `sportsData.service.ts` to depend on the `ISportsDataProvider` interface, not the concrete ESPN adapter.
-    - Inject the `espnAdapter` when instantiating the service.
+3.  **Write Repository Integration Tests:**
+    - For each feature, write integration tests for the repository class, verifying its methods against a real database schema.

@@ -8,18 +8,18 @@ import {
   jsonb,
   integer,
 } from "drizzle-orm/pg-core";
-import { LEAGUE_VISIBILITIES } from "../lib/models/leagues/constants";
+import { LEAGUE_VISIBILITIES } from "../features/leagues/leagues.types";
 import {
   LEAGUE_TYPE_NAMES,
   LEAGUE_TYPE_SLUGS,
-} from "../lib/models/leagueTypes/constants";
-import { PHASE_TYPES } from "../lib/models/phases/constants";
-import { DATA_SOURCE_NAMES } from "../lib/models/dataSources/constants";
+} from "../features/leagueTypes/leagueTypes.types";
+import { DATA_SOURCE_NAMES } from "../features/dataSources/dataSources.types";
 import {
-  LEAGUE_INVITE_TYPES,
   LEAGUE_INVITE_STATUSES,
-} from "../lib/models/leagueInvites/constants";
-import { LEAGUE_MEMBER_ROLES } from "../lib/models/leagueMembers/constants";
+  LEAGUE_INVITE_TYPES,
+} from "../features/leagueInvites/leagueInvites.types";
+import { LEAGUE_MEMBER_ROLES } from "../features/leagueMembers/leagueMembers.types";
+import { PHASE_TEMPLATE_TYPES } from "../features/phaseTemplates/phaseTemplates.types";
 
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -197,7 +197,7 @@ export const phaseTemplatesTable = pgTable("phase_templates", {
   label: text("label").notNull(),
   sequence: integer("sequence").notNull(),
   type: text("type", {
-    enum: [PHASE_TYPES.WEEK],
+    enum: [PHASE_TEMPLATE_TYPES.WEEK],
   }).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")

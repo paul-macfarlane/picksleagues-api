@@ -4,62 +4,189 @@ This document is the single source of truth for the architectural patterns and A
 
 ## Part 1: Architecture
 
-### 1.1. Feature-Sliced Architecture
+### 1.1. Core Principles: Feature-Sliced and Object-Oriented
 
-We use a feature-sliced architecture. The primary principle is that all files related to a single business feature are co-located in the same directory. This promotes high cohesion and discoverability.
+Our architecture is built on two core principles:
 
-- **Primary Directory:** `src/features/`
-- Each feature gets its own subdirectory (e.g., `src/features/leagues/`, `src/features/profiles/`).
+1.  **Feature-Sliced:** Logic is grouped by business domain, not technical layer.
+2.  **Object-Oriented with Dependency Injection:** Layers within a feature are represented by classes, and their dependencies are "injected" into their constructors. This promotes loose coupling and high testability.
 
-### 1.2. Directory Structure Overview
+### 1.2. Directory Structure
 
-```
-src/
-├── api/                  # Express server setup and feature router mounting
-├── features/             # All business features
-│   ├── leagues/          # Example user-facing feature
-│   └── sportsData/       # Example backend capability feature
-├── db/                   # Global Drizzle ORM schema and client
-├── lib/                  # Truly generic, cross-cutting concerns (auth, loggers)
-└── views/                # Server-rendered pages (EJS)
-```
+The `src` directory is organized into the following high-level folders, each with a distinct responsibility:
 
-### 1.3. Layers of a Feature
+- `src/api`: The entry point and all code related to the Express web server (routing, middleware, etc.). This is the delivery mechanism.
+- `src/db`: The database schema, connection logic, and migration scripts.
+- `src/features`: The core of the application, where all business logic lives, sliced by domain.
+- `src/integrations`: Clients and services for communicating with third-party APIs (e.g., ESPN).
+- `src/lib`: Shared, low-level, and internal utilities or libraries (e.g., error handlers, Inversify config).
 
-Each feature directory should be internally structured by technical responsibility.
+### 1.3. What is a "Feature"?
+
+A "feature" is a vertical slice of business functionality that is centered around a **single primary data entity or business domain**.
+
+- **Good:** `leagues`, `profiles`, `leagueMembers`. Each of these corresponds to a specific table in our database and a clear set of business rules.
+- **Bad:** `userManagement`, `settings`. These are too broad and should be broken down.
+
+The goal is for each feature directory to be the single source of truth for all logic related to its domain.
+
+### 1.4. Layers of a Feature
+
+Each feature is composed of class-based layers, each with a distinct responsibility.
 
 ```
 src/features/leagues/
-├── leagues.router.ts      # (Router) Handles HTTP req/res, calls service.
-├── leagues.service.ts     # (Service) Core business logic, orchestrates repository.
-├── leagues.repository.ts  # (Repository) All database interactions for this feature.
-├── leagues.types.ts       # (Types) Zod schemas, TS types, and constants.
-└── adapters/              # (Optional) For connecting to external services.
+├── leagues.router.ts      # (Composition Root) Instantiates and wires dependencies. Handles HTTP.
+├── leagues.service.ts     # (Service Class) Core business logic.
+├── leagues.repository.ts  # (Repository Class) All database interactions.
+└── leagues.types.ts       # (Shared) Zod schemas, TS types, and constants.
 ```
 
-- **Router:** The thinnest possible layer. Its only job is to parse the request, call a single service function, and format the response or error. It is the only layer that should depend on `express`.
-- **Service:** The core of the feature. Contains all business logic, validation, and orchestration. It is framework-agnostic (no `req`/`res`).
-- **Repository:** The database access layer. All Drizzle ORM queries related to the feature live here.
-- **Types:** Defines the data contract for the feature. Contains Zod schemas for validation, infers TypeScript types from them, and holds any feature-specific constants.
+- **Repository (`ProfilesRepository`):** A class whose methods map directly to database operations (e.g., `create`, `findById`). It knows _nothing_ about other features.
+- **Service (`ProfilesService`):** A class that contains the core business logic. It depends on one or more repositories and potentially other services, which are injected into its constructor.
+- **Router (Composition Root):** For now, the router file acts as the "composition root." It is responsible for instantiating the repository and service classes for its feature and wiring them together. It then handles HTTP requests by calling methods on the service instance.
 
-### 1.4. Cross-Feature Communication
+### 1.5. The Integrations Layer
 
-- **Rule:** A feature may only communicate with another feature by importing from its **service** file. Never directly access another feature's repository. This treats each feature as a "black box" with a well-defined public API.
-- **Data Models:** A feature that "owns" a data model (e.g., `profiles` owns the `Profile` type) is the source of truth for that type. Other features should import types and schemas directly from the owning feature's `.types.ts` file.
+While "features" represent our internal business domains, the `src/integrations` directory is responsible for communicating with the outside world.
 
-### 1.5. External Services (The Adapter Pattern)
+- **Purpose:** This directory houses clients or adapters for third-party services (e.g., ESPN API, Stripe for payments, etc.).
+- **Structure:** Each integration should be encapsulated within its own `@injectable` service (e.g., `EspnService`). This service will contain all the logic for making network requests and translating the external data into a format our application can use.
 
-When a feature needs to communicate with an external API (e.g., ESPN), it must use the Adapter Pattern.
+This pattern is critical for testability. By wrapping external calls in an injectable service, we can easily provide a mock version of that service in our unit tests, preventing real network calls and allowing us to simulate any API response.
 
-1.  **Define an Interface:** Inside `src/features/[featureName]/adapters/`, create a generic interface that defines the data and methods the service needs, independent of any specific provider.
-2.  **Create an Adapter:** Create a concrete implementation of the interface for a specific provider (e.g., `espn.adapter.ts`). This file contains the API client logic and data transformation.
-3.  **Inject the Dependency:** The feature's service should depend on the **interface**, not the concrete adapter. This decouples the business logic from the specific external API client.
+### 1.6. Dependency Injection and Inversion of Control (IoC)
+
+To keep our code decoupled and testable, we strictly follow the principle of Inversion of Control. A class **must not** create its own dependencies. Instead, its dependencies must be passed (injected) into its constructor.
+
+```typescript
+// Good: Dependencies are injected
+export class ProfilesService {
+  private profilesRepository: ProfilesRepository;
+  private notificationsService: NotificationsService;
+
+  constructor(
+    profilesRepository: ProfilesRepository,
+    notificationsService: NotificationsService,
+  ) {
+    this.profilesRepository = profilesRepository;
+    this.notificationsService = notificationsService;
+  }
+}
+```
+
+This is a **strict rule**. It is what allows us to swap implementations and, critically, to provide _mock_ dependencies during testing.
+
+### 1.7. Validation Strategy
+
+We employ a two-tiered validation strategy:
+
+- **Shape Validation (in the Router):** The router is responsible for validating the _shape_ and _data types_ of the incoming request payload. It should use `zodSchema.parse()` to achieve this. This ensures that the service layer never receives a malformed request. If parsing fails, a `ZodError` is thrown and handled by our central error handler.
+- **Business Rule Validation (in the Service):** The service is responsible for validating the data against _business rules_ (e.g., checking if a username is already taken). This logic requires application context and often database access.
+
+### 1.8. Cross-Feature Communication: Avoiding Circular Dependencies
+
+The relationship between services is governed by a "Command vs. Query" distinction to prevent circular dependencies.
+
+- **For Commands (Write Operations): Services MUST Call Services.**
+  When a business process requires changing data across multiple domains (e.g., creating a league and its first member), the primary service (`LeaguesService`) **must** call the other service (`LeagueMembersService`) to ensure all business rules are enforced. This is essential for data integrity.
+
+- **For Queries (Read Operations): Routers Compose Views.**
+  When a use case requires fetching data from multiple domains for a read-only view (e.g., getting a profile and all their leagues), this composition should happen in the **router**. The router will call `profilesService.get(...)` and `leaguesService.get(...)` and assemble the response. This prevents services from needing to know about each other for simple read operations, which is the primary cause of circular dependencies.
+
+### 1.9. Transaction Management
+
+Our approach to transactions remains the same but adapts to the class-based pattern. Service methods that perform writes must accept an optional `dbOrTx` argument, allowing them to participate in transactions started by other services or the router.
+
+- **Repositories are Transaction-Agnostic:** Repository methods must accept an optional `dbOrTx` argument.
+- **Services are Transaction-Agnostic:** Service methods that perform database operations must also accept an optional `dbOrTx` argument and pass it down to the repository.
+
+### 1.10. Service Layer Method Naming
+
+To make inter-service communication predictable, all services **must** adhere to the following conventions for methods that retrieve data.
+
+#### General Structure: `{get|find|list}By{Filter}With{Relations}`
+
+This structure makes method names self-documenting.
+
+- **Prefix (`get`, `find`, `list`):** Defines the "not found" behavior (see below).
+- **`By{Filter}`:** The primary `where` clause of the query (e.g., `ById`, `ByEmail`, `ByLeagueId`).
+- **`With{Relations}` (Optional):** Specifies any related entities that are being joined and returned with the primary entity (e.g., `WithMembers`, `WithLeagueType`).
+- **`ForUser` (Optional):** Indicates that the query is being performed on behalf of a specific user, and the method includes permission checks to ensure that user is authorized to view the data.
+
+**Examples:**
+
+- `getById(id)`
+- `findById(id)`
+- `findByEmail(email)`
+- `listByLeagueId(leagueId)`
+- `listByLeagueIdWithMembers(leagueId)`
+- `listMembersForUserByLeagueId(userId, leagueId)`
+- `getMemberForUserByLeagueId(userId, leagueId)`
+
+#### "Not Found" Behavior by Prefix
+
+The prefix of a method name clearly defines its behavior when the requested resource(s) cannot be found.
+
+- #### `get...` methods (e.g., `getById`, `getUserProfile`)
+
+  - **Returns:** A single, complete entity.
+  - **On Not Found:** **Throws a `NotFoundError`**.
+  - **Implementation:** Should call its corresponding `find...` method and throw an error if the result is `null`.
+  - **Use When:** The resource is essential for the current operation to continue.
+
+- #### `find...` methods (e.g., `findById`, `findUserByEmail`)
+
+  - **Returns:** A single entity or `null`.
+  - **On Not Found:** **Returns `null`**. Must not return `undefined`.
+  - **Use When:** Checking for the existence of an entity is part of the business logic.
+
+- #### `list...` methods (e.g., `listByLeagueId`, `listActiveUsers`)
+  - **Returns:** An array of entities (`[]`).
+  - **On Not Found:** **Returns an empty array (`[]`)**.
+  - **Use When:** Retrieving a collection of resources.
 
 ---
 
-## Part 2: API Design Guide
+## Part 2: Testing Strategy
 
-### 2.1. URL Structure
+_Note: This section outlines the testing strategy we will adopt. The actual implementation of tests is a future task._
+
+Our testing strategy is pragmatic, focusing effort where it provides the most value.
+
+### 2.1. Service Layer: Unit Tests (High Priority)
+
+The service layer contains our most complex business logic, making it the ideal candidate for unit tests.
+
+- **Goal:** Test each service class in complete isolation from the database and other services.
+- **Method:** We will use a testing framework (e.g., Jest, Vitest) to write unit tests for our service classes.
+- **Mocking:** Dependencies (repositories, other services) will be provided as mock objects during test setup. This is made easy by our Dependency Injection pattern.
+
+### 2.2. Repository Layer: Integration Tests (Medium Priority)
+
+Unit testing repositories provides little value, as they are simple wrappers around database queries.
+
+- **Goal:** Verify that our database queries are syntactically correct and behave as expected against a real database schema.
+- **Method:** We will write integration tests that run against a temporary, containerized test database. Each test will execute a repository method and assert the state of the database before and after.
+
+### 2.4. Mocking Strategy: Pragmatic Mocks over Formal Interfaces
+
+For unit testing our services, we will provide mocks for their dependencies (e.g., repositories). There are two common ways to do this:
+
+1.  **Formal Interfaces:** Define an `interface` for each repository (e.g., `IProfilesRepository`) and create a mock class that `implements` this interface. This provides strong compile-time safety but adds significant boilerplate and maintenance overhead.
+2.  **Structural Mocks (Our Choice):** Create a plain JavaScript object that has the same methods and properties as the real repository class, using a library like Jest to create mock functions (`jest.fn()`).
+
+We have chosen **Option 2**. TypeScript's structural typing already gives us a strong degree of safety, ensuring our mock object has the correct "shape." This approach provides almost all of the benefits of formal interfaces with significantly less code duplication and maintenance cost, making it the more pragmatic choice for this project.
+
+### 2.3. Preventing Accidental DB Connections in Unit Tests
+
+To ensure our unit tests are fast and reliable, they must never touch a real database. We will enforce this by globally mocking the application's database client in our unit testing environment setup. This guarantees that any code that accidentally tries to connect to the database will receive a harmless mock object instead.
+
+---
+
+## Part 3: API Design Guide
+
+### 3.1. URL Structure
 
 - **Use Plural Nouns for Collections:**
 
@@ -74,7 +201,7 @@ When a feature needs to communicate with an external API (e.g., ESPN), it must u
 - **Versioning**: All API endpoints are prefixed with a version number.
   - _Example_: `/api/v1/leagues`
 
-### 2.2. Naming Conventions
+### 3.2. Naming Conventions
 
 - **JSON Keys**: Use `camelCase` for all keys in JSON request and response bodies.
   ```json
@@ -86,7 +213,7 @@ When a feature needs to communicate with an external API (e.g., ESPN), it must u
 - **Query Parameters**: Use `camelCase` for query parameters.
   - _Example_: `/leagues?leagueType=pick-em`
 
-### 2.3. HTTP Methods
+### 3.3. HTTP Methods
 
 Use the standard HTTP methods to describe the action being performed.
 
@@ -96,49 +223,44 @@ Use the standard HTTP methods to describe the action being performed.
 - `PUT`: Completely replace an existing resource. The request body should contain the complete resource representation.
 - `DELETE`: Delete a resource.
 
-### 2.4. Request & Response Format
+### 3.4. Request & Response Format
 
 - **JSON Everywhere**: The API accepts and returns JSON exclusively. Clients must send `Content-Type: application/json` for `POST`, `PUT`, and `PATCH` requests with a body.
 
-- **Successful `GET` Response (Single Resource)**
+---
 
-  ```json
-  {
-    "id": "league-uuid-1",
-    "name": "The Grand Tournament",
-    "status": "active"
-  }
-  ```
+## Part 4: API Versioning Strategy
 
-- **Successful `GET` Response (Collection)**
+This section outlines the strategy for evolving the API by introducing new versions without breaking existing clients.
 
-  ```json
-  [
-    { "id": "league-uuid-1", "name": "The Grand Tournament" },
-    { "id": "league-uuid-2", "name": "The Winter Classic" }
-  ]
-  ```
+### 4.1. Philosophy: Default + Override
 
-- **Error Response**: All `4xx` and `5xx` errors **must** return a consistent JSON error object. This allows clients to have a single way of handling all API errors.
-  ```json
-  // Status: 403 Forbidden
-  {
-    "error": {
-      "message": "You do not have permission to view these members.",
-      "code": "permission_denied" // A stable, machine-readable error code
-    }
-  }
-  ```
+Our versioning strategy is built on a "Default + Override" model. This provides a clear, maintainable path for evolution while maximizing code reuse.
 
-### 2.5. HTTP Status Codes
+- **The "Default" Implementation**: For any given feature, the primary router file (e.g., `leagues.router.ts`) represents the **current, stable, and recommended implementation**. It is not explicitly versioned in its filename.
+- **The "Override" Implementation**: When a new API version introduces a **breaking change** to a feature, we create a new, version-specific router file (e.g., `profiles.v2.router.ts`). This file acts as an override for that specific version.
 
-Use standard HTTP status codes to indicate the outcome of a request.
+This approach ensures that a developer can always find the "main" logic in the default, un-versioned file, and only needs to look at versioned files to understand specific historical changes.
 
-- `200 OK`: The request was successful (used for `GET`, `PUT`, `PATCH`).
-- `201 Created`: The resource was successfully created (used for `POST`).
-- `204 No Content`: The request was successful, but there is no data to return (used for `DELETE`).
-- `400 Bad Request`: The request was malformed (e.g., invalid JSON, missing parameters).
-- `401 Unauthorized`: The request requires authentication, but none was provided.
-- `403 Forbidden`: The authenticated user does not have permission to perform the action.
-- `404 Not Found`: The requested resource does not exist.
-- `
+### 4.2. How to Introduce a Breaking Change (e.g., for V2)
+
+The following steps should be followed to introduce a breaking change to an existing V1 endpoint.
+
+1.  **Do Not Modify the V1 Router**: The original router (e.g., `profiles.router.ts`) must remain **untouched** to ensure continued support for all V1 clients.
+
+2.  **Create a Versioned "Override" Router**: In the same feature directory, create a new router with a version suffix. Implement the new, breaking logic here.
+
+    - _Example_: `src/features/profiles/profiles.v2.router.ts`
+
+3.  **Create a New V2 Composition Root**: Create a new aggregator for the V2 API.
+
+    - _Example_: `src/api/v2.router.ts`
+
+4.  **Compose the V2 API**: Inside the new `v2.router.ts`, compose the API by:
+
+    - Importing the **new, version-specific override router** (`profiles.v2.router.ts`) for any feature that has changed.
+    - Importing and **reusing the stable, un-versioned "default" routers** (`leagues.router.ts`, etc.) for all features that have _not_ changed.
+
+5.  **Activate the New Version**: In the main `src/api/router.ts`, import and mount the new V2 router, making it accessible via the `/api/v2` prefix.
+
+This strategy ensures that `GET /api/v1/profiles` and `GET /api/v2/profiles` can be served simultaneously with different logic, while `GET /api/v1/leagues` and `GET /api/v2/leagues` are both served by the same, reusable code.
