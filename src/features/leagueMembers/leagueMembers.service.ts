@@ -1,10 +1,13 @@
-import { inject, injectable } from "inversify";
 import { DBOrTx } from "../../db";
 import { TYPES } from "../../lib/inversify.types";
 import { LeagueMembersRepository } from "./leagueMembers.repository";
-import { DBLeagueMember, DBLeagueMemberInsert } from "./leagueMembers.types";
-import { DBLeagueMemberWithProfile } from "./leagueMembers.types";
+import {
+  DBLeagueMember,
+  DBLeagueMemberInsert,
+  DBLeagueMemberWithProfile,
+} from "./leagueMembers.types";
 import { NotFoundError } from "../../lib/errors";
+import { injectable, inject } from "inversify";
 
 @injectable()
 export class LeagueMembersService {
@@ -45,13 +48,10 @@ export class LeagueMembersService {
     return member;
   }
 
-  async listByLeagueIdWithProfile(
+  async listByLeagueId(
     leagueId: string,
-    dbOrTx?: DBOrTx,
-  ): Promise<DBLeagueMemberWithProfile[]> {
-    return await this.leagueMembersRepository.listByLeagueIdWithProfile(
-      leagueId,
-      dbOrTx,
-    );
+    options?: { include?: "profile"[] },
+  ): Promise<(DBLeagueMember | DBLeagueMemberWithProfile)[]> {
+    return await this.leagueMembersRepository.listByLeagueId(leagueId, options);
   }
 }

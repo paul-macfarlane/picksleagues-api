@@ -36,6 +36,16 @@ export type DBLeagueUpdate = Partial<DBLeagueInsert>;
 // Validation Schemas
 export const LeagueIdSchema = z.string().trim().uuid();
 
+export const LeagueIncludeSchema = z
+  .object({
+    include: z
+      .string()
+      .transform((val) => val.split(","))
+      .pipe(z.array(z.enum(["leagueType"])))
+      .optional(),
+  })
+  .optional();
+
 export const PickEmLeagueSettingsSchema = z.object({
   picksPerPhase: z
     .number()

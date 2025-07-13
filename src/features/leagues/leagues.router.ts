@@ -1,9 +1,14 @@
 import { Router, Request, Response } from "express";
-import { CreateLeagueSchema, LeagueIdSchema } from "./leagues.types";
+import {
+  CreateLeagueSchema,
+  LeagueIdSchema,
+  LeagueIncludeSchema,
+} from "./leagues.types";
 import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
 import { LeaguesService } from "./leagues.service";
 import { requireAuth } from "../../lib/auth.middleware";
+import { LeagueMemberIncludeSchema } from "../leagueMembers/leagueMembers.types";
 
 const router = Router();
 const leaguesService = container.get<LeaguesService>(TYPES.LeaguesService);
@@ -19,10 +24,11 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
 
 router.get("/:leagueId", async (req: Request, res: Response): Promise<void> => {
   const leagueId = LeagueIdSchema.parse(req.params.leagueId);
-  const league = await leaguesService.getForUserByIdWithLeagueType(
-    req.user!.id,
-    leagueId,
-  );
+  const query = LeagueIncludeSchema.parse(req.query);
+
+  const league = await leaguesService.getForUserById(req.user!.id, leagueId, {
+    include: query?.include,
+  });
 
   res.status(200).json(league);
 });
@@ -31,9 +37,11 @@ router.get(
   "/:leagueId/members",
   async (req: Request, res: Response): Promise<void> => {
     const leagueId = LeagueIdSchema.parse(req.params.leagueId);
-    const members = await leaguesService.listMembersForUserByIdWithProfile(
+    const query = LeagueMemberIncludeSchema.parse(req.query);
+    const members = await leaguesService.listMembersForUserById(
       req.user!.id,
       leagueId,
+      { include: query?.include },
     );
 
     res.status(200).json(members);

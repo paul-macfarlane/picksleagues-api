@@ -8,7 +8,10 @@ import {
 import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types";
 import { NotFoundError, ValidationError } from "../../lib/errors";
 import { DBLeagueInviteWithLeagueAndType } from "../leagueInvites/leagueInvites.types";
-import { DBLeagueMemberWithProfile } from "../leagueMembers/leagueMembers.types";
+import {
+  DBLeagueMember,
+  DBLeagueMemberWithProfile,
+} from "../leagueMembers/leagueMembers.types";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
 import { LeaguesRepository } from "./leagues.repository";
@@ -94,10 +97,11 @@ export class LeaguesService {
     });
   }
 
-  async getForUserByIdWithLeagueType(
+  async getForUserById(
     userId: string,
     leagueId: string,
-  ): Promise<DBLeagueWithLeagueType> {
+    options?: { include?: "leagueType"[] },
+  ): Promise<DBLeagueWithLeagueType | DBLeague> {
     const league = await this.leaguesRepository.findById(leagueId);
     if (!league) {
       throw new NotFoundError("League not found");
@@ -111,23 +115,24 @@ export class LeaguesService {
       throw new NotFoundError("League not found");
     }
 
-    const leagueType = await this.leagueTypesService.findByIdOrSlug(
-      league.leagueTypeId,
-    );
-    if (!leagueType) {
-      throw new NotFoundError("League type not found");
+    if (options?.include?.includes("leagueType")) {
+      const leagueType = await this.leagueTypesService.getByIdOrSlug(
+        league.leagueTypeId,
+      );
+      return { ...league, leagueType };
     }
 
-    return { ...league, leagueType };
+    return league;
   }
 
-  async listMembersForUserByIdWithProfile(
+  async listMembersForUserById(
     userId: string,
     leagueId: string,
-  ): Promise<DBLeagueMemberWithProfile[]> {
+    options?: { include?: "profile"[] },
+  ): Promise<(DBLeagueMember | DBLeagueMemberWithProfile)[]> {
     // will throw if league not found or user not a member
-    await this.getForUserByIdWithLeagueType(userId, leagueId);
-    return await this.leagueMembersService.listByLeagueIdWithProfile(leagueId);
+    await this.getForUserById(userId, leagueId);
+    return await this.leagueMembersService.listByLeagueId(leagueId, options);
   }
 
   async listPendingInvitesForUserByIdWithLeagueAndType(
@@ -135,7 +140,7 @@ export class LeaguesService {
     leagueId: string,
   ): Promise<DBLeagueInviteWithLeagueAndType[]> {
     // will throw if league not found or user not a member
-    await this.getForUserByIdWithLeagueType(userId, leagueId);
+    await this.getForUserById(userId, leagueId);
     return await this.leagueInvitesService.listPendingByLeagueIdWithLeagueAndType(
       leagueId,
     );

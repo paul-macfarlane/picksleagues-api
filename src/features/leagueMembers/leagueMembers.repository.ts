@@ -11,14 +11,43 @@ import {
 @injectable()
 export class LeagueMembersRepository {
   async create(
-    leagueMember: DBLeagueMemberInsert,
+    data: DBLeagueMemberInsert,
     dbOrTx: DBOrTx = db,
   ): Promise<DBLeagueMember> {
     const [newMember] = await dbOrTx
       .insert(leagueMembersTable)
-      .values(leagueMember)
+      .values(data)
       .returning();
     return newMember;
+  }
+
+  async listByLeagueId(
+    leagueId: string,
+    options?: { include?: "profile"[] },
+    dbOrTx: DBOrTx = db,
+  ): Promise<(DBLeagueMember | DBLeagueMemberWithProfile)[]> {
+    if (options?.include?.includes("profile")) {
+      const members = await dbOrTx
+        .select({
+          leagueMember: leagueMembersTable,
+          profile: profilesTable,
+        })
+        .from(leagueMembersTable)
+        .where(eq(leagueMembersTable.leagueId, leagueId))
+        .innerJoin(
+          profilesTable,
+          eq(leagueMembersTable.userId, profilesTable.userId),
+        );
+      return members.map((member) => ({
+        ...member.leagueMember,
+        profile: member.profile,
+      }));
+    }
+
+    return await dbOrTx
+      .select()
+      .from(leagueMembersTable)
+      .where(eq(leagueMembersTable.leagueId, leagueId));
   }
 
   async findByLeagueAndUserId(
@@ -36,26 +65,5 @@ export class LeagueMembersRepository {
         ),
       );
     return leagueMember[0] ?? null;
-  }
-
-  async listByLeagueIdWithProfile(
-    leagueId: string,
-    dbOrTx: DBOrTx = db,
-  ): Promise<DBLeagueMemberWithProfile[]> {
-    const members = await dbOrTx
-      .select({
-        leagueMember: leagueMembersTable,
-        profile: profilesTable,
-      })
-      .from(leagueMembersTable)
-      .where(eq(leagueMembersTable.leagueId, leagueId))
-      .innerJoin(
-        profilesTable,
-        eq(leagueMembersTable.userId, profilesTable.userId),
-      );
-    return members.map((member) => ({
-      ...member.leagueMember,
-      profile: member.profile,
-    }));
   }
 }
