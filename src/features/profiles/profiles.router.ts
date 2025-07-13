@@ -8,9 +8,9 @@ import {
 } from "./profiles.types";
 import { DBUser } from "../users/users.types";
 import { ProfilesService } from "./profiles.service";
-import { UnauthorizedError } from "../../lib/errors";
 import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
+import { requireAuth } from "../../lib/auth.middleware";
 
 const router = Router();
 
@@ -34,51 +34,42 @@ router.get("/onboard", async (req: Request, res: Response): Promise<void> => {
   res.redirect(302, `${process.env.WEB_FRONTEND_URL!}`);
 });
 
-router.get("/search", async (req: Request, res: Response): Promise<void> => {
-  const session = (await auth.api.getSession({
-    headers: fromNodeHeaders(req.headers),
-  })) as { user: DBUser };
-  if (!session) {
-    throw new UnauthorizedError();
-  }
+router.get(
+  "/search",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const parseQuery = SearchProfilesSchema.parse(req.query);
+    const profiles = await profilesService.search(parseQuery);
 
-  const parseQuery = SearchProfilesSchema.parse(req.query);
-  const profiles = await profilesService.search(parseQuery);
+    res.json(profiles);
+  },
+);
 
-  res.json(profiles);
-});
+router.get(
+  "/:userId",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = UserIdSchema.parse(req.params.userId);
+    const profile = await profilesService.getByUserId(userId);
 
-router.get("/:userId", async (req: Request, res: Response): Promise<void> => {
-  const session = (await auth.api.getSession({
-    headers: fromNodeHeaders(req.headers),
-  })) as { user: DBUser };
-  if (!session) {
-    throw new UnauthorizedError();
-  }
+    res.json(profile);
+  },
+);
 
-  const userId = UserIdSchema.parse(req.params.userId);
-  const profile = await profilesService.getByUserId(userId);
+router.patch(
+  "/:userId",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = UserIdSchema.parse(req.params.userId);
+    const parseBody = UpdateProfileSchema.parse(req.body);
+    const updatedProfile = await profilesService.update(
+      req.user!.id,
+      userId,
+      parseBody,
+    );
 
-  res.json(profile);
-});
-
-router.patch("/:userId", async (req: Request, res: Response): Promise<void> => {
-  const session = (await auth.api.getSession({
-    headers: fromNodeHeaders(req.headers),
-  })) as { user: DBUser };
-  if (!session) {
-    throw new UnauthorizedError();
-  }
-
-  const userId = UserIdSchema.parse(req.params.userId);
-  const parseBody = UpdateProfileSchema.parse(req.body);
-  const updatedProfile = await profilesService.update(
-    session.user.id,
-    userId,
-    parseBody,
-  );
-
-  res.json(updatedProfile);
-});
+    res.json(updatedProfile);
+  },
+);
 
 export default router;

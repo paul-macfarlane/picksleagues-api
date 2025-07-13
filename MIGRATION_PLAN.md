@@ -14,7 +14,7 @@ This document outlines the tactical steps to harden the codebase and ensure it f
 
 **Goal:** Now that the new architecture is in place, iterate through each feature and align its API with the standards defined in `Part 3: API Design Guide` and `Part 1.10: Service Layer Method Naming` of the `STANDARDS.md`.
 
-1.  **Standardize Error Responses:**
+1.  **Standardize Error Responses:** (Completed)
 
     - Go through each endpoint in every feature.
     - Replace all old error formats (e.g., `{ error: "..." }`) with the new standard: `{ error: { message: "...", code: "..." } }`.

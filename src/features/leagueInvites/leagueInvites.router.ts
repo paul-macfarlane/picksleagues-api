@@ -1,7 +1,4 @@
 import { Request, Response, Router } from "express";
-import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "../../lib/auth";
-import { DBUser } from "../users/users.types";
 import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
 import { LeagueInvitesService } from "./leagueInvites.service";
@@ -11,7 +8,7 @@ import {
   LeagueInviteTokenSchema,
   RespondToLeagueInviteSchema,
 } from "./leagueInvites.types";
-import { UnauthorizedError } from "../../lib/errors";
+import { requireAuth } from "../../lib/auth.middleware";
 
 const leagueInvitesRouter = Router();
 const leagueInvitesService = container.get<LeagueInvitesService>(
@@ -20,20 +17,11 @@ const leagueInvitesService = container.get<LeagueInvitesService>(
 
 leagueInvitesRouter.post(
   "/",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    const session = (await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })) as { user: DBUser };
-    if (!session) {
-      throw new UnauthorizedError();
-    }
-
     const parseInvite = CreateLeagueInviteSchema.parse(req.body);
 
-    const invite = await leagueInvitesService.create(
-      session.user.id,
-      parseInvite,
-    );
+    const invite = await leagueInvitesService.create(req.user!.id, parseInvite);
 
     res.status(201).json(invite);
   },
@@ -41,20 +29,14 @@ leagueInvitesRouter.post(
 
 leagueInvitesRouter.post(
   "/:inviteId/respond",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    const session = (await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })) as { user: DBUser };
-    if (!session) {
-      throw new UnauthorizedError();
-    }
-
     const parseId = LeagueInviteIdSchema.parse(req.params.inviteId);
 
     const parseResponse = RespondToLeagueInviteSchema.parse(req.body);
 
     await leagueInvitesService.respond(
-      session.user.id,
+      req.user!.id,
       parseId,
       parseResponse.response,
     );
@@ -65,17 +47,11 @@ leagueInvitesRouter.post(
 
 leagueInvitesRouter.get(
   "/my-invites",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    const session = (await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })) as { user: DBUser };
-    if (!session) {
-      throw new UnauthorizedError();
-    }
-
     const invites =
       await leagueInvitesService.listPendingByUserIdWithLeagueAndType(
-        session.user.id,
+        req.user!.id,
       );
     res.status(200).json(invites);
   },
@@ -83,17 +59,11 @@ leagueInvitesRouter.get(
 
 leagueInvitesRouter.delete(
   "/:inviteId",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    const session = (await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })) as { user: DBUser };
-    if (!session) {
-      throw new UnauthorizedError();
-    }
-
     const parseId = LeagueInviteIdSchema.parse(req.params.inviteId);
 
-    await leagueInvitesService.revoke(session.user.id, parseId);
+    await leagueInvitesService.revoke(req.user!.id, parseId);
 
     res.status(204).send();
   },
@@ -112,17 +82,11 @@ leagueInvitesRouter.get(
 
 leagueInvitesRouter.post(
   "/token/:token/join",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    const session = (await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })) as { user: DBUser };
-    if (!session) {
-      throw new UnauthorizedError();
-    }
-
     const parseToken = LeagueInviteTokenSchema.parse(req.params.token);
 
-    await leagueInvitesService.joinWithToken(session.user.id, parseToken);
+    await leagueInvitesService.joinWithToken(req.user!.id, parseToken);
 
     res.status(204).send();
   },

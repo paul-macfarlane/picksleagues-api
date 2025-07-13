@@ -1,41 +1,26 @@
 import { Router, Request, Response } from "express";
-import { auth } from "../../lib/auth";
-import { fromNodeHeaders } from "better-auth/node";
-import { DBUser } from "../users/users.types";
 import { CreateLeagueSchema, LeagueIdSchema } from "./leagues.types";
-import { UnauthorizedError } from "../../lib/errors";
 import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
 import { LeaguesService } from "./leagues.service";
+import { requireAuth } from "../../lib/auth.middleware";
 
 const router = Router();
 const leaguesService = container.get<LeaguesService>(TYPES.LeaguesService);
 
-router.post("/", async (req: Request, res: Response): Promise<void> => {
-  const session = (await auth.api.getSession({
-    headers: fromNodeHeaders(req.headers),
-  })) as { user: DBUser };
-  if (!session) {
-    throw new UnauthorizedError();
-  }
+router.use(requireAuth);
 
+router.post("/", async (req: Request, res: Response): Promise<void> => {
   const leagueData = CreateLeagueSchema.parse(req.body);
-  const newLeague = await leaguesService.create(session.user.id, leagueData);
+  const newLeague = await leaguesService.create(req.user!.id, leagueData);
 
   res.status(201).json(newLeague);
 });
 
 router.get("/:leagueId", async (req: Request, res: Response): Promise<void> => {
-  const session = (await auth.api.getSession({
-    headers: fromNodeHeaders(req.headers),
-  })) as { user: DBUser };
-  if (!session) {
-    throw new UnauthorizedError();
-  }
-
   const leagueId = LeagueIdSchema.parse(req.params.leagueId);
   const league = await leaguesService.getForUserByIdWithLeagueType(
-    session.user.id,
+    req.user!.id,
     leagueId,
   );
 
@@ -45,16 +30,9 @@ router.get("/:leagueId", async (req: Request, res: Response): Promise<void> => {
 router.get(
   "/:leagueId/members",
   async (req: Request, res: Response): Promise<void> => {
-    const session = (await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })) as { user: DBUser };
-    if (!session) {
-      throw new UnauthorizedError();
-    }
-
     const leagueId = LeagueIdSchema.parse(req.params.leagueId);
     const members = await leaguesService.listMembersForUserByIdWithProfile(
-      session.user.id,
+      req.user!.id,
       leagueId,
     );
 
@@ -65,17 +43,10 @@ router.get(
 router.get(
   "/:leagueId/invites",
   async (req: Request, res: Response): Promise<void> => {
-    const session = (await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })) as { user: DBUser };
-    if (!session) {
-      throw new UnauthorizedError();
-    }
-
     const leagueId = LeagueIdSchema.parse(req.params.leagueId);
     const invites =
       await leaguesService.listPendingInvitesForUserByIdWithLeagueAndType(
-        session.user.id,
+        req.user!.id,
         leagueId,
       );
 
