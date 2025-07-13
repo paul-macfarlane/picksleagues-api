@@ -32,6 +32,8 @@ const TYPES = {
 
   DataSourcesService: Symbol.for("DataSourcesService"),
   DataSourcesRepository: Symbol.for("DataSourcesRepository"),
+
+  EspnService: Symbol.for("EspnService"),
 };
 
 export { TYPES };

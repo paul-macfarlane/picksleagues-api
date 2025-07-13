@@ -4,7 +4,7 @@ import { db } from "../../db";
 import { PhasesRepository } from "./phases.repository";
 import { PhaseTemplatesService } from "../phaseTemplates/phaseTemplates.service";
 import { DBDataSource } from "../dataSources/dataSources.types";
-import { ESPNWeek } from "../../lib/external/espn/models/weeks/types";
+import { ESPNWeek } from "../../integrations/espn/espn.types";
 
 @injectable()
 export class PhasesService {

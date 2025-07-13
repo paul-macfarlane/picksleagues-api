@@ -5,11 +5,12 @@ import { SeasonsRepository } from "./seasons.repository";
 import { DataSourcesService } from "../dataSources/dataSources.service";
 import { PhasesService } from "../phases/phases.service";
 import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
-import { ESPN_DESIRED_LEAGUES } from "../../lib/external/espn/models/leagues/constants";
-import { getESPNLeagueSeasons } from "../../lib/external/espn/api/seasons";
-import { getESPNWeeks } from "../../lib/external/espn/api/weeks";
-import { ESPN_SEASON_TYPES } from "../../lib/external/espn/models/seasons/constants";
 import { SportLeaguesRepository } from "../sportLeagues/sportLeagues.repository";
+import { EspnService } from "../../integrations/espn/espn.service";
+import {
+  ESPN_DESIRED_LEAGUES,
+  ESPN_SEASON_TYPES,
+} from "../../integrations/espn/espn.types";
 
 @injectable()
 export class SeasonsService {
@@ -22,6 +23,8 @@ export class SeasonsService {
     private phasesService: PhasesService,
     @inject(TYPES.SportLeaguesRepository)
     private sportLeaguesRepository: SportLeaguesRepository,
+    @inject(TYPES.EspnService)
+    private espnService: EspnService,
   ) {}
 
   async syncSeasons() {
@@ -31,7 +34,7 @@ export class SeasonsService {
       );
 
       for (const desiredLeague of ESPN_DESIRED_LEAGUES) {
-        const espnLeagueSeasons = await getESPNLeagueSeasons(
+        const espnLeagueSeasons = await this.espnService.getESPNLeagueSeasons(
           desiredLeague.sportSlug,
           desiredLeague.leagueSlug,
         );
@@ -116,14 +119,14 @@ export class SeasonsService {
           }
 
           if (sportLeagueId && seasonId) {
-            const regularSeasonESPNWeeks = await getESPNWeeks(
+            const regularSeasonESPNWeeks = await this.espnService.getESPNWeeks(
               desiredLeague.sportSlug,
               desiredLeague.leagueSlug,
               externalSeason.displayName,
               ESPN_SEASON_TYPES.REGULAR_SEASON,
             );
 
-            const postSeasonESPNWeeks = await getESPNWeeks(
+            const postSeasonESPNWeeks = await this.espnService.getESPNWeeks(
               desiredLeague.sportSlug,
               desiredLeague.leagueSlug,
               externalSeason.displayName,

@@ -23,6 +23,7 @@ import { SportLeaguesRepository } from "../features/sportLeagues/sportLeagues.re
 import { SportLeaguesService } from "../features/sportLeagues/sportLeagues.service";
 import { DataSourcesRepository } from "../features/dataSources/dataSources.repository";
 import { DataSourcesService } from "../features/dataSources/dataSources.service";
+import { EspnService } from "../integrations/espn/espn.service";
 
 const container = new Container();
 
@@ -134,6 +135,12 @@ container
 container
   .bind<DataSourcesService>(TYPES.DataSourcesService)
   .to(DataSourcesService)
+  .inSingletonScope();
+
+// Integrations Bindings
+container
+  .bind<EspnService>(TYPES.EspnService)
+  .to(EspnService)
   .inSingletonScope();
 
 // Add other feature bindings here as we migrate them

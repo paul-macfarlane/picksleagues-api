@@ -36,7 +36,16 @@ src/features/leagues/
 - **Service (`ProfilesService`):** A class that contains the core business logic. It depends on one or more repositories and potentially other services, which are injected into its constructor.
 - **Router (Composition Root):** For now, the router file acts as the "composition root." It is responsible for instantiating the repository and service classes for its feature and wiring them together. It then handles HTTP requests by calling methods on the service instance.
 
-### 1.4. Dependency Injection and Inversion of Control (IoC)
+### 1.4. The Integrations Layer
+
+While "features" represent our internal business domains, the `src/integrations` directory is responsible for communicating with the outside world.
+
+- **Purpose:** This directory houses clients or adapters for third-party services (e.g., ESPN API, Stripe for payments, etc.).
+- **Structure:** Each integration should be encapsulated within its own `@injectable` service (e.g., `EspnService`). This service will contain all the logic for making network requests and translating the external data into a format our application can use.
+
+This pattern is critical for testability. By wrapping external calls in an injectable service, we can easily provide a mock version of that service in our unit tests, preventing real network calls and allowing us to simulate any API response.
+
+### 1.5. Dependency Injection and Inversion of Control (IoC)
 
 To keep our code decoupled and testable, we strictly follow the principle of Inversion of Control. A class **must not** create its own dependencies. Instead, its dependencies must be passed (injected) into its constructor.
 
@@ -58,14 +67,14 @@ export class ProfilesService {
 
 This is a **strict rule**. It is what allows us to swap implementations and, critically, to provide _mock_ dependencies during testing.
 
-### 1.5. Validation Strategy
+### 1.6. Validation Strategy
 
 We employ a two-tiered validation strategy:
 
 - **Shape Validation (in the Router):** The router is responsible for validating the _shape_ and _data types_ of the incoming request payload. It should use `zodSchema.parse()` to achieve this. This ensures that the service layer never receives a malformed request. If parsing fails, a `ZodError` is thrown and handled by our central error handler.
 - **Business Rule Validation (in the Service):** The service is responsible for validating the data against _business rules_ (e.g., checking if a username is already taken). This logic requires application context and often database access.
 
-### 1.6. Cross-Feature Communication: Avoiding Circular Dependencies
+### 1.7. Cross-Feature Communication: Avoiding Circular Dependencies
 
 The relationship between services is governed by a "Command vs. Query" distinction to prevent circular dependencies.
 
@@ -75,14 +84,14 @@ The relationship between services is governed by a "Command vs. Query" distincti
 - **For Queries (Read Operations): Routers Compose Views.**
   When a use case requires fetching data from multiple domains for a read-only view (e.g., getting a profile and all their leagues), this composition should happen in the **router**. The router will call `profilesService.get(...)` and `leaguesService.get(...)` and assemble the response. This prevents services from needing to know about each other for simple read operations, which is the primary cause of circular dependencies.
 
-### 1.7. Transaction Management
+### 1.8. Transaction Management
 
 Our approach to transactions remains the same but adapts to the class-based pattern. Service methods that perform writes must accept an optional `dbOrTx` argument, allowing them to participate in transactions started by other services or the router.
 
 - **Repositories are Transaction-Agnostic:** Repository methods must accept an optional `dbOrTx` argument.
 - **Services are Transaction-Agnostic:** Service methods that perform database operations must also accept an optional `dbOrTx` argument and pass it down to the repository.
 
-### 1.8. Service Layer Method Naming
+### 1.9. Service Layer Method Naming
 
 To make inter-service communication predictable, all services **must** adhere to the following conventions for methods that retrieve data.
 

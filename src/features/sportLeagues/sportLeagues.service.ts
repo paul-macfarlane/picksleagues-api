@@ -4,10 +4,10 @@ import { db, DBOrTx } from "../../db";
 import { SportLeaguesRepository } from "./sportLeagues.repository";
 import { DataSourcesService } from "../dataSources/dataSources.service";
 import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
-import { ESPN_DESIRED_LEAGUES } from "../../lib/external/espn/models/leagues/constants";
-import { getESPNLeague } from "../../lib/external/espn/api/leagues";
+import { ESPN_DESIRED_LEAGUES } from "../../integrations/espn/espn.types";
 import { DBSportLeague } from "./sportLeagues.types";
 import { NotFoundError } from "../../lib/errors";
+import { EspnService } from "../../integrations/espn/espn.service";
 
 @injectable()
 export class SportLeaguesService {
@@ -16,6 +16,8 @@ export class SportLeaguesService {
     private sportLeaguesRepository: SportLeaguesRepository,
     @inject(TYPES.DataSourcesService)
     private dataSourcesService: DataSourcesService,
+    @inject(TYPES.EspnService)
+    private espnService: EspnService,
   ) {}
 
   async findById(id: string): Promise<DBSportLeague | null> {
@@ -47,7 +49,7 @@ export class SportLeaguesService {
       }
 
       for (const desiredLeague of ESPN_DESIRED_LEAGUES) {
-        const espnLeague = await getESPNLeague(
+        const espnLeague = await this.espnService.getESPNLeague(
           desiredLeague.sportSlug,
           desiredLeague.leagueSlug,
         );
