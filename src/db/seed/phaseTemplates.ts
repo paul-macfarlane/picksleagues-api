@@ -1,12 +1,8 @@
-import { PHASE_TYPES } from "../../lib/models/phases/constants";
-import { DBOrTx } from "..";
-import {
-  getPhaseTemplateBySportLeagueAndLabel,
-  insertPhaseTemplate,
-} from "../helpers/phaseTemplates";
-import { getSportLeagueByName } from "../helpers/sportLeagues";
-import { SPORT_LEAGUE_NAMES } from "../../lib/models/sportLeagues/constants";
-import { DBPhaseTemplate } from "../../lib/models/phaseTemplates/db";
+import { PhaseTemplatesService } from "../../features/phaseTemplates/phaseTemplates.service";
+import { SPORT_LEAGUE_NAMES } from "../../features/sportLeagues/sportLeagues.types";
+import { SportLeaguesService } from "../../features/sportLeagues/sportLeagues.service";
+import { db, DBOrTx } from "..";
+import { PHASE_TEMPLATE_TYPES } from "../../features/phaseTemplates/phaseTemplates.types";
 
 const NFL_WEEK_PHASE_LABELS = [
   "Week 1",
@@ -35,48 +31,33 @@ const NFL_WEEK_PHASE_LABELS = [
 
 const NFL_PHASE_TEMPLATES = NFL_WEEK_PHASE_LABELS.map((label) => ({
   label,
-  type: PHASE_TYPES.WEEK,
+  type: PHASE_TEMPLATE_TYPES.WEEK,
 }));
 
 export async function seedPhaseTemplates(
-  dbOrTx: DBOrTx,
-): Promise<DBPhaseTemplate[]> {
-  const nflSportLeague = await getSportLeagueByName(
-    dbOrTx,
+  phaseTemplatesService: PhaseTemplatesService,
+  sportLeaguesService: SportLeaguesService,
+  dbOrTx: DBOrTx = db,
+): Promise<void> {
+  const nflSportLeague = await sportLeaguesService.getByName(
     SPORT_LEAGUE_NAMES.NFL,
+    dbOrTx,
   );
-  if (!nflSportLeague) {
-    console.warn("NFL sport league not found, skipping phase templates");
-    return [];
-  }
 
-  const phaseTemplates: DBPhaseTemplate[] = [];
   for (const [index, phaseTemplate] of NFL_PHASE_TEMPLATES.entries()) {
-    const existingPhaseTemplate = await getPhaseTemplateBySportLeagueAndLabel(
+    const newPhaseTemplate = await phaseTemplatesService.findOrCreate(
+      {
+        sportLeagueId: nflSportLeague.id,
+        label: phaseTemplate.label,
+        sequence: index + 1,
+        type: phaseTemplate.type,
+      },
       dbOrTx,
-      nflSportLeague.id,
-      phaseTemplate.label,
     );
-    if (existingPhaseTemplate) {
-      console.log(
-        `Phase template ${phaseTemplate.label} already exists, skipping`,
-      );
-      continue;
-    }
-
-    const newPhaseTemplate = await insertPhaseTemplate(dbOrTx, {
-      sportLeagueId: nflSportLeague.id,
-      label: phaseTemplate.label,
-      sequence: index + 1,
-      type: phaseTemplate.type,
-    });
     console.log(
-      `Created phase template ${phaseTemplate.label} as ${JSON.stringify(
-        newPhaseTemplate,
-      )}`,
+      `Found or created phase template ${
+        phaseTemplate.label
+      } as ${JSON.stringify(newPhaseTemplate)}`,
     );
-    phaseTemplates.push(newPhaseTemplate);
   }
-
-  return phaseTemplates;
 }

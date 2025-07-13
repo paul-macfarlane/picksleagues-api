@@ -3,6 +3,10 @@ import { z } from "zod";
 
 // Constants
 
+export enum PHASE_TEMPLATE_TYPES {
+  WEEK = "week",
+}
+
 // DB Types
 export type DBPhaseTemplate = typeof phaseTemplatesTable.$inferSelect;
 

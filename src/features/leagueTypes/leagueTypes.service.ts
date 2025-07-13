@@ -5,6 +5,7 @@ import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
 import { LeagueTypesRepository } from "./leagueTypes.repository";
 import { z } from "zod";
+import { DBLeagueTypeInsert } from "./leagueTypes.types";
 
 @injectable()
 export class LeagueTypesService {
@@ -12,6 +13,24 @@ export class LeagueTypesService {
     @inject(TYPES.LeagueTypesRepository)
     private leagueTypesRepository: LeagueTypesRepository,
   ) {}
+
+  async create(
+    data: DBLeagueTypeInsert,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBLeagueType> {
+    return await this.leagueTypesRepository.create(data, dbOrTx);
+  }
+
+  async findOrCreateBySlug(
+    data: DBLeagueTypeInsert,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBLeagueType> {
+    const existing = await this.findByIdOrSlug(data.slug, dbOrTx);
+    if (existing) {
+      return existing;
+    }
+    return await this.create(data, dbOrTx);
+  }
 
   async findByIdOrSlug(
     typeIdOrSlug: string,

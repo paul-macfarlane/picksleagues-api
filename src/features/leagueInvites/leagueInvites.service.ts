@@ -54,7 +54,10 @@ export class LeagueInvitesService {
         inviteData.type === LEAGUE_INVITE_TYPES.DIRECT &&
         inviteData.inviteeId
       ) {
-        const invitee = await this.usersService.findById(inviteData.inviteeId);
+        const invitee = await this.usersService.findById(
+          inviteData.inviteeId,
+          tx,
+        );
         if (!invitee) {
           throw new NotFoundError("Invitee not found");
         }

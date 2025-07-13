@@ -23,6 +23,15 @@ const TYPES = {
 
   SportLeaguesService: Symbol.for("SportLeaguesService"),
   SportLeaguesRepository: Symbol.for("SportLeaguesRepository"),
+
+  DataSourcesService: Symbol.for("DataSourcesService"),
+  DataSourcesRepository: Symbol.for("DataSourcesRepository"),
+
+  SeasonsService: Symbol.for("SeasonsService"),
+  SeasonsRepository: Symbol.for("SeasonsRepository"),
+
+  PhasesService: Symbol.for("PhasesService"),
+  PhasesRepository: Symbol.for("PhasesRepository"),
 };
 
 export { TYPES };

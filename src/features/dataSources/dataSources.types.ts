@@ -9,9 +9,7 @@ export enum DATA_SOURCE_NAMES {
 // DB Types
 
 export type DBDataSource = typeof dataSourcesTable.$inferSelect;
-
 export type DBDataSourceInsert = typeof dataSourcesTable.$inferInsert;
-
 export type DBDataSourceUpdate = Partial<DBDataSourceInsert>;
 
 // Validation Schemas

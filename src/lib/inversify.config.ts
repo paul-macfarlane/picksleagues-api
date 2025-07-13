@@ -13,6 +13,10 @@ import { PhaseTemplatesRepository } from "../features/phaseTemplates/phaseTempla
 import { PhaseTemplatesService } from "../features/phaseTemplates/phaseTemplates.service";
 import { UsersRepository } from "../features/users/users.repository";
 import { UsersService } from "../features/users/users.service";
+import { SportLeaguesRepository } from "../features/sportLeagues/sportLeagues.repository";
+import { SportLeaguesService } from "../features/sportLeagues/sportLeagues.service";
+import { DataSourcesRepository } from "../features/dataSources/dataSources.repository";
+import { DataSourcesService } from "../features/dataSources/dataSources.service";
 
 const container = new Container();
 
@@ -74,6 +78,26 @@ container
 container
   .bind<UsersService>(TYPES.UsersService)
   .to(UsersService)
+  .inSingletonScope();
+
+// Sport Leagues Bindings
+container
+  .bind<SportLeaguesRepository>(TYPES.SportLeaguesRepository)
+  .to(SportLeaguesRepository)
+  .inSingletonScope();
+container
+  .bind<SportLeaguesService>(TYPES.SportLeaguesService)
+  .to(SportLeaguesService)
+  .inSingletonScope();
+
+// Data Sources Bindings
+container
+  .bind<DataSourcesRepository>(TYPES.DataSourcesRepository)
+  .to(DataSourcesRepository)
+  .inSingletonScope();
+container
+  .bind<DataSourcesService>(TYPES.DataSourcesService)
+  .to(DataSourcesService)
   .inSingletonScope();
 
 // Add other feature bindings here as we migrate them
