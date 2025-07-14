@@ -33,6 +33,10 @@ export const TYPES = {
   LeagueInvitesQueryService: Symbol.for("LeagueInvitesQueryService"),
   ProfilesQueryService: Symbol.for("ProfilesQueryService"),
   PhaseTemplatesQueryService: Symbol.for("PhaseTemplatesQueryService"),
+  PhasesQueryService: Symbol.for("PhasesQueryService"),
+  SeasonsQueryService: Symbol.for("SeasonsQueryService"),
+  DataSourcesQueryService: Symbol.for("DataSourcesQueryService"),
+  SportLeaguesQueryService: Symbol.for("SportLeaguesQueryService"),
 
   // Mutation Services
   LeagueMembersMutationService: Symbol.for("LeagueMembersMutationService"),
@@ -41,6 +45,10 @@ export const TYPES = {
   ProfilesMutationService: Symbol.for("ProfilesMutationService"),
   LeaguesMutationService: Symbol.for("LeaguesMutationService"),
   PhaseTemplatesMutationService: Symbol.for("PhaseTemplatesMutationService"),
+  PhasesMutationService: Symbol.for("PhasesMutationService"),
+  SeasonsMutationService: Symbol.for("SeasonsMutationService"),
+  DataSourcesMutationService: Symbol.for("DataSourcesMutationService"),
+  SportLeaguesMutationService: Symbol.for("SportLeaguesMutationService"),
 
   // External Services
   EspnService: Symbol.for("EspnService"),

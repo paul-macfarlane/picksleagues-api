@@ -1,18 +1,22 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
 import { db } from "../../db";
-import { PhasesRepository } from "./phases.repository";
-import { PhaseTemplatesService } from "../phaseTemplates/phaseTemplates.service";
 import { DBDataSource } from "../dataSources/dataSources.types";
 import { ESPNWeek } from "../../integrations/espn/espn.types";
+import { PhasesQueryService } from "./phases.query.service";
+import { PhasesMutationService } from "./phases.mutation.service";
+import { PHASE_TEMPLATE_TYPES } from "../phaseTemplates/phaseTemplates.types";
+import { PhaseTemplatesMutationService } from "../phaseTemplates/phaseTemplates.mutation.service";
 
 @injectable()
 export class PhasesService {
   constructor(
-    @inject(TYPES.PhasesRepository)
-    private phasesRepository: PhasesRepository,
-    @inject(TYPES.PhaseTemplatesService)
-    private phaseTemplatesService: PhaseTemplatesService,
+    @inject(TYPES.PhasesQueryService)
+    private phasesQueryService: PhasesQueryService,
+    @inject(TYPES.PhasesMutationService)
+    private phasesMutationService: PhasesMutationService,
+    @inject(TYPES.PhaseTemplatesMutationService)
+    private phaseTemplatesMutationService: PhaseTemplatesMutationService,
   ) {}
 
   async syncPhases(
@@ -21,10 +25,10 @@ export class PhasesService {
     dataSource: DBDataSource,
     espnWeeks: ESPNWeek[],
   ) {
-    return await db.transaction(async (tx) => {
+    return db.transaction(async (tx) => {
       for (const [index, espnWeek] of espnWeeks.entries()) {
         const existingExternalPhase =
-          await this.phasesRepository.findExternalBySourceAndId(
+          await this.phasesQueryService.findExternalBySourceAndId(
             dataSource.id,
             espnWeek.text,
             tx,
@@ -32,7 +36,7 @@ export class PhasesService {
         if (existingExternalPhase) {
           console.log(`${espnWeek.text} already exists for season ${seasonId}`);
 
-          const updatedPhase = await this.phasesRepository.update(
+          const updatedPhase = await this.phasesMutationService.update(
             existingExternalPhase.phaseId,
             {
               sequence: index + 1,
@@ -44,7 +48,7 @@ export class PhasesService {
 
           console.log(`Updated phase ${JSON.stringify(updatedPhase)}`);
 
-          await this.phasesRepository.updateExternal(
+          await this.phasesMutationService.updateExternal(
             dataSource.id,
             existingExternalPhase.externalId,
             {
@@ -55,18 +59,17 @@ export class PhasesService {
         } else {
           console.log(`${espnWeek.text} does not exist for season ${seasonId}`);
 
-          const phaseTemplate =
-            await this.phaseTemplatesService.findBySportLeagueAndLabel(
+          const phaseTemplate = await this.phaseTemplatesMutationService.create(
+            {
               sportLeagueId,
-              espnWeek.text,
-              tx,
-            );
-          if (!phaseTemplate) {
-            console.error(`Phase template not found for ${espnWeek.text}`);
-            continue;
-          }
+              label: espnWeek.text,
+              sequence: index + 1,
+              type: PHASE_TEMPLATE_TYPES.WEEK,
+            },
+            tx,
+          );
 
-          const insertedPhase = await this.phasesRepository.create(
+          const insertedPhase = await this.phasesMutationService.create(
             {
               seasonId,
               phaseTemplateId: phaseTemplate.id,
@@ -77,7 +80,7 @@ export class PhasesService {
             tx,
           );
 
-          await this.phasesRepository.createExternal(
+          await this.phasesMutationService.createExternal(
             {
               dataSourceId: dataSource.id,
               externalId: espnWeek.text,

@@ -37,6 +37,14 @@ import { LeagueInvitesMutationService } from "../features/leagueInvites/leagueIn
 import { ProfilesQueryService } from "../features/profiles/profiles.query.service";
 import { ProfilesMutationService } from "../features/profiles/profiles.mutation.service";
 import { LeaguesMutationService } from "../features/leagues/leagues.mutation.service";
+import { PhasesQueryService } from "../features/phases/phases.query.service";
+import { PhasesMutationService } from "../features/phases/phases.mutation.service";
+import { SeasonsQueryService } from "../features/seasons/seasons.query.service";
+import { SeasonsMutationService } from "../features/seasons/seasons.mutation.service";
+import { DataSourcesQueryService } from "../features/dataSources/dataSources.query.service";
+import { DataSourcesMutationService } from "../features/dataSources/dataSources.mutation.service";
+import { SportLeaguesQueryService } from "../features/sportLeagues/sportLeagues.query.service";
+import { SportLeaguesMutationService } from "../features/sportLeagues/sportLeagues.mutation.service";
 
 const container = new Container();
 
@@ -185,6 +193,22 @@ container
   .bind<PhaseTemplatesQueryService>(TYPES.PhaseTemplatesQueryService)
   .to(PhaseTemplatesQueryService)
   .inSingletonScope();
+container
+  .bind<PhasesQueryService>(TYPES.PhasesQueryService)
+  .to(PhasesQueryService)
+  .inSingletonScope();
+container
+  .bind<SeasonsQueryService>(TYPES.SeasonsQueryService)
+  .to(SeasonsQueryService)
+  .inSingletonScope();
+container
+  .bind<DataSourcesQueryService>(TYPES.DataSourcesQueryService)
+  .to(DataSourcesQueryService)
+  .inSingletonScope();
+container
+  .bind<SportLeaguesQueryService>(TYPES.SportLeaguesQueryService)
+  .to(SportLeaguesQueryService)
+  .inSingletonScope();
 
 // Mutation Services
 container
@@ -210,6 +234,22 @@ container
 container
   .bind<PhaseTemplatesMutationService>(TYPES.PhaseTemplatesMutationService)
   .to(PhaseTemplatesMutationService)
+  .inSingletonScope();
+container
+  .bind<PhasesMutationService>(TYPES.PhasesMutationService)
+  .to(PhasesMutationService)
+  .inSingletonScope();
+container
+  .bind<SeasonsMutationService>(TYPES.SeasonsMutationService)
+  .to(SeasonsMutationService)
+  .inSingletonScope();
+container
+  .bind<DataSourcesMutationService>(TYPES.DataSourcesMutationService)
+  .to(DataSourcesMutationService)
+  .inSingletonScope();
+container
+  .bind<SportLeaguesMutationService>(TYPES.SportLeaguesMutationService)
+  .to(SportLeaguesMutationService)
   .inSingletonScope();
 
 // Add other feature bindings here as we migrate them

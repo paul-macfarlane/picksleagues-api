@@ -1,4 +1,4 @@
-import { db } from "../../db";
+import { db, DBOrTx } from "../../db";
 import {
   CreateLeagueSchema,
   DBLeague,
@@ -22,6 +22,11 @@ import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types";
 import { LeaguesMutationService } from "./leagues.mutation.service";
 import { LeaguesQueryService } from "./leagues.query.service";
 import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service";
+import {
+  DBLeagueType,
+  LEAGUE_TYPE_SLUGS,
+  LeagueTypeIdSchema,
+} from "../leagueTypes/leagueTypes.types";
 
 @injectable()
 export class LeaguesService {
@@ -96,19 +101,31 @@ export class LeaguesService {
     });
   }
 
-  private async populateLeague(
-    league: DBLeague,
+  private async populateLeagues(
+    leagues: DBLeague[],
     query: z.infer<typeof LeagueIncludeSchema>,
-  ): Promise<PopulatedDBLeague> {
-    const populatedLeague: PopulatedDBLeague = league;
-    if (query?.include?.includes(LEAGUE_INCLUDES.LEAGUE_TYPE)) {
-      const leagueType = await this.leagueTypesQueryService.findById(
-        league.leagueTypeId,
-      );
-      populatedLeague.leagueType = leagueType ?? undefined;
+    dbOrTx?: DBOrTx,
+  ): Promise<PopulatedDBLeague[]> {
+    const populatedLeagues: PopulatedDBLeague[] = leagues;
+
+    const leagueTypeByIdMap = new Map<string, DBLeagueType>();
+    for (const league of populatedLeagues) {
+      if (query?.include?.includes(LEAGUE_INCLUDES.LEAGUE_TYPE)) {
+        let leagueType = leagueTypeByIdMap.get(league.leagueTypeId) ?? null;
+        if (!leagueType) {
+          leagueType = await this.leagueTypesQueryService.findById(
+            league.leagueTypeId,
+            dbOrTx,
+          );
+          if (leagueType) {
+            leagueTypeByIdMap.set(league.leagueTypeId, leagueType);
+          }
+        }
+        league.leagueType = leagueTypeByIdMap.get(league.leagueTypeId);
+      }
     }
 
-    return populatedLeague;
+    return populatedLeagues;
   }
 
   async getByIdForUser(
@@ -130,6 +147,50 @@ export class LeaguesService {
       throw new ForbiddenError("You are not a member of this league");
     }
 
-    return this.populateLeague(league, query);
+    const populatedLeague = await this.populateLeagues([league], query);
+    return populatedLeague[0];
+  }
+
+  async listByUserIdAndLeagueTypeIdOrSlug(
+    userId: string,
+    typeIdOrSlug: string,
+    query: z.infer<typeof LeagueIncludeSchema>,
+    dbOrTx?: DBOrTx,
+  ): Promise<PopulatedDBLeague[]> {
+    const isId = LeagueTypeIdSchema.safeParse(typeIdOrSlug).success;
+
+    let leagueType: DBLeagueType | null = null;
+    if (isId) {
+      leagueType = await this.leagueTypesQueryService.findById(
+        typeIdOrSlug,
+        dbOrTx,
+      );
+    } else {
+      leagueType = await this.leagueTypesQueryService.findBySlug(
+        typeIdOrSlug as LEAGUE_TYPE_SLUGS,
+        dbOrTx,
+      );
+    }
+
+    if (!leagueType) {
+      throw new NotFoundError("League type not found");
+    }
+
+    let leagues: DBLeague[] = [];
+    if (isId) {
+      leagues = await this.leaguesQueryService.listByUserIdAndLeagueTypeId(
+        userId,
+        leagueType.id,
+        dbOrTx,
+      );
+    } else {
+      leagues = await this.leaguesQueryService.listByUserIdAndLeagueTypeSlug(
+        userId,
+        leagueType.slug,
+        dbOrTx,
+      );
+    }
+
+    return this.populateLeagues(leagues, query, dbOrTx);
   }
 }

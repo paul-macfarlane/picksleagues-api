@@ -1,8 +1,13 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
-import { leagueMembersTable, leaguesTable } from "../../db/schema";
+import {
+  leagueMembersTable,
+  leaguesTable,
+  leagueTypesTable,
+} from "../../db/schema";
 import { DBLeague, DBLeagueInsert } from "./leagues.types";
+import { LEAGUE_TYPE_SLUGS } from "../leagueTypes/leagueTypes.types";
 
 @injectable()
 export class LeaguesRepository {
@@ -61,5 +66,55 @@ export class LeaguesRepository {
       .from(leaguesTable)
       .where(inArray(leaguesTable.id, leagueIds));
     return leagues;
+  }
+
+  async listByUserIdAndLeagueTypeId(
+    userId: string,
+    leagueTypeId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBLeague[]> {
+    const result = await dbOrTx
+      .select({
+        league: leaguesTable,
+      })
+      .from(leaguesTable)
+      .innerJoin(
+        leagueMembersTable,
+        eq(leaguesTable.id, leagueMembersTable.leagueId),
+      )
+      .where(
+        and(
+          eq(leaguesTable.leagueTypeId, leagueTypeId),
+          eq(leagueMembersTable.userId, userId),
+        ),
+      );
+    return result.map((row) => row.league);
+  }
+
+  async listByUserIdAndLeagueTypeSlug(
+    userId: string,
+    leagueTypeSlug: LEAGUE_TYPE_SLUGS,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBLeague[]> {
+    const result = await dbOrTx
+      .select({
+        league: leaguesTable,
+      })
+      .from(leaguesTable)
+      .innerJoin(
+        leagueTypesTable,
+        eq(leaguesTable.leagueTypeId, leagueTypesTable.id),
+      )
+      .innerJoin(
+        leagueMembersTable,
+        eq(leaguesTable.id, leagueMembersTable.leagueId),
+      )
+      .where(
+        and(
+          eq(leagueTypesTable.slug, leagueTypeSlug),
+          eq(leagueMembersTable.userId, userId),
+        ),
+      );
+    return result.map((row) => row.league);
   }
 }

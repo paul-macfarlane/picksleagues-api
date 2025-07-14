@@ -1,37 +1,45 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
 import { db } from "../../db";
-import { SeasonsRepository } from "./seasons.repository";
-import { DataSourcesService } from "../dataSources/dataSources.service";
 import { PhasesService } from "../phases/phases.service";
 import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
-import { SportLeaguesRepository } from "../sportLeagues/sportLeagues.repository";
 import { EspnService } from "../../integrations/espn/espn.service";
 import {
   ESPN_DESIRED_LEAGUES,
   ESPN_SEASON_TYPES,
 } from "../../integrations/espn/espn.types";
+import { SeasonsQueryService } from "./seasons.query.service";
+import { SeasonsMutationService } from "./seasons.mutation.service";
+import { DataSourcesQueryService } from "../dataSources/dataSources.query.service";
+import { NotFoundError } from "../../lib/errors";
+import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service";
 
 @injectable()
 export class SeasonsService {
   constructor(
-    @inject(TYPES.SeasonsRepository)
-    private seasonsRepository: SeasonsRepository,
-    @inject(TYPES.DataSourcesService)
-    private dataSourcesService: DataSourcesService,
+    @inject(TYPES.DataSourcesQueryService)
+    private dataSourcesQueryService: DataSourcesQueryService,
+    // todo this can be refactored so that phases are their own cron, that way the seasons service doens't need to use the phases service
     @inject(TYPES.PhasesService)
     private phasesService: PhasesService,
-    @inject(TYPES.SportLeaguesRepository)
-    private sportLeaguesRepository: SportLeaguesRepository,
+    @inject(TYPES.SportLeaguesQueryService)
+    private sportLeaguesQueryService: SportLeaguesQueryService,
     @inject(TYPES.EspnService)
     private espnService: EspnService,
+    @inject(TYPES.SeasonsQueryService)
+    private seasonsQueryService: SeasonsQueryService,
+    @inject(TYPES.SeasonsMutationService)
+    private seasonsMutationService: SeasonsMutationService,
   ) {}
 
   async syncSeasons() {
-    return await db.transaction(async (tx) => {
-      const dataSource = await this.dataSourcesService.getByName(
+    return db.transaction(async (tx) => {
+      const dataSource = await this.dataSourcesQueryService.findByName(
         DATA_SOURCE_NAMES.ESPN,
       );
+      if (!dataSource) {
+        throw new NotFoundError("ESPN data source not found");
+      }
 
       for (const desiredLeague of ESPN_DESIRED_LEAGUES) {
         const espnLeagueSeasons = await this.espnService.getESPNLeagueSeasons(
@@ -44,13 +52,13 @@ export class SeasonsService {
 
         for (const externalSeason of espnLeagueSeasons) {
           const existingExternalSeason =
-            await this.seasonsRepository.findExternalBySourceAndId(
+            await this.seasonsQueryService.findExternalBySourceAndId(
               dataSource.id,
               externalSeason.displayName,
               tx,
             );
           if (existingExternalSeason) {
-            const updatedSeason = await this.seasonsRepository.update(
+            const updatedSeason = await this.seasonsMutationService.update(
               existingExternalSeason.seasonId,
               {
                 name: externalSeason.displayName,
@@ -64,7 +72,7 @@ export class SeasonsService {
             sportLeagueId = updatedSeason.sportLeagueId;
             seasonId = updatedSeason.id;
 
-            await this.seasonsRepository.updateExternal(
+            await this.seasonsMutationService.updateExternal(
               dataSource.id,
               externalSeason.displayName,
               {
@@ -77,7 +85,7 @@ export class SeasonsService {
             );
           } else {
             const externalSportLeague =
-              await this.sportLeaguesRepository.findExternalBySourceAndMetadata(
+              await this.sportLeaguesQueryService.findExternalBySourceAndMetadata(
                 dataSource.id,
                 {
                   slug: desiredLeague.leagueSlug,
@@ -91,7 +99,7 @@ export class SeasonsService {
               continue;
             }
 
-            const insertedSeason = await this.seasonsRepository.create(
+            const insertedSeason = await this.seasonsMutationService.create(
               {
                 name: externalSeason.displayName,
                 year: externalSeason.year.toString(),
@@ -105,7 +113,7 @@ export class SeasonsService {
             sportLeagueId = insertedSeason.sportLeagueId;
             seasonId = insertedSeason.id;
 
-            await this.seasonsRepository.createExternal(
+            await this.seasonsMutationService.createExternal(
               {
                 dataSourceId: dataSource.id,
                 externalId: externalSeason.displayName,
@@ -138,6 +146,7 @@ export class SeasonsService {
               ...postSeasonESPNWeeks.filter((week) => week.text !== "Pro Bowl"),
             ];
 
+            // todo this can be refactored so that phases are their own cron, that way the seasons service doens't need to use the phases service
             await this.phasesService.syncPhases(
               sportLeagueId,
               seasonId,

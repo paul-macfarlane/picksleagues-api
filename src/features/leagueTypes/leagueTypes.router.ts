@@ -6,6 +6,7 @@ import { LeaguesService } from "../leagues/leagues.service";
 import { PhaseTemplatesService } from "../phaseTemplates/phaseTemplates.service";
 import { LeagueTypesService } from "./leagueTypes.service";
 import { requireAuth } from "../../lib/auth.middleware";
+import { LeagueIncludeSchema } from "../leagues/leagues.types";
 
 const router = Router();
 const leagueTypesService = container.get<LeagueTypesService>(
@@ -20,10 +21,12 @@ router.use(requireAuth);
 
 router.get("/:typeIdOrSlug/my-leagues", async (req: Request, res: Response) => {
   const typeIdOrSlug = LeagueTypeIdOrSlugSchema.parse(req.params.typeIdOrSlug);
+  const query = LeagueIncludeSchema.parse(req.query);
 
-  const leagues = await leaguesService.listForUserByIdAndLeagueTypeIdOrSlug(
+  const leagues = await leaguesService.listByUserIdAndLeagueTypeIdOrSlug(
     req.user!.id,
     typeIdOrSlug,
+    query,
   );
   res.status(200).json(leagues);
 });

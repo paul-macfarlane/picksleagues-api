@@ -3,6 +3,7 @@ import { DBOrTx } from "../../db";
 import { TYPES } from "../../lib/inversify.types";
 import { LeaguesRepository } from "./leagues.repository";
 import { DBLeague } from "./leagues.types";
+import { LEAGUE_TYPE_SLUGS } from "../leagueTypes/leagueTypes.types";
 
 @injectable()
 export class LeaguesQueryService {
@@ -17,5 +18,29 @@ export class LeaguesQueryService {
 
   async listByIds(leagueIds: string[], dbOrTx?: DBOrTx): Promise<DBLeague[]> {
     return this.leaguesRepository.listByIds(leagueIds, dbOrTx);
+  }
+
+  async listByUserIdAndLeagueTypeId(
+    userId: string,
+    typeIdOrSlug: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBLeague[]> {
+    return this.leaguesRepository.listByUserIdAndLeagueTypeId(
+      userId,
+      typeIdOrSlug,
+      dbOrTx,
+    );
+  }
+
+  async listByUserIdAndLeagueTypeSlug(
+    userId: string,
+    leagueTypeSlug: LEAGUE_TYPE_SLUGS,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBLeague[]> {
+    return this.leaguesRepository.listByUserIdAndLeagueTypeSlug(
+      userId,
+      leagueTypeSlug,
+      dbOrTx,
+    );
   }
 }

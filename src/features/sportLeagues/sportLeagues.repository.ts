@@ -82,7 +82,7 @@ export class SportLeaguesRepository {
     sourceId: string,
     externalId: string,
     dbOrTx: DBOrTx = db,
-  ): Promise<DBExternalSportLeague | undefined> {
+  ): Promise<DBExternalSportLeague | null> {
     const [externalSportLeague] = await dbOrTx
       .select()
       .from(externalSportLeaguesTable)
