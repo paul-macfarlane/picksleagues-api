@@ -24,9 +24,9 @@ import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mut
 import { UsersQueryService } from "../users/users.query.service";
 import { LeagueInvitesMutationService } from "./leagueInvites.mutation.service";
 import { LeagueInvitesQueryService } from "./leagueInvites.query.service";
-import { DBLeague } from "../leagues/leagues.types";
 import { LeaguesQueryService } from "../leagues/leagues.query.service";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
+import { ProfilesQueryService } from "../profiles/profiles.query.service";
 
 @injectable()
 export class LeagueInvitesService {
@@ -45,6 +45,8 @@ export class LeagueInvitesService {
     private leaguesQueryService: LeaguesQueryService,
     @inject(TYPES.LeagueTypesQueryService)
     private leagueTypesQueryService: LeagueTypesQueryService,
+    @inject(TYPES.ProfilesQueryService)
+    private profilesQueryService: ProfilesQueryService,
   ) {}
 
   // Orchestration Methods (Mutations)
@@ -314,13 +316,32 @@ export class LeagueInvitesService {
 
     const populatedInvites: PopulatedDBLeagueInvite[] = invites;
     const includes = new Set(query.include);
-    let leagues: DBLeague[] = [];
 
-    if (includes.has("league")) {
+    if (includes.has(LEAGUE_INVITE_INCLUDES.INVITEE)) {
+      const inviteeIds = populatedInvites
+        .map((invite) => invite.inviteeId)
+        .filter((id): id is string => !!id);
+      const profiles = await this.profilesQueryService.listByUserIds(
+        inviteeIds,
+        dbOrTx,
+      );
+      const profilesById = new Map(profiles.map((p) => [p.userId, p]));
+
+      for (const invite of populatedInvites) {
+        if (invite.inviteeId) {
+          invite.invitee = profilesById.get(invite.inviteeId);
+        }
+      }
+    }
+
+    if (includes.has(LEAGUE_INVITE_INCLUDES.LEAGUE)) {
       const leagueIds = populatedInvites
         .map((invite) => invite.leagueId)
         .filter((id): id is string => !!id);
-      leagues = await this.leaguesQueryService.listByIds(leagueIds, dbOrTx);
+      const leagues = await this.leaguesQueryService.listByIds(
+        leagueIds,
+        dbOrTx,
+      );
       const leaguesById = new Map(leagues.map((l) => [l.id, l]));
 
       for (const invite of populatedInvites) {
@@ -328,24 +349,24 @@ export class LeagueInvitesService {
           invite.league = leaguesById.get(invite.leagueId);
         }
       }
-    }
 
-    if (includes.has(LEAGUE_INVITE_INCLUDES.LEAGUE_TYPE)) {
-      const leagueTypeIds = leagues
-        .map((l) => l.leagueTypeId)
-        .filter((id): id is string => !!id);
+      if (includes.has(LEAGUE_INVITE_INCLUDES.LEAGUE_TYPE)) {
+        const leagueTypeIds = leagues
+          .map((l) => l.leagueTypeId)
+          .filter((id): id is string => !!id);
 
-      const leagueTypes = await this.leagueTypesQueryService.listByIds(
-        leagueTypeIds,
-        dbOrTx,
-      );
-      const leagueTypesById = new Map(leagueTypes.map((lt) => [lt.id, lt]));
+        const leagueTypes = await this.leagueTypesQueryService.listByIds(
+          leagueTypeIds,
+          dbOrTx,
+        );
+        const leagueTypesById = new Map(leagueTypes.map((lt) => [lt.id, lt]));
 
-      for (const invite of populatedInvites) {
-        if (invite.league) {
-          invite.league.leagueType = leagueTypesById.get(
-            invite.league.leagueTypeId,
-          );
+        for (const invite of populatedInvites) {
+          if (invite.league) {
+            invite.league.leagueType = leagueTypesById.get(
+              invite.league.leagueTypeId,
+            );
+          }
         }
       }
     }

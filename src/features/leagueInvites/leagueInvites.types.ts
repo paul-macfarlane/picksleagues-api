@@ -2,6 +2,7 @@ import { leagueInvitesTable } from "../../db/schema";
 import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types";
 import { PopulatedDBLeague } from "../leagues/leagues.types";
 import { z } from "zod";
+import { DBProfile } from "../profiles/profiles.types";
 
 // Constants
 
@@ -23,11 +24,10 @@ export const MIN_LEAGUE_INVITE_EXPIRATION_DAYS = 1;
 export const MAX_LEAGUE_INVITE_EXPIRATION_DAYS = 30;
 
 export enum LEAGUE_INVITE_INCLUDES {
+  INVITEE = "invitee",
   LEAGUE = "league",
   LEAGUE_TYPE = "league.leagueType",
 }
-
-// DB Types
 
 export type DBLeagueInvite = typeof leagueInvitesTable.$inferSelect;
 
@@ -36,6 +36,7 @@ export type DBLeagueInviteInsert = typeof leagueInvitesTable.$inferInsert;
 export type DBLeagueInviteUpdate = Partial<DBLeagueInviteInsert>;
 
 export type PopulatedDBLeagueInvite = DBLeagueInvite & {
+  invitee?: DBProfile;
   league?: PopulatedDBLeague;
 };
 
@@ -44,26 +45,19 @@ export type PopulatedDBLeagueInvite = DBLeagueInvite & {
 export const LeagueInviteIdSchema = z.string().trim().uuid();
 
 export const LeagueInviteTokenSchema = z.string().trim().uuid();
-const allowedInviteIncludes = Object.values(LEAGUE_INVITE_INCLUDES) as [
-  string,
-  ...string[],
-];
 
 export const LeagueInviteIncludeSchema = z
   .object({
     include: z
       .string()
       .transform((val) => val.split(","))
-      .pipe(z.array(z.enum(allowedInviteIncludes)))
-      .transform((includes) => {
-        const includeSet = new Set(includes);
-        if (includeSet.has("league.leagueType")) {
-          includeSet.add("league");
-        }
-        return Array.from(
-          includeSet,
-        ) as (typeof allowedInviteIncludes)[number][];
-      })
+      .pipe(
+        z.array(
+          z.enum(
+            Object.values(LEAGUE_INVITE_INCLUDES) as [string, ...string[]],
+          ),
+        ),
+      )
       .optional(),
   })
   .optional();

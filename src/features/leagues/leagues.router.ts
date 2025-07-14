@@ -34,7 +34,6 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
 router.get("/:leagueId", async (req: Request, res: Response): Promise<void> => {
   const leagueId = LeagueIdSchema.parse(req.params.leagueId);
   const query = LeagueIncludeSchema.parse(req.query);
-
   const league = await leaguesService.getByIdForUser(req.user!.id, leagueId, {
     include: query?.include,
   });
@@ -47,7 +46,11 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     const leagueId = LeagueIdSchema.parse(req.params.leagueId);
     const query = LeagueMemberIncludeSchema.parse(req.query);
-    const members = await leagueMembersService.listByLeagueId(leagueId, query);
+    const members = await leagueMembersService.listByLeagueIdForUser(
+      req.user!.id,
+      leagueId,
+      query,
+    );
 
     res.status(200).json(members);
   },

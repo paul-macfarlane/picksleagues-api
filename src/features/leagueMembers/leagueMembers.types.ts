@@ -12,10 +12,6 @@ export enum LEAGUE_MEMBER_INCLUDES {
   PROFILE = "profile",
 }
 
-export const LEAGUE_MEMBER_INCLUDES_ARRAY = Object.values(
-  LEAGUE_MEMBER_INCLUDES,
-) as [string, ...string[]];
-
 // DB Types
 export type DBLeagueMember = typeof leagueMembersTable.$inferSelect;
 
@@ -38,7 +34,13 @@ export const LeagueMemberIncludeSchema = z
     include: z
       .string()
       .transform((val) => val.split(","))
-      .pipe(z.array(z.enum(LEAGUE_MEMBER_INCLUDES_ARRAY)))
+      .pipe(
+        z.array(
+          z.enum(
+            Object.values(LEAGUE_MEMBER_INCLUDES) as [string, ...string[]],
+          ),
+        ),
+      )
       .optional(),
   })
   .optional();

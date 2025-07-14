@@ -8,7 +8,9 @@ import {
 } from "./leagueMembers.types";
 import { LeagueMembersQueryService } from "./leagueMembers.query.service";
 import { ProfilesQueryService } from "../profiles/profiles.query.service";
+import { LeaguesQueryService } from "../leagues/leagues.query.service";
 import { TYPES } from "../../lib/inversify.types";
+import { NotFoundError } from "../../lib/errors";
 
 @injectable()
 export class LeagueMembersService {
@@ -17,6 +19,8 @@ export class LeagueMembersService {
     private leagueMembersQueryService: LeagueMembersQueryService,
     @inject(TYPES.ProfilesQueryService)
     private profilesQueryService: ProfilesQueryService,
+    @inject(TYPES.LeaguesQueryService)
+    private leaguesQueryService: LeaguesQueryService,
   ) {}
 
   private async populateMembers(
@@ -41,10 +45,24 @@ export class LeagueMembersService {
     return populatedMembers;
   }
 
-  async listByLeagueId(
+  async listByLeagueIdForUser(
+    userId: string,
     leagueId: string,
     query: z.infer<typeof LeagueMemberIncludeSchema>,
   ): Promise<PopulatedDBLeagueMember[]> {
+    const league = await this.leaguesQueryService.findById(leagueId);
+    if (!league) {
+      throw new NotFoundError("League not found");
+    }
+
+    const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
+      leagueId,
+      userId,
+    );
+    if (!member) {
+      throw new NotFoundError("User is not a member of the league");
+    }
+
     const members =
       await this.leagueMembersQueryService.listByLeagueId(leagueId);
 
