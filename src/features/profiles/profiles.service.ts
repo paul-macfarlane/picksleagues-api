@@ -1,49 +1,27 @@
-import { db } from "../../db";
-import { ProfilesRepository } from "./profiles.repository";
+import { db, DBOrTx } from "../../db";
 import {
   DBProfile,
   DBProfileUpdate,
+  MAX_USERNAME_LENGTH,
   SearchProfilesSchema,
 } from "./profiles.types";
-import { z } from "zod";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors";
 import { generateFromEmail } from "unique-username-generator";
-import { MAX_USERNAME_LENGTH } from "./profiles.types";
 import { DBUser } from "../users/users.types";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
+import { ProfilesQueryService } from "./profiles.query.service";
+import { ProfilesMutationService } from "./profiles.mutation.service";
+import { z } from "zod";
 
 @injectable()
 export class ProfilesService {
-  private profilesRepository: ProfilesRepository;
-
   constructor(
-    @inject(TYPES.ProfilesRepository) profilesRepository: ProfilesRepository,
-  ) {
-    this.profilesRepository = profilesRepository;
-  }
-
-  async search(
-    query: z.infer<typeof SearchProfilesSchema>,
-  ): Promise<DBProfile[]> {
-    if (!query.username && !query.firstName && !query.lastName) {
-      return [];
-    }
-    return await this.profilesRepository.searchProfiles(query, 10);
-  }
-
-  async findByUserId(userId: string): Promise<DBProfile | null> {
-    return await this.profilesRepository.findByUserId(userId);
-  }
-
-  async getByUserId(userId: string): Promise<DBProfile> {
-    const profile = await this.findByUserId(userId);
-    if (!profile) {
-      throw new NotFoundError("Profile not found");
-    }
-
-    return profile;
-  }
+    @inject(TYPES.ProfilesQueryService)
+    private profilesQueryService: ProfilesQueryService,
+    @inject(TYPES.ProfilesMutationService)
+    private profilesMutationService: ProfilesMutationService,
+  ) {}
 
   async update(
     actingUserId: string,
@@ -55,10 +33,8 @@ export class ProfilesService {
     }
 
     return await db.transaction(async (tx) => {
-      const existingProfile = await this.profilesRepository.findByUserId(
-        targetUserId,
-        tx,
-      );
+      const existingProfile =
+        await this.profilesQueryService.findByUserId(targetUserId);
       if (!existingProfile) {
         throw new NotFoundError("Profile not found");
       }
@@ -67,7 +43,7 @@ export class ProfilesService {
         profileData.username &&
         profileData.username !== existingProfile.username
       ) {
-        const usernameIsTaken = await this.profilesRepository.isUsernameTaken(
+        const usernameIsTaken = await this.profilesQueryService.isUsernameTaken(
           profileData.username,
           tx,
         );
@@ -76,11 +52,7 @@ export class ProfilesService {
         }
       }
 
-      return await this.profilesRepository.update(
-        targetUserId,
-        profileData,
-        tx,
-      );
+      return this.profilesMutationService.update(targetUserId, profileData, tx);
     });
   }
 
@@ -88,7 +60,7 @@ export class ProfilesService {
     user: DBUser,
   ): Promise<{ status: "exists" | "created"; profile: DBProfile }> {
     return await db.transaction(async (tx) => {
-      const existingProfile = await this.profilesRepository.findByUserId(
+      const existingProfile = await this.profilesQueryService.findByUserId(
         user.id,
         tx,
       );
@@ -100,7 +72,7 @@ export class ProfilesService {
         MAX_USERNAME_LENGTH,
       );
       let i = 1;
-      while (await this.profilesRepository.isUsernameTaken(username, tx)) {
+      while (await this.profilesQueryService.isUsernameTaken(username, tx)) {
         username = generateFromEmail(user.email, i).slice(
           0,
           MAX_USERNAME_LENGTH,
@@ -111,7 +83,7 @@ export class ProfilesService {
       const guessFirstName = user.name?.split(" ")[0] ?? "First";
       const guessLastName = user.name?.split(" ")[1] ?? "Last";
 
-      const newProfile = await this.profilesRepository.create(
+      const newProfile = await this.profilesMutationService.create(
         {
           userId: user.id,
           username,
@@ -124,5 +96,28 @@ export class ProfilesService {
 
       return { status: "created", profile: newProfile };
     });
+  }
+
+  async search(
+    query: z.infer<typeof SearchProfilesSchema>,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBProfile[]> {
+    if (!query.username && !query.firstName && !query.lastName) {
+      return [];
+    }
+
+    return this.profilesQueryService.search(query, dbOrTx);
+  }
+
+  async getByUserId(userId: string, dbOrTx?: DBOrTx): Promise<DBProfile> {
+    const profile = await this.profilesQueryService.findByUserId(
+      userId,
+      dbOrTx,
+    );
+    if (!profile) {
+      throw new NotFoundError("Profile not found");
+    }
+
+    return profile;
   }
 }

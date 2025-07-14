@@ -8,23 +8,37 @@ export enum LEAGUE_MEMBER_ROLES {
   MEMBER = "member",
 }
 
-export const LeagueMemberIncludeSchema = z
-  .object({
-    include: z
-      .string()
-      .transform((val) => val.split(","))
-      .pipe(z.array(z.enum(["profile"])))
-      .optional(),
-  })
-  .optional();
+export enum LEAGUE_MEMBER_INCLUDES {
+  PROFILE = "profile",
+}
+
+export const LEAGUE_MEMBER_INCLUDES_ARRAY = Object.values(
+  LEAGUE_MEMBER_INCLUDES,
+) as [string, ...string[]];
 
 // DB Types
 export type DBLeagueMember = typeof leagueMembersTable.$inferSelect;
+
+export type DBLeagueMemberWithProfile = DBLeagueMember & {
+  profile: DBProfile;
+};
 
 export type DBLeagueMemberInsert = typeof leagueMembersTable.$inferInsert;
 
 export type DBLeagueMemberUpdate = Partial<DBLeagueMemberInsert>;
 
-export type DBLeagueMemberWithProfile = DBLeagueMember & {
-  profile: DBProfile;
+export type PopulatedDBLeagueMember = DBLeagueMember & {
+  profile?: DBProfile;
 };
+
+// Validation Schemas
+
+export const LeagueMemberIncludeSchema = z
+  .object({
+    include: z
+      .string()
+      .transform((val) => val.split(","))
+      .pipe(z.array(z.enum(LEAGUE_MEMBER_INCLUDES_ARRAY)))
+      .optional(),
+  })
+  .optional();

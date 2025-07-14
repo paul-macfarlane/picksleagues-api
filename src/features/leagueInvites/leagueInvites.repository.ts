@@ -1,18 +1,13 @@
 import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
-import {
-  leagueInvitesTable,
-  leaguesTable,
-  leagueTypesTable,
-} from "../../db/schema";
+import { leagueInvitesTable } from "../../db/schema";
 import {
   DBLeagueInvite,
   DBLeagueInviteInsert,
   DBLeagueInviteUpdate,
   LEAGUE_INVITE_STATUSES,
   LEAGUE_INVITE_TYPES,
-  DBLeagueInviteWithLeagueAndType,
 } from "./leagueInvites.types";
 
 @injectable()
@@ -52,23 +47,14 @@ export class LeagueInvitesRepository {
     return invites[0] ?? null;
   }
 
-  async listWithLeagueAndTypeByInviteeIdAndOptionalStatus(
+  async listByInviteeId(
     inviteeId: string,
     status: LEAGUE_INVITE_STATUSES | undefined,
     dbOrTx: DBOrTx = db,
-  ): Promise<DBLeagueInviteWithLeagueAndType[]> {
+  ): Promise<DBLeagueInvite[]> {
     const invites = await dbOrTx
-      .select({
-        league: leaguesTable,
-        invite: leagueInvitesTable,
-        leagueType: leagueTypesTable,
-      })
+      .select()
       .from(leagueInvitesTable)
-      .innerJoin(leaguesTable, eq(leagueInvitesTable.leagueId, leaguesTable.id))
-      .innerJoin(
-        leagueTypesTable,
-        eq(leaguesTable.leagueTypeId, leagueTypesTable.id),
-      )
       .where(
         and(
           eq(leagueInvitesTable.inviteeId, inviteeId),
@@ -76,29 +62,16 @@ export class LeagueInvitesRepository {
         ),
       );
 
-    return invites.map((invite) => ({
-      ...invite.invite,
-      league: invite.league,
-      leagueType: invite.leagueType,
-    }));
+    return invites;
   }
 
-  async listWithLeagueAndTypeByLeagueId(
+  async listActiveByLeagueId(
     leagueId: string,
     dbOrTx: DBOrTx = db,
-  ): Promise<DBLeagueInviteWithLeagueAndType[]> {
+  ): Promise<DBLeagueInvite[]> {
     const invites = await dbOrTx
-      .select({
-        league: leaguesTable,
-        invite: leagueInvitesTable,
-        leagueType: leagueTypesTable,
-      })
+      .select()
       .from(leagueInvitesTable)
-      .innerJoin(leaguesTable, eq(leagueInvitesTable.leagueId, leaguesTable.id))
-      .innerJoin(
-        leagueTypesTable,
-        eq(leaguesTable.leagueTypeId, leagueTypesTable.id),
-      )
       .where(
         and(
           eq(leagueInvitesTable.leagueId, leagueId),
@@ -113,11 +86,7 @@ export class LeagueInvitesRepository {
         ),
       );
 
-    return invites.map((invite) => ({
-      ...invite.invite,
-      league: invite.league,
-      leagueType: invite.leagueType,
-    }));
+    return invites;
   }
 
   async delete(inviteId: string, dbOrTx: DBOrTx = db): Promise<void> {
@@ -154,33 +123,5 @@ export class LeagueInvitesRepository {
       .from(leagueInvitesTable)
       .where(eq(leagueInvitesTable.token, token));
     return invites[0] ?? null;
-  }
-
-  async findWithLeagueAndTypeByToken(
-    token: string,
-    dbOrTx: DBOrTx = db,
-  ): Promise<DBLeagueInviteWithLeagueAndType | null> {
-    const invites = await dbOrTx
-      .select({
-        league: leaguesTable,
-        invite: leagueInvitesTable,
-        leagueType: leagueTypesTable,
-      })
-      .from(leagueInvitesTable)
-      .innerJoin(leaguesTable, eq(leagueInvitesTable.leagueId, leaguesTable.id))
-      .innerJoin(
-        leagueTypesTable,
-        eq(leaguesTable.leagueTypeId, leagueTypesTable.id),
-      )
-      .where(eq(leagueInvitesTable.token, token));
-    if (invites.length === 0) {
-      return null;
-    }
-
-    return {
-      ...invites[0].invite,
-      league: invites[0].league,
-      leagueType: invites[0].leagueType,
-    };
   }
 }

@@ -65,4 +65,8 @@ export class LeagueTypesService {
 
     return leagueType;
   }
+
+  async listByIds(leagueTypeIds: string[]): Promise<DBLeagueType[]> {
+    return await this.leagueTypesRepository.listByIds(leagueTypeIds);
+  }
 }

@@ -5,6 +5,7 @@ import { LeagueInvitesService } from "./leagueInvites.service";
 import {
   CreateLeagueInviteSchema,
   LeagueInviteIdSchema,
+  LeagueInviteIncludeSchema,
   LeagueInviteTokenSchema,
   RespondToLeagueInviteSchema,
 } from "./leagueInvites.types";
@@ -49,11 +50,12 @@ leagueInvitesRouter.get(
   "/my-invites",
   requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    const invites =
-      await leagueInvitesService.listPendingByUserIdWithLeagueAndType(
-        req.user!.id,
-      );
-    res.status(200).json(invites);
+    const query = LeagueInviteIncludeSchema.parse(req.query);
+    const invites = await leagueInvitesService.getMyInvites(
+      req.user!.id,
+      query,
+    );
+    res.status(200).json({ invites });
   },
 );
 
@@ -73,9 +75,12 @@ leagueInvitesRouter.get(
   "/token/:token",
   async (req: Request, res: Response): Promise<void> => {
     const parseToken = LeagueInviteTokenSchema.parse(req.params.token);
+    const query = LeagueInviteIncludeSchema.parse(req.query);
 
-    const invite =
-      await leagueInvitesService.getByTokenWithLeagueAndType(parseToken);
+    const invite = await leagueInvitesService.getInviteByToken(
+      parseToken,
+      query,
+    );
     res.status(200).json(invite);
   },
 );

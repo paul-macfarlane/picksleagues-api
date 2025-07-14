@@ -1,12 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
-import { leagueMembersTable, profilesTable } from "../../db/schema";
-import {
-  DBLeagueMember,
-  DBLeagueMemberInsert,
-  DBLeagueMemberWithProfile,
-} from "./leagueMembers.types";
+import { leagueMembersTable } from "../../db/schema";
+import { DBLeagueMember, DBLeagueMemberInsert } from "./leagueMembers.types";
 
 @injectable()
 export class LeagueMembersRepository {
@@ -23,27 +19,8 @@ export class LeagueMembersRepository {
 
   async listByLeagueId(
     leagueId: string,
-    options?: { include?: "profile"[] },
     dbOrTx: DBOrTx = db,
-  ): Promise<(DBLeagueMember | DBLeagueMemberWithProfile)[]> {
-    if (options?.include?.includes("profile")) {
-      const members = await dbOrTx
-        .select({
-          leagueMember: leagueMembersTable,
-          profile: profilesTable,
-        })
-        .from(leagueMembersTable)
-        .where(eq(leagueMembersTable.leagueId, leagueId))
-        .innerJoin(
-          profilesTable,
-          eq(leagueMembersTable.userId, profilesTable.userId),
-        );
-      return members.map((member) => ({
-        ...member.leagueMember,
-        profile: member.profile,
-      }));
-    }
-
+  ): Promise<DBLeagueMember[]> {
     return await dbOrTx
       .select()
       .from(leagueMembersTable)

@@ -9,9 +9,18 @@ import { TYPES } from "../../lib/inversify.types";
 import { LeaguesService } from "./leagues.service";
 import { requireAuth } from "../../lib/auth.middleware";
 import { LeagueMemberIncludeSchema } from "../leagueMembers/leagueMembers.types";
+import { LeagueMembersService } from "../leagueMembers/leagueMembers.service";
+import { LeagueInviteIncludeSchema } from "../leagueInvites/leagueInvites.types";
+import { LeagueInvitesService } from "../leagueInvites/leagueInvites.service";
 
 const router = Router();
 const leaguesService = container.get<LeaguesService>(TYPES.LeaguesService);
+const leagueMembersService = container.get<LeagueMembersService>(
+  TYPES.LeagueMembersService,
+);
+const leagueInvitesService = container.get<LeagueInvitesService>(
+  TYPES.LeagueInvitesService,
+);
 
 router.use(requireAuth);
 
@@ -26,7 +35,7 @@ router.get("/:leagueId", async (req: Request, res: Response): Promise<void> => {
   const leagueId = LeagueIdSchema.parse(req.params.leagueId);
   const query = LeagueIncludeSchema.parse(req.query);
 
-  const league = await leaguesService.getForUserById(req.user!.id, leagueId, {
+  const league = await leaguesService.getByIdForUser(req.user!.id, leagueId, {
     include: query?.include,
   });
 
@@ -38,11 +47,7 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     const leagueId = LeagueIdSchema.parse(req.params.leagueId);
     const query = LeagueMemberIncludeSchema.parse(req.query);
-    const members = await leaguesService.listMembersForUserById(
-      req.user!.id,
-      leagueId,
-      { include: query?.include },
-    );
+    const members = await leagueMembersService.listByLeagueId(leagueId, query);
 
     res.status(200).json(members);
   },
@@ -52,11 +57,12 @@ router.get(
   "/:leagueId/invites",
   async (req: Request, res: Response): Promise<void> => {
     const leagueId = LeagueIdSchema.parse(req.params.leagueId);
-    const invites =
-      await leaguesService.listPendingInvitesForUserByIdWithLeagueAndType(
-        req.user!.id,
-        leagueId,
-      );
+    const query = LeagueInviteIncludeSchema.parse(req.query);
+    const invites = await leagueInvitesService.listByLeagueIdForUser(
+      req.user!.id,
+      leagueId,
+      query,
+    );
 
     res.status(200).json(invites);
   },
