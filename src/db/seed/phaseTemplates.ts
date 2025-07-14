@@ -2,7 +2,6 @@ import { PhaseTemplatesService } from "../../features/phaseTemplates/phaseTempla
 import { SPORT_LEAGUE_NAMES } from "../../features/sportLeagues/sportLeagues.types";
 import { db, DBOrTx } from "..";
 import { PHASE_TEMPLATE_TYPES } from "../../features/phaseTemplates/phaseTemplates.types";
-import { NotFoundError } from "../../lib/errors";
 import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service";
 
 const NFL_WEEK_PHASE_LABELS = [
@@ -45,7 +44,8 @@ export async function seedPhaseTemplates(
     dbOrTx,
   );
   if (!nflSportLeague) {
-    throw new NotFoundError("NFL sport league not found");
+    console.warn("NFL sport league not found, skipping phase templates");
+    return;
   }
 
   for (const [index, phaseTemplate] of NFL_PHASE_TEMPLATES.entries()) {

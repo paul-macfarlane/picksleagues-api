@@ -53,24 +53,31 @@ export class SportLeaguesService {
             `League ${desiredLeague.sportSlug}:${desiredLeague.leagueSlug} already exists, updating`,
           );
 
-          await this.sportLeaguesMutationService.updateExternal(
-            dataSource.id,
-            espnLeague.id,
-            {
-              metadata: {
-                slug: espnLeague.slug,
+          const updatedExternalLeague =
+            await this.sportLeaguesMutationService.updateExternal(
+              dataSource.id,
+              espnLeague.id,
+              {
+                metadata: {
+                  slug: espnLeague.slug,
+                },
               },
-            },
-            tx,
+              tx,
+            );
+
+          console.log(
+            `Updated external league ${JSON.stringify(updatedExternalLeague)}`,
           );
 
-          await this.sportLeaguesMutationService.update(
+          const updatedLeague = await this.sportLeaguesMutationService.update(
             existingExternalLeague.sportLeagueId!,
             {
               name: espnLeague.displayName,
             },
             tx,
           );
+
+          console.log(`Updated league ${JSON.stringify(updatedLeague)}`);
         } else {
           console.log(
             `Creating new sport league with for sport ${desiredLeague.sportSlug} and league slug ${desiredLeague.leagueSlug} with name ${espnLeague.displayName}`,
@@ -83,16 +90,25 @@ export class SportLeaguesService {
             tx,
           );
 
-          await this.sportLeaguesMutationService.createExternal(
-            {
-              dataSourceId: dataSource.id,
-              externalId: espnLeague.id,
-              sportLeagueId: newSportLeague.id,
-              metadata: {
-                slug: espnLeague.slug,
+          console.log(
+            `Inserting new sport league ${JSON.stringify(newSportLeague)}`,
+          );
+
+          const insertedExternalLeague =
+            await this.sportLeaguesMutationService.createExternal(
+              {
+                dataSourceId: dataSource.id,
+                externalId: espnLeague.id,
+                sportLeagueId: newSportLeague.id,
+                metadata: {
+                  slug: espnLeague.slug,
+                },
               },
-            },
-            tx,
+              tx,
+            );
+
+          console.log(
+            `Inserted external league ${JSON.stringify(insertedExternalLeague)}`,
           );
         }
       }
