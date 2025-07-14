@@ -55,7 +55,7 @@ leagueInvitesRouter.get(
       req.user!.id,
       query,
     );
-    res.status(200).json({ invites });
+    res.status(200).json(invites);
   },
 );
 
