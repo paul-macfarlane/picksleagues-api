@@ -1,17 +1,15 @@
 import { Request, Response, Router } from "express";
-import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "../../lib/auth";
-import { DBUser } from "../users/users.types";
 import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
 import { LeagueInvitesService } from "./leagueInvites.service";
 import {
   CreateLeagueInviteSchema,
   LeagueInviteIdSchema,
+  LeagueInviteIncludeSchema,
   LeagueInviteTokenSchema,
   RespondToLeagueInviteSchema,
 } from "./leagueInvites.types";
-import { handleApiError } from "../../lib/errors";
+import { requireAuth } from "../../lib/auth.middleware";
 
 const leagueInvitesRouter = Router();
 const leagueInvitesService = container.get<LeagueInvitesService>(
@@ -20,140 +18,82 @@ const leagueInvitesService = container.get<LeagueInvitesService>(
 
 leagueInvitesRouter.post(
   "/",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    try {
-      const session = (await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers),
-      })) as { user: DBUser };
-      if (!session) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+    const parseInvite = CreateLeagueInviteSchema.parse(req.body);
 
-      const parseInvite = CreateLeagueInviteSchema.parse(req.body);
+    const invite = await leagueInvitesService.create(req.user!.id, parseInvite);
 
-      const invite = await leagueInvitesService.create(
-        session.user.id,
-        parseInvite,
-      );
-
-      res.status(201).json(invite);
-    } catch (err) {
-      handleApiError(err, res);
-    }
+    res.status(201).json(invite);
   },
 );
 
 leagueInvitesRouter.post(
   "/:inviteId/respond",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    try {
-      const session = (await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers),
-      })) as { user: DBUser };
-      if (!session) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+    const parseId = LeagueInviteIdSchema.parse(req.params.inviteId);
 
-      const parseId = LeagueInviteIdSchema.parse(req.params.inviteId);
+    const parseResponse = RespondToLeagueInviteSchema.parse(req.body);
 
-      const parseResponse = RespondToLeagueInviteSchema.parse(req.body);
+    await leagueInvitesService.respond(
+      req.user!.id,
+      parseId,
+      parseResponse.response,
+    );
 
-      await leagueInvitesService.respond(
-        session.user.id,
-        parseId,
-        parseResponse.response,
-      );
-
-      res.status(204).send();
-    } catch (err) {
-      handleApiError(err, res);
-    }
+    res.status(204).send();
   },
 );
 
 leagueInvitesRouter.get(
   "/my-invites",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    try {
-      const session = (await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers),
-      })) as { user: DBUser };
-      if (!session) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
-
-      const invites =
-        await leagueInvitesService.listPendingByUserIdWithLeagueAndType(
-          session.user.id,
-        );
-      res.status(200).json(invites);
-    } catch (err) {
-      handleApiError(err, res);
-    }
+    const query = LeagueInviteIncludeSchema.parse(req.query);
+    const invites = await leagueInvitesService.getMyInvites(
+      req.user!.id,
+      query,
+    );
+    res.status(200).json(invites);
   },
 );
 
 leagueInvitesRouter.delete(
   "/:inviteId",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    try {
-      const session = (await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers),
-      })) as { user: DBUser };
-      if (!session) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+    const parseId = LeagueInviteIdSchema.parse(req.params.inviteId);
 
-      const parseId = LeagueInviteIdSchema.parse(req.params.inviteId);
+    await leagueInvitesService.revoke(req.user!.id, parseId);
 
-      await leagueInvitesService.revoke(session.user.id, parseId);
-
-      res.status(204).send();
-    } catch (err) {
-      handleApiError(err, res);
-    }
+    res.status(204).send();
   },
 );
 
 leagueInvitesRouter.get(
   "/token/:token",
   async (req: Request, res: Response): Promise<void> => {
-    try {
-      const parseToken = LeagueInviteTokenSchema.parse(req.params.token);
+    const parseToken = LeagueInviteTokenSchema.parse(req.params.token);
+    const query = LeagueInviteIncludeSchema.parse(req.query);
 
-      const invite =
-        await leagueInvitesService.getByTokenWithLeagueAndType(parseToken);
-      res.status(200).json(invite);
-    } catch (err) {
-      handleApiError(err, res);
-    }
+    const invite = await leagueInvitesService.getInviteByToken(
+      parseToken,
+      query,
+    );
+    res.status(200).json(invite);
   },
 );
 
 leagueInvitesRouter.post(
   "/token/:token/join",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
-    try {
-      const session = (await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers),
-      })) as { user: DBUser };
-      if (!session) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+    const parseToken = LeagueInviteTokenSchema.parse(req.params.token);
 
-      const parseToken = LeagueInviteTokenSchema.parse(req.params.token);
+    await leagueInvitesService.joinWithToken(req.user!.id, parseToken);
 
-      await leagueInvitesService.joinWithToken(session.user.id, parseToken);
-
-      res.status(204).send();
-    } catch (err) {
-      handleApiError(err, res);
-    }
+    res.status(204).send();
   },
 );
 

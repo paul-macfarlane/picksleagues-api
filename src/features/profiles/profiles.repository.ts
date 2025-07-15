@@ -1,12 +1,12 @@
 import { db, DBOrTx } from "../../db";
 import { profilesTable } from "../../db/schema";
 import { DBProfile, DBProfileInsert, DBProfileUpdate } from "./profiles.types";
-import { eq, or, like } from "drizzle-orm";
+import { eq, or, like, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
 
 @injectable()
 export class ProfilesRepository {
-  async searchProfiles(
+  async search(
     query: {
       username?: string;
       firstName?: string;
@@ -33,6 +33,19 @@ export class ProfilesRepository {
       .limit(limit);
 
     return users;
+  }
+
+  async listByUserIds(
+    userIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBProfile[]> {
+    if (userIds.length === 0) {
+      return [];
+    }
+    return dbOrTx
+      .select()
+      .from(profilesTable)
+      .where(inArray(profilesTable.userId, userIds));
   }
 
   async findByUserId(

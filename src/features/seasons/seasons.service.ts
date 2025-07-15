@@ -1,37 +1,39 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
 import { db } from "../../db";
-import { SeasonsRepository } from "./seasons.repository";
-import { DataSourcesService } from "../dataSources/dataSources.service";
-import { PhasesService } from "../phases/phases.service";
 import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
-import { SportLeaguesRepository } from "../sportLeagues/sportLeagues.repository";
 import { EspnService } from "../../integrations/espn/espn.service";
-import {
-  ESPN_DESIRED_LEAGUES,
-  ESPN_SEASON_TYPES,
-} from "../../integrations/espn/espn.types";
+import { ESPN_DESIRED_LEAGUES } from "../../integrations/espn/espn.types";
+import { SeasonsQueryService } from "./seasons.query.service";
+import { SeasonsMutationService } from "./seasons.mutation.service";
+import { DataSourcesQueryService } from "../dataSources/dataSources.query.service";
+import { NotFoundError } from "../../lib/errors";
+import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service";
 
 @injectable()
 export class SeasonsService {
   constructor(
-    @inject(TYPES.SeasonsRepository)
-    private seasonsRepository: SeasonsRepository,
-    @inject(TYPES.DataSourcesService)
-    private dataSourcesService: DataSourcesService,
-    @inject(TYPES.PhasesService)
-    private phasesService: PhasesService,
-    @inject(TYPES.SportLeaguesRepository)
-    private sportLeaguesRepository: SportLeaguesRepository,
+    @inject(TYPES.DataSourcesQueryService)
+    private dataSourcesQueryService: DataSourcesQueryService,
+    @inject(TYPES.SportLeaguesQueryService)
+    private sportLeaguesQueryService: SportLeaguesQueryService,
     @inject(TYPES.EspnService)
     private espnService: EspnService,
+    @inject(TYPES.SeasonsQueryService)
+    private seasonsQueryService: SeasonsQueryService,
+    @inject(TYPES.SeasonsMutationService)
+    private seasonsMutationService: SeasonsMutationService,
   ) {}
 
   async syncSeasons() {
-    return await db.transaction(async (tx) => {
-      const dataSource = await this.dataSourcesService.getByName(
+    return db.transaction(async (tx) => {
+      const dataSource = await this.dataSourcesQueryService.findByName(
         DATA_SOURCE_NAMES.ESPN,
+        tx,
       );
+      if (!dataSource) {
+        throw new NotFoundError("ESPN data source not found");
+      }
 
       for (const desiredLeague of ESPN_DESIRED_LEAGUES) {
         const espnLeagueSeasons = await this.espnService.getESPNLeagueSeasons(
@@ -39,45 +41,46 @@ export class SeasonsService {
           desiredLeague.leagueSlug,
         );
 
-        let sportLeagueId: string | undefined;
-        let seasonId: string | undefined;
-
-        for (const externalSeason of espnLeagueSeasons) {
+        for (const espnLeagueSeason of espnLeagueSeasons) {
           const existingExternalSeason =
-            await this.seasonsRepository.findExternalBySourceAndId(
+            await this.seasonsQueryService.findExternalBySourceAndId(
               dataSource.id,
-              externalSeason.displayName,
+              espnLeagueSeason.displayName,
               tx,
             );
           if (existingExternalSeason) {
-            const updatedSeason = await this.seasonsRepository.update(
+            const updatedSeason = await this.seasonsMutationService.update(
               existingExternalSeason.seasonId,
               {
-                name: externalSeason.displayName,
-                year: externalSeason.year.toString(),
-                startDate: new Date(externalSeason.startDate),
-                endDate: new Date(externalSeason.endDate),
+                name: espnLeagueSeason.displayName,
+                year: espnLeagueSeason.year.toString(),
+                startDate: new Date(espnLeagueSeason.startDate),
+                endDate: new Date(espnLeagueSeason.endDate),
               },
               tx,
             );
 
-            sportLeagueId = updatedSeason.sportLeagueId;
-            seasonId = updatedSeason.id;
+            console.log(`Updated season ${JSON.stringify(updatedSeason)}`);
 
-            await this.seasonsRepository.updateExternal(
-              dataSource.id,
-              externalSeason.displayName,
-              {
-                seasonId: existingExternalSeason.seasonId,
-                metadata: {
-                  slug: externalSeason.displayName,
+            const updatedExternalSeason =
+              await this.seasonsMutationService.updateExternal(
+                dataSource.id,
+                espnLeagueSeason.displayName,
+                {
+                  seasonId: existingExternalSeason.seasonId,
+                  metadata: {
+                    slug: espnLeagueSeason.displayName,
+                  },
                 },
-              },
-              tx,
+                tx,
+              );
+
+            console.log(
+              `Updated external season ${JSON.stringify(updatedExternalSeason)}`,
             );
           } else {
             const externalSportLeague =
-              await this.sportLeaguesRepository.findExternalBySourceAndMetadata(
+              await this.sportLeaguesQueryService.findExternalBySourceAndMetadata(
                 dataSource.id,
                 {
                   slug: desiredLeague.leagueSlug,
@@ -91,58 +94,36 @@ export class SeasonsService {
               continue;
             }
 
-            const insertedSeason = await this.seasonsRepository.create(
+            console.log(`Inserting season ${espnLeagueSeason.displayName}`);
+
+            const insertedSeason = await this.seasonsMutationService.create(
               {
-                name: externalSeason.displayName,
-                year: externalSeason.year.toString(),
-                startDate: new Date(externalSeason.startDate),
-                endDate: new Date(externalSeason.endDate),
+                name: espnLeagueSeason.displayName,
+                year: espnLeagueSeason.year.toString(),
+                startDate: new Date(espnLeagueSeason.startDate),
+                endDate: new Date(espnLeagueSeason.endDate),
                 sportLeagueId: externalSportLeague.sportLeagueId,
               },
               tx,
             );
 
-            sportLeagueId = insertedSeason.sportLeagueId;
-            seasonId = insertedSeason.id;
+            console.log(`Inserted season ${JSON.stringify(insertedSeason)}`);
 
-            await this.seasonsRepository.createExternal(
-              {
-                dataSourceId: dataSource.id,
-                externalId: externalSeason.displayName,
-                seasonId: insertedSeason.id,
-                metadata: {
-                  slug: externalSeason.displayName,
+            const insertedExternalSeason =
+              await this.seasonsMutationService.createExternal(
+                {
+                  dataSourceId: dataSource.id,
+                  externalId: espnLeagueSeason.displayName,
+                  seasonId: insertedSeason.id,
+                  metadata: {
+                    slug: espnLeagueSeason.displayName,
+                  },
                 },
-              },
-              tx,
-            );
-          }
+                tx,
+              );
 
-          if (sportLeagueId && seasonId) {
-            const regularSeasonESPNWeeks = await this.espnService.getESPNWeeks(
-              desiredLeague.sportSlug,
-              desiredLeague.leagueSlug,
-              externalSeason.displayName,
-              ESPN_SEASON_TYPES.REGULAR_SEASON,
-            );
-
-            const postSeasonESPNWeeks = await this.espnService.getESPNWeeks(
-              desiredLeague.sportSlug,
-              desiredLeague.leagueSlug,
-              externalSeason.displayName,
-              ESPN_SEASON_TYPES.POST_SEASON,
-            );
-
-            const allESPNWeeks = [
-              ...regularSeasonESPNWeeks,
-              ...postSeasonESPNWeeks.filter((week) => week.text !== "Pro Bowl"),
-            ];
-
-            await this.phasesService.syncPhases(
-              sportLeagueId,
-              seasonId,
-              dataSource,
-              allESPNWeeks,
+            console.log(
+              `Inserted external season ${JSON.stringify(insertedExternalSeason)}`,
             );
           }
         }

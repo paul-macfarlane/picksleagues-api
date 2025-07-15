@@ -19,3 +19,5 @@ export type DBLeagueTypeUpdate = Partial<DBLeagueTypeInsert>;
 
 // Validation Schemas
 export const LeagueTypeIdOrSlugSchema = z.string().trim();
+
+export const LeagueTypeIdSchema = z.string().trim().uuid();

@@ -1,8 +1,8 @@
 import { PhaseTemplatesService } from "../../features/phaseTemplates/phaseTemplates.service";
 import { SPORT_LEAGUE_NAMES } from "../../features/sportLeagues/sportLeagues.types";
-import { SportLeaguesService } from "../../features/sportLeagues/sportLeagues.service";
 import { db, DBOrTx } from "..";
 import { PHASE_TEMPLATE_TYPES } from "../../features/phaseTemplates/phaseTemplates.types";
+import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service";
 
 const NFL_WEEK_PHASE_LABELS = [
   "Week 1",
@@ -36,13 +36,17 @@ const NFL_PHASE_TEMPLATES = NFL_WEEK_PHASE_LABELS.map((label) => ({
 
 export async function seedPhaseTemplates(
   phaseTemplatesService: PhaseTemplatesService,
-  sportLeaguesService: SportLeaguesService,
+  sportLeaguesQueryService: SportLeaguesQueryService,
   dbOrTx: DBOrTx = db,
 ): Promise<void> {
-  const nflSportLeague = await sportLeaguesService.getByName(
+  const nflSportLeague = await sportLeaguesQueryService.findByName(
     SPORT_LEAGUE_NAMES.NFL,
     dbOrTx,
   );
+  if (!nflSportLeague) {
+    console.warn("NFL sport league not found, skipping phase templates");
+    return;
+  }
 
   for (const [index, phaseTemplate] of NFL_PHASE_TEMPLATES.entries()) {
     const newPhaseTemplate = await phaseTemplatesService.findOrCreate(

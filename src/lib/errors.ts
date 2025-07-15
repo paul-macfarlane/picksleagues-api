@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, Request, NextFunction } from "express";
 import { ZodError } from "zod";
 
 // Base class for our custom API errors
@@ -77,4 +77,14 @@ export const handleApiError = (err: unknown, res: Response) => {
       code: "internal_server_error",
     },
   });
+};
+
+export const errorMiddleware = (
+  err: Error,
+  req: Request,
+  res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  next: NextFunction,
+) => {
+  handleApiError(err, res);
 };

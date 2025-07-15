@@ -84,15 +84,28 @@ We employ a two-tiered validation strategy:
 - **Shape Validation (in the Router):** The router is responsible for validating the _shape_ and _data types_ of the incoming request payload. It should use `zodSchema.parse()` to achieve this. This ensures that the service layer never receives a malformed request. If parsing fails, a `ZodError` is thrown and handled by our central error handler.
 - **Business Rule Validation (in the Service):** The service is responsible for validating the data against _business rules_ (e.g., checking if a username is already taken). This logic requires application context and often database access.
 
-### 1.8. Cross-Feature Communication: Avoiding Circular Dependencies
+### 1.8. Cross-Feature Communication: The Three-Service Pattern
 
-The relationship between services is governed by a "Command vs. Query" distinction to prevent circular dependencies.
+To ensure code is maintainable, testable, and free of circular dependencies, we use a formal, three-service pattern for each feature. A "feature" (`leagues`, `profiles`, etc.) is composed of the following services:
 
-- **For Commands (Write Operations): Services MUST Call Services.**
-  When a business process requires changing data across multiple domains (e.g., creating a league and its first member), the primary service (`LeaguesService`) **must** call the other service (`LeagueMembersService`) to ensure all business rules are enforced. This is essential for data integrity.
+1.  **`[Feature]QueryService` (For Reading Data)**
 
-- **For Queries (Read Operations): Routers Compose Views.**
-  When a use case requires fetching data from multiple domains for a read-only view (e.g., getting a profile and all their leagues), this composition should happen in the **router**. The router will call `profilesService.get(...)` and `leaguesService.get(...)` and assemble the response. This prevents services from needing to know about each other for simple read operations, which is the primary cause of circular dependencies.
+    - **Responsibility:** The single source of truth for all **read** operations (`R` in CRUD). Its methods are responsible for fetching data from the database, including complex joins, aggregations, and assembling "view models". This is also the appropriate layer to introduce caching.
+    - **Dependencies:** Can **only** depend on one or more `Repositories`. It **cannot** depend on any other service (Query, Mutation, or Orchestration).
+    - **Why?** This guarantees `QueryService`s are simple, reusable, and can never be part of a dependency cycle. Any service can safely inject and use any `QueryService`.
+
+2.  **`[Feature]MutationService` (For Atomic Writes)**
+
+    - **Responsibility:** The sole gatekeeper for all atomic **write** operations (`CUD` in CRUD). Its methods (`create`, `update`, `delete`) should be simple, single-entity operations that do not contain complex business logic.
+    - **Dependencies:** Can **only** depend on its own feature's `Repository`. It **cannot** depend on any other service.
+    - **Why?** This guarantees `MutationService`s are simple, predictable, and can never be part of a dependency cycle. They do one thing: change their own entity's state in the database.
+
+3.  **`[Feature]Service` (For Orchestration and Business Logic)**
+    - **Responsibility:** This is the "root" service and the primary entry point for a feature's capabilities. It contains the complex business logic that orchestrates calls to multiple services to fulfill a single use case.
+    - **Dependencies:** Can depend on any `QueryService` (to get data for validation) and any `MutationService` (to command state changes).
+    - **Why?** This centralizes complex business process logic. For any process that crosses feature boundaries (e.g., "accepting an invite" touches `invites` and `members`), the initiating service (`LeagueInvitesService`) orchestrates the entire flow, ensuring it happens within a single transaction and in the correct order. The call chain is always linear (e.g., `A_Service -> B_MutationService`), preventing cycles.
+
+This separation provides a clear, predictable, and scalable architecture.
 
 ### 1.9. Transaction Management
 
@@ -226,6 +239,27 @@ Use the standard HTTP methods to describe the action being performed.
 ### 3.4. Request & Response Format
 
 - **JSON Everywhere**: The API accepts and returns JSON exclusively. Clients must send `Content-Type: application/json` for `POST`, `PUT`, and `PATCH` requests with a body.
+
+### 3.5. Including Related Resources
+
+To reduce the number of API calls, consumers can request related resources to be included in the response using the `include` query parameter.
+
+- **Parameter**: `include`
+- **Format**: A comma-separated list of relation names.
+- **Nested Includes**: Use dot notation (`.`) to specify includes on a related resource.
+
+**Validation:** Endpoints that support includes **must** validate the requested relations using a `zod` schema to prevent requests for unsupported or invalid data.
+
+**Examples:**
+
+- **Get a league and include its members:**
+  `GET /api/v1/leagues/abc-123?include=members`
+
+- **Get a league and include its members, and for each member, include their profile:**
+  `GET /api/v1/leagues/abc-123?include=members.profile`
+
+- **Multiple and nested includes:**
+  `GET /api/v1/leagues/abc-123?include=leagueType,members.profile`
 
 ---
 

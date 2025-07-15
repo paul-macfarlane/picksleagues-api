@@ -1,101 +1,73 @@
 import { Router, Request, Response } from "express";
-import { auth } from "../../lib/auth";
-import { fromNodeHeaders } from "better-auth/node";
-import { DBUser } from "../users/users.types";
-import { CreateLeagueSchema, LeagueIdSchema } from "./leagues.types";
-import { handleApiError, UnauthorizedError } from "../../lib/errors";
+import {
+  CreateLeagueSchema,
+  LeagueIdSchema,
+  LeagueIncludeSchema,
+} from "./leagues.types";
 import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
 import { LeaguesService } from "./leagues.service";
+import { requireAuth } from "../../lib/auth.middleware";
+import { LeagueMemberIncludeSchema } from "../leagueMembers/leagueMembers.types";
+import { LeagueMembersService } from "../leagueMembers/leagueMembers.service";
+import { LeagueInviteIncludeSchema } from "../leagueInvites/leagueInvites.types";
+import { LeagueInvitesService } from "../leagueInvites/leagueInvites.service";
 
 const router = Router();
 const leaguesService = container.get<LeaguesService>(TYPES.LeaguesService);
+const leagueMembersService = container.get<LeagueMembersService>(
+  TYPES.LeagueMembersService,
+);
+const leagueInvitesService = container.get<LeagueInvitesService>(
+  TYPES.LeagueInvitesService,
+);
+
+router.use(requireAuth);
 
 router.post("/", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const session = (await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })) as { user: DBUser };
-    if (!session) {
-      throw new UnauthorizedError();
-    }
+  const leagueData = CreateLeagueSchema.parse(req.body);
+  const newLeague = await leaguesService.create(req.user!.id, leagueData);
 
-    const leagueData = CreateLeagueSchema.parse(req.body);
-    const newLeague = await leaguesService.create(session.user.id, leagueData);
-
-    res.status(201).json(newLeague);
-  } catch (err) {
-    handleApiError(err, res);
-  }
+  res.status(201).json(newLeague);
 });
 
 router.get("/:leagueId", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const session = (await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })) as { user: DBUser };
-    if (!session) {
-      throw new UnauthorizedError();
-    }
+  const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+  const query = LeagueIncludeSchema.parse(req.query);
+  const league = await leaguesService.getByIdForUser(req.user!.id, leagueId, {
+    include: query?.include,
+  });
 
-    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
-    const league = await leaguesService.getForUserByIdWithLeagueType(
-      session.user.id,
-      leagueId,
-    );
-
-    res.status(200).json(league);
-  } catch (err) {
-    handleApiError(err, res);
-  }
+  res.status(200).json(league);
 });
 
 router.get(
   "/:leagueId/members",
   async (req: Request, res: Response): Promise<void> => {
-    try {
-      const session = (await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers),
-      })) as { user: DBUser };
-      if (!session) {
-        throw new UnauthorizedError();
-      }
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const query = LeagueMemberIncludeSchema.parse(req.query);
+    const members = await leagueMembersService.listByLeagueIdForUser(
+      req.user!.id,
+      leagueId,
+      query,
+    );
 
-      const leagueId = LeagueIdSchema.parse(req.params.leagueId);
-      const members = await leaguesService.listMembersForUserByIdWithProfile(
-        session.user.id,
-        leagueId,
-      );
-
-      res.status(200).json(members);
-    } catch (err) {
-      handleApiError(err, res);
-    }
+    res.status(200).json(members);
   },
 );
 
 router.get(
   "/:leagueId/invites",
   async (req: Request, res: Response): Promise<void> => {
-    try {
-      const session = (await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers),
-      })) as { user: DBUser };
-      if (!session) {
-        throw new UnauthorizedError();
-      }
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const query = LeagueInviteIncludeSchema.parse(req.query);
+    const invites = await leagueInvitesService.listByLeagueIdForUser(
+      req.user!.id,
+      leagueId,
+      query,
+    );
 
-      const leagueId = LeagueIdSchema.parse(req.params.leagueId);
-      const invites =
-        await leaguesService.listPendingInvitesForUserByIdWithLeagueAndType(
-          session.user.id,
-          leagueId,
-        );
-
-      res.status(200).json(invites);
-    } catch (err) {
-      handleApiError(err, res);
-    }
+    res.status(200).json(invites);
   },
 );
 

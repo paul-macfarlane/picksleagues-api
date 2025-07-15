@@ -23,6 +23,10 @@ export const MAX_LEAGUE_NAME_LENGTH = 50;
 export const MIN_LEAGUE_SIZE = 2;
 export const MAX_LEAGUE_SIZE = 20;
 
+export enum LEAGUE_INCLUDES {
+  LEAGUE_TYPE = "leagueType",
+}
+
 // DB Types
 export type DBLeague = typeof leaguesTable.$inferSelect;
 
@@ -30,11 +34,25 @@ export type DBLeagueWithLeagueType = DBLeague & {
   leagueType: DBLeagueType;
 };
 
+export type PopulatedDBLeague = DBLeague & {
+  leagueType?: DBLeagueType;
+};
+
 export type DBLeagueInsert = typeof leaguesTable.$inferInsert;
 export type DBLeagueUpdate = Partial<DBLeagueInsert>;
 
 // Validation Schemas
 export const LeagueIdSchema = z.string().trim().uuid();
+
+export const LeagueIncludeSchema = z
+  .object({
+    include: z
+      .string()
+      .transform((val) => val.split(","))
+      .pipe(z.array(z.enum([LEAGUE_INCLUDES.LEAGUE_TYPE])))
+      .optional(),
+  })
+  .optional();
 
 export const PickEmLeagueSettingsSchema = z.object({
   picksPerPhase: z

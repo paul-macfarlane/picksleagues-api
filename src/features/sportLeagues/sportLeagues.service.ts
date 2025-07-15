@@ -1,48 +1,32 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
-import { db, DBOrTx } from "../../db";
-import { SportLeaguesRepository } from "./sportLeagues.repository";
-import { DataSourcesService } from "../dataSources/dataSources.service";
+import { db } from "../../db";
 import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
 import { ESPN_DESIRED_LEAGUES } from "../../integrations/espn/espn.types";
-import { DBSportLeague } from "./sportLeagues.types";
 import { NotFoundError } from "../../lib/errors";
 import { EspnService } from "../../integrations/espn/espn.service";
+import { SportLeaguesQueryService } from "./sportLeagues.query.service";
+import { SportLeaguesMutationService } from "./sportLeagues.mutation.service";
+import { DataSourcesQueryService } from "../dataSources/dataSources.query.service";
 
 @injectable()
 export class SportLeaguesService {
   constructor(
-    @inject(TYPES.SportLeaguesRepository)
-    private sportLeaguesRepository: SportLeaguesRepository,
-    @inject(TYPES.DataSourcesService)
-    private dataSourcesService: DataSourcesService,
+    @inject(TYPES.DataSourcesQueryService)
+    private dataSourcesQueryService: DataSourcesQueryService,
     @inject(TYPES.EspnService)
     private espnService: EspnService,
+    @inject(TYPES.SportLeaguesQueryService)
+    private sportLeaguesQueryService: SportLeaguesQueryService,
+    @inject(TYPES.SportLeaguesMutationService)
+    private sportLeaguesMutationService: SportLeaguesMutationService,
   ) {}
 
-  async findById(id: string): Promise<DBSportLeague | null> {
-    return await this.sportLeaguesRepository.findById(id);
-  }
-
-  async findByName(
-    name: string,
-    dbOrTx: DBOrTx = db,
-  ): Promise<DBSportLeague | null> {
-    return await this.sportLeaguesRepository.findByName(name, dbOrTx);
-  }
-
-  async getByName(name: string, dbOrTx: DBOrTx = db): Promise<DBSportLeague> {
-    const sportLeague = await this.findByName(name, dbOrTx);
-    if (!sportLeague) {
-      throw new NotFoundError(`Sport league with name ${name} not found`);
-    }
-    return sportLeague;
-  }
-
   async syncSportLeagues() {
-    return await db.transaction(async (tx) => {
-      const dataSource = await this.dataSourcesService.findByName(
+    return db.transaction(async (tx) => {
+      const dataSource = await this.dataSourcesQueryService.findByName(
         DATA_SOURCE_NAMES.ESPN,
+        tx,
       );
       if (!dataSource) {
         throw new NotFoundError("ESPN data source not found");
@@ -59,7 +43,7 @@ export class SportLeaguesService {
         );
 
         const existingExternalLeague =
-          await this.sportLeaguesRepository.findExternalBySourceAndId(
+          await this.sportLeaguesQueryService.findExternalBySourceAndId(
             dataSource.id,
             espnLeague.id,
             tx,
@@ -69,46 +53,62 @@ export class SportLeaguesService {
             `League ${desiredLeague.sportSlug}:${desiredLeague.leagueSlug} already exists, updating`,
           );
 
-          await this.sportLeaguesRepository.updateExternal(
-            dataSource.id,
-            espnLeague.id,
-            {
-              metadata: {
-                slug: espnLeague.slug,
+          const updatedExternalLeague =
+            await this.sportLeaguesMutationService.updateExternal(
+              dataSource.id,
+              espnLeague.id,
+              {
+                metadata: {
+                  slug: espnLeague.slug,
+                },
               },
-            },
-            tx,
+              tx,
+            );
+
+          console.log(
+            `Updated external league ${JSON.stringify(updatedExternalLeague)}`,
           );
 
-          await this.sportLeaguesRepository.update(
+          const updatedLeague = await this.sportLeaguesMutationService.update(
             existingExternalLeague.sportLeagueId!,
             {
               name: espnLeague.displayName,
             },
             tx,
           );
+
+          console.log(`Updated league ${JSON.stringify(updatedLeague)}`);
         } else {
           console.log(
             `Creating new sport league with for sport ${desiredLeague.sportSlug} and league slug ${desiredLeague.leagueSlug} with name ${espnLeague.displayName}`,
           );
 
-          const newSportLeague = await this.sportLeaguesRepository.create(
+          const newSportLeague = await this.sportLeaguesMutationService.create(
             {
               name: espnLeague.displayName,
             },
             tx,
           );
 
-          await this.sportLeaguesRepository.createExternal(
-            {
-              dataSourceId: dataSource.id,
-              externalId: espnLeague.id,
-              sportLeagueId: newSportLeague.id,
-              metadata: {
-                slug: espnLeague.slug,
+          console.log(
+            `Inserting new sport league ${JSON.stringify(newSportLeague)}`,
+          );
+
+          const insertedExternalLeague =
+            await this.sportLeaguesMutationService.createExternal(
+              {
+                dataSourceId: dataSource.id,
+                externalId: espnLeague.id,
+                sportLeagueId: newSportLeague.id,
+                metadata: {
+                  slug: espnLeague.slug,
+                },
               },
-            },
-            tx,
+              tx,
+            );
+
+          console.log(
+            `Inserted external league ${JSON.stringify(insertedExternalLeague)}`,
           );
         }
       }

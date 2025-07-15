@@ -14,27 +14,28 @@ This document outlines the tactical steps to harden the codebase and ensure it f
 
 **Goal:** Now that the new architecture is in place, iterate through each feature and align its API with the standards defined in `Part 3: API Design Guide` and `Part 1.10: Service Layer Method Naming` of the `STANDARDS.md`.
 
-1.  **Standardize Error Responses:**
+1.  **Standardize Error Responses:** (Completed)
 
     - Go through each endpoint in every feature.
     - Replace all old error formats (e.g., `{ error: "..." }`) with the new standard: `{ error: { message: "...", code: "..." } }`.
     - Create a shared `ApiError` class in `src/lib` to make this easier.
 
-2.  **Correct HTTP Methods:**
+2.  **Correct HTTP Methods:** (Completed)
 
     - For any endpoint that performs a partial update (like the profile update), change its method in the router from `PUT` to `PATCH`.
 
-3.  **Make Implicit Includes Explicit:**
+3.  **Make Implicit Includes Explicit:** (Completed)
 
     - Identify any endpoint that automatically embeds related data (e.g., `GET /leagues/:id/members` including profiles).
     - Modify the service and repository layers to only include that data when a `?include=` parameter is present in the request.
 
-4.  **Implement Common Features (As Needed):**
+4.  **Implement Common Features (As Needed):** (Completed)
 
     - Add pagination (`?limit`/`?offset`) to endpoints that return large collections.
     - Add `?include=` support for other desired resources.
 
-5.  **Enforce Explicit Return Types:**
+5.  **Enforce Explicit Return Types:** (Completed)
+
     - Go through each function in the refactored feature's `service` and `repository` files.
     - Add explicit return types to all function signatures (e.g., `Promise<DBProfile | null>`, `Promise<void>`).
 

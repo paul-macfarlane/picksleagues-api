@@ -9,6 +9,7 @@ import { auth } from "../lib/auth";
 import cors from "cors";
 import path from "path";
 import expressLayouts from "express-ejs-layouts";
+import { errorMiddleware } from "../lib/errors";
 
 const app = express();
 const port = process.env.EXPRESS_PORT || 3001;
@@ -43,6 +44,10 @@ app.use("/api", apiRouter);
 
 // Handle static page routes
 app.use("/", staticRouter);
+
+// Register the error middleware
+// This must be the last app.use() call
+app.use(errorMiddleware);
 
 // Redirect all other routes to frontend
 app.get("*splat", (req: Request, res: Response) => {

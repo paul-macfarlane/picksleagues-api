@@ -4,18 +4,22 @@ import {
 } from "../../features/leagueTypes/leagueTypes.types";
 import { SPORT_LEAGUE_NAMES } from "../../features/sportLeagues/sportLeagues.types";
 import { LeagueTypesService } from "../../features/leagueTypes/leagueTypes.service";
-import { SportLeaguesService } from "../../features/sportLeagues/sportLeagues.service";
 import { db, DBOrTx } from "..";
+import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service";
 
 export const seedLeagueTypes = async (
   leagueTypesService: LeagueTypesService,
-  sportLeaguesService: SportLeaguesService,
+  sportLeaguesService: SportLeaguesQueryService,
   dbOrTx: DBOrTx = db,
 ) => {
-  const nflSportLeague = await sportLeaguesService.getByName(
+  const nflSportLeague = await sportLeaguesService.findByName(
     SPORT_LEAGUE_NAMES.NFL,
     dbOrTx,
   );
+  if (!nflSportLeague) {
+    console.warn("NFL sport league not found, skipping league types");
+    return;
+  }
 
   const pickemLeagueType = await leagueTypesService.findOrCreateBySlug(
     {

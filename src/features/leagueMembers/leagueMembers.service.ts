@@ -1,57 +1,71 @@
-import { inject, injectable } from "inversify";
-import { DBOrTx } from "../../db";
+import { injectable, inject } from "inversify";
+import { z } from "zod";
+import {
+  DBLeagueMember,
+  DBLeagueMemberWithProfile,
+  LeagueMemberIncludeSchema,
+  PopulatedDBLeagueMember,
+} from "./leagueMembers.types";
+import { LeagueMembersQueryService } from "./leagueMembers.query.service";
+import { ProfilesQueryService } from "../profiles/profiles.query.service";
+import { LeaguesQueryService } from "../leagues/leagues.query.service";
 import { TYPES } from "../../lib/inversify.types";
-import { LeagueMembersRepository } from "./leagueMembers.repository";
-import { DBLeagueMember, DBLeagueMemberInsert } from "./leagueMembers.types";
-import { DBLeagueMemberWithProfile } from "./leagueMembers.types";
 import { NotFoundError } from "../../lib/errors";
 
 @injectable()
 export class LeagueMembersService {
   constructor(
-    @inject(TYPES.LeagueMembersRepository)
-    private leagueMembersRepository: LeagueMembersRepository,
+    @inject(TYPES.LeagueMembersQueryService)
+    private leagueMembersQueryService: LeagueMembersQueryService,
+    @inject(TYPES.ProfilesQueryService)
+    private profilesQueryService: ProfilesQueryService,
+    @inject(TYPES.LeaguesQueryService)
+    private leaguesQueryService: LeaguesQueryService,
   ) {}
 
-  async createLeagueMember(
-    data: DBLeagueMemberInsert,
-    dbOrTx?: DBOrTx,
-  ): Promise<DBLeagueMember> {
-    return await this.leagueMembersRepository.create(data, dbOrTx);
-  }
-
-  async findByLeagueAndUserId(
-    leagueId: string,
-    userId: string,
-    dbOrTx?: DBOrTx,
-  ): Promise<DBLeagueMember | null> {
-    return await this.leagueMembersRepository.findByLeagueAndUserId(
-      leagueId,
-      userId,
-      dbOrTx,
-    );
-  }
-
-  async getByLeagueAndUserId(
-    leagueId: string,
-    userId: string,
-    dbOrTx?: DBOrTx,
-  ): Promise<DBLeagueMember> {
-    const member = await this.findByLeagueAndUserId(leagueId, userId, dbOrTx);
-    if (!member) {
-      throw new NotFoundError("League member not found");
+  private async populateMembers(
+    members: DBLeagueMember[],
+    query: z.infer<typeof LeagueMemberIncludeSchema>,
+  ): Promise<PopulatedDBLeagueMember[]> {
+    if (!query?.include?.includes("profile")) {
+      return members;
     }
 
-    return member;
+    const userIds = members.map((member) => member.userId);
+    const profiles = await this.profilesQueryService.listByUserIds(userIds);
+    const profilesByUserId = new Map(profiles.map((p) => [p.userId, p]));
+
+    const populatedMembers: DBLeagueMemberWithProfile[] = members.map(
+      (member) => ({
+        ...member,
+        profile: profilesByUserId.get(member.userId)!,
+      }),
+    );
+
+    return populatedMembers;
   }
 
-  async listByLeagueIdWithProfile(
+  async listByLeagueIdForUser(
+    userId: string,
     leagueId: string,
-    dbOrTx?: DBOrTx,
-  ): Promise<DBLeagueMemberWithProfile[]> {
-    return await this.leagueMembersRepository.listByLeagueIdWithProfile(
+    query: z.infer<typeof LeagueMemberIncludeSchema>,
+  ): Promise<PopulatedDBLeagueMember[]> {
+    const league = await this.leaguesQueryService.findById(leagueId);
+    if (!league) {
+      throw new NotFoundError("League not found");
+    }
+
+    const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
       leagueId,
-      dbOrTx,
+      userId,
     );
+    if (!member) {
+      throw new NotFoundError("User is not a member of the league");
+    }
+
+    const members =
+      await this.leagueMembersQueryService.listByLeagueId(leagueId);
+
+    return this.populateMembers(members, query);
   }
 }

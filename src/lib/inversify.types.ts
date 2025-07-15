@@ -1,39 +1,55 @@
-const TYPES = {
-  // Profiles
+export const TYPES = {
+  // Repositories
   ProfilesRepository: Symbol.for("ProfilesRepository"),
-  ProfilesService: Symbol.for("ProfilesService"),
-
   LeagueTypesRepository: Symbol.for("LeagueTypesRepository"),
-  LeagueTypesService: Symbol.for("LeagueTypesService"),
-
   LeaguesRepository: Symbol.for("LeaguesRepository"),
-  LeaguesService: Symbol.for("LeaguesService"),
-
   LeagueMembersRepository: Symbol.for("LeagueMembersRepository"),
-  LeagueMembersService: Symbol.for("LeagueMembersService"),
-
+  LeagueInvitesRepository: Symbol.for("LeagueInvitesRepository"),
   PhasesRepository: Symbol.for("PhasesRepository"),
-  PhasesService: Symbol.for("PhasesService"),
-
   PhaseTemplatesRepository: Symbol.for("PhaseTemplatesRepository"),
-  PhaseTemplatesService: Symbol.for("PhaseTemplatesService"),
-
-  UsersService: Symbol.for("UsersService"),
+  DataSourcesRepository: Symbol.for("DataSourcesRepository"),
+  SportLeaguesRepository: Symbol.for("SportLeaguesRepository"),
+  SeasonsRepository: Symbol.for("SeasonsRepository"),
   UsersRepository: Symbol.for("UsersRepository"),
 
-  SeasonsRepository: Symbol.for("SeasonsRepository"),
+  // Services
+  ProfilesService: Symbol.for("ProfilesService"),
+  LeagueTypesService: Symbol.for("LeagueTypesService"),
+  LeaguesService: Symbol.for("LeaguesService"),
+  LeagueMembersService: Symbol.for("LeagueMembersService"),
+  LeagueInvitesService: Symbol.for("LeagueInvitesService"),
+  PhasesService: Symbol.for("PhasesService"),
+  PhaseTemplatesService: Symbol.for("PhaseTemplatesService"),
+  UsersService: Symbol.for("UsersService"),
+  DataSourcesService: Symbol.for("DataSourcesService"),
+  SportLeaguesService: Symbol.for("SportLeaguesService"),
   SeasonsService: Symbol.for("SeasonsService"),
 
-  LeagueInvitesService: Symbol.for("LeagueInvitesService"),
-  LeagueInvitesRepository: Symbol.for("LeagueInvitesRepository"),
+  // Query Services
+  LeaguesQueryService: Symbol.for("LeaguesQueryService"),
+  LeagueTypesQueryService: Symbol.for("LeagueTypesQueryService"),
+  LeagueMembersQueryService: Symbol.for("LeagueMembersQueryService"),
+  UsersQueryService: Symbol.for("UsersQueryService"),
+  LeagueInvitesQueryService: Symbol.for("LeagueInvitesQueryService"),
+  ProfilesQueryService: Symbol.for("ProfilesQueryService"),
+  PhaseTemplatesQueryService: Symbol.for("PhaseTemplatesQueryService"),
+  PhasesQueryService: Symbol.for("PhasesQueryService"),
+  SeasonsQueryService: Symbol.for("SeasonsQueryService"),
+  DataSourcesQueryService: Symbol.for("DataSourcesQueryService"),
+  SportLeaguesQueryService: Symbol.for("SportLeaguesQueryService"),
 
-  SportLeaguesRepository: Symbol.for("SportLeaguesRepository"),
-  SportLeaguesService: Symbol.for("SportLeaguesService"),
+  // Mutation Services
+  LeagueMembersMutationService: Symbol.for("LeagueMembersMutationService"),
+  UsersMutationService: Symbol.for("UsersMutationService"),
+  LeagueInvitesMutationService: Symbol.for("LeagueInvitesMutationService"),
+  ProfilesMutationService: Symbol.for("ProfilesMutationService"),
+  LeaguesMutationService: Symbol.for("LeaguesMutationService"),
+  PhaseTemplatesMutationService: Symbol.for("PhaseTemplatesMutationService"),
+  PhasesMutationService: Symbol.for("PhasesMutationService"),
+  SeasonsMutationService: Symbol.for("SeasonsMutationService"),
+  DataSourcesMutationService: Symbol.for("DataSourcesMutationService"),
+  SportLeaguesMutationService: Symbol.for("SportLeaguesMutationService"),
 
-  DataSourcesService: Symbol.for("DataSourcesService"),
-  DataSourcesRepository: Symbol.for("DataSourcesRepository"),
-
+  // External Services
   EspnService: Symbol.for("EspnService"),
 };
-
-export { TYPES };

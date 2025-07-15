@@ -15,6 +15,8 @@ import { PhasesRepository } from "../features/phases/phases.repository";
 import { PhasesService } from "../features/phases/phases.service";
 import { PhaseTemplatesRepository } from "../features/phaseTemplates/phaseTemplates.repository";
 import { PhaseTemplatesService } from "../features/phaseTemplates/phaseTemplates.service";
+import { PhaseTemplatesQueryService } from "../features/phaseTemplates/phaseTemplates.query.service";
+import { PhaseTemplatesMutationService } from "../features/phaseTemplates/phaseTemplates.mutation.service";
 import { UsersRepository } from "../features/users/users.repository";
 import { UsersService } from "../features/users/users.service";
 import { SeasonsRepository } from "../features/seasons/seasons.repository";
@@ -24,6 +26,25 @@ import { SportLeaguesService } from "../features/sportLeagues/sportLeagues.servi
 import { DataSourcesRepository } from "../features/dataSources/dataSources.repository";
 import { DataSourcesService } from "../features/dataSources/dataSources.service";
 import { EspnService } from "../integrations/espn/espn.service";
+import { LeaguesQueryService } from "../features/leagues/leagues.query.service";
+import { LeagueTypesQueryService } from "../features/leagueTypes/leagueTypes.query.service";
+import { LeagueMembersQueryService } from "../features/leagueMembers/leagueMembers.query.service";
+import { LeagueMembersMutationService } from "../features/leagueMembers/leagueMembers.mutation.service";
+import { UsersQueryService } from "../features/users/users.query.service";
+import { UsersMutationService } from "../features/users/users.mutation.service";
+import { LeagueInvitesQueryService } from "../features/leagueInvites/leagueInvites.query.service";
+import { LeagueInvitesMutationService } from "../features/leagueInvites/leagueInvites.mutation.service";
+import { ProfilesQueryService } from "../features/profiles/profiles.query.service";
+import { ProfilesMutationService } from "../features/profiles/profiles.mutation.service";
+import { LeaguesMutationService } from "../features/leagues/leagues.mutation.service";
+import { PhasesQueryService } from "../features/phases/phases.query.service";
+import { PhasesMutationService } from "../features/phases/phases.mutation.service";
+import { SeasonsQueryService } from "../features/seasons/seasons.query.service";
+import { SeasonsMutationService } from "../features/seasons/seasons.mutation.service";
+import { DataSourcesQueryService } from "../features/dataSources/dataSources.query.service";
+import { DataSourcesMutationService } from "../features/dataSources/dataSources.mutation.service";
+import { SportLeaguesQueryService } from "../features/sportLeagues/sportLeagues.query.service";
+import { SportLeaguesMutationService } from "../features/sportLeagues/sportLeagues.mutation.service";
 
 const container = new Container();
 
@@ -141,6 +162,94 @@ container
 container
   .bind<EspnService>(TYPES.EspnService)
   .to(EspnService)
+  .inSingletonScope();
+
+// Query Services
+container
+  .bind<LeaguesQueryService>(TYPES.LeaguesQueryService)
+  .to(LeaguesQueryService)
+  .inSingletonScope();
+container
+  .bind<LeagueTypesQueryService>(TYPES.LeagueTypesQueryService)
+  .to(LeagueTypesQueryService)
+  .inSingletonScope();
+container
+  .bind<LeagueMembersQueryService>(TYPES.LeagueMembersQueryService)
+  .to(LeagueMembersQueryService)
+  .inSingletonScope();
+container
+  .bind<UsersQueryService>(TYPES.UsersQueryService)
+  .to(UsersQueryService)
+  .inSingletonScope();
+container
+  .bind<LeagueInvitesQueryService>(TYPES.LeagueInvitesQueryService)
+  .to(LeagueInvitesQueryService)
+  .inSingletonScope();
+container
+  .bind<ProfilesQueryService>(TYPES.ProfilesQueryService)
+  .to(ProfilesQueryService)
+  .inSingletonScope();
+container
+  .bind<PhaseTemplatesQueryService>(TYPES.PhaseTemplatesQueryService)
+  .to(PhaseTemplatesQueryService)
+  .inSingletonScope();
+container
+  .bind<PhasesQueryService>(TYPES.PhasesQueryService)
+  .to(PhasesQueryService)
+  .inSingletonScope();
+container
+  .bind<SeasonsQueryService>(TYPES.SeasonsQueryService)
+  .to(SeasonsQueryService)
+  .inSingletonScope();
+container
+  .bind<DataSourcesQueryService>(TYPES.DataSourcesQueryService)
+  .to(DataSourcesQueryService)
+  .inSingletonScope();
+container
+  .bind<SportLeaguesQueryService>(TYPES.SportLeaguesQueryService)
+  .to(SportLeaguesQueryService)
+  .inSingletonScope();
+
+// Mutation Services
+container
+  .bind<LeagueMembersMutationService>(TYPES.LeagueMembersMutationService)
+  .to(LeagueMembersMutationService)
+  .inSingletonScope();
+container
+  .bind<UsersMutationService>(TYPES.UsersMutationService)
+  .to(UsersMutationService)
+  .inSingletonScope();
+container
+  .bind<LeagueInvitesMutationService>(TYPES.LeagueInvitesMutationService)
+  .to(LeagueInvitesMutationService)
+  .inSingletonScope();
+container
+  .bind<ProfilesMutationService>(TYPES.ProfilesMutationService)
+  .to(ProfilesMutationService)
+  .inSingletonScope();
+container
+  .bind<LeaguesMutationService>(TYPES.LeaguesMutationService)
+  .to(LeaguesMutationService)
+  .inSingletonScope();
+container
+  .bind<PhaseTemplatesMutationService>(TYPES.PhaseTemplatesMutationService)
+  .to(PhaseTemplatesMutationService)
+  .inSingletonScope();
+container
+  .bind<PhasesMutationService>(TYPES.PhasesMutationService)
+  .to(PhasesMutationService)
+  .inSingletonScope();
+container
+  .bind<SeasonsMutationService>(TYPES.SeasonsMutationService)
+  .to(SeasonsMutationService)
+  .inSingletonScope();
+container
+  .bind<DataSourcesMutationService>(TYPES.DataSourcesMutationService)
+  .to(DataSourcesMutationService)
+  .inSingletonScope();
+container
+  .bind<SportLeaguesMutationService>(TYPES.SportLeaguesMutationService)
+  .to(SportLeaguesMutationService)
   .inSingletonScope();
 
 // Add other feature bindings here as we migrate them
