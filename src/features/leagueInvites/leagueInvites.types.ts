@@ -71,7 +71,10 @@ export const CreateLeagueInviteSchema = z
     ]),
     type: z.enum([LEAGUE_INVITE_TYPES.DIRECT, LEAGUE_INVITE_TYPES.LINK]),
     expiresInDays: z
-      .number()
+      .number({
+        required_error: `Required`,
+        invalid_type_error: `Required`,
+      })
       .int()
       .min(MIN_LEAGUE_INVITE_EXPIRATION_DAYS, {
         message: `Expires in days must be at least ${MIN_LEAGUE_INVITE_EXPIRATION_DAYS}`,

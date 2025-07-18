@@ -59,10 +59,10 @@ export const PickEmLeagueSettingsSchema = z.object({
     .number()
     .int()
     .min(MIN_PICKS_PER_PHASE, {
-      message: `Picks per week must be at least ${MIN_PICKS_PER_PHASE}`,
+      message: `Must be at least ${MIN_PICKS_PER_PHASE}`,
     })
     .max(MAX_PICKS_PER_PHASE, {
-      message: `Picks per week must be at most ${MAX_PICKS_PER_PHASE}`,
+      message: `Must be at most ${MAX_PICKS_PER_PHASE}`,
     }),
   pickType: z.enum([PICK_EM_PICK_TYPES.STRAIGHT_UP, PICK_EM_PICK_TYPES.SPREAD]),
 });
@@ -71,10 +71,10 @@ export const CreateLeagueSchema = z.object({
   name: z
     .string()
     .min(MIN_LEAGUE_NAME_LENGTH, {
-      message: `Name must be at least ${MIN_LEAGUE_NAME_LENGTH} characters`,
+      message: `Must be at least ${MIN_LEAGUE_NAME_LENGTH} characters`,
     })
     .max(MAX_LEAGUE_NAME_LENGTH, {
-      message: `Name must be at most ${MAX_LEAGUE_NAME_LENGTH} characters`,
+      message: `Must be at most ${MAX_LEAGUE_NAME_LENGTH} characters`,
     })
     .trim(),
   image: z
@@ -88,7 +88,7 @@ export const CreateLeagueSchema = z.object({
     .number()
     .int()
     .min(MIN_LEAGUE_SIZE, {
-      message: `Size must be at least ${MIN_LEAGUE_SIZE}`,
+      message: `Must be at least ${MIN_LEAGUE_SIZE}`,
     })
     .max(MAX_LEAGUE_SIZE, {
       message: `Size must be at most ${MAX_LEAGUE_SIZE}`,
