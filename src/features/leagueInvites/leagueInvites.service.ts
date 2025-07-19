@@ -173,7 +173,6 @@ export class LeagueInvitesService {
       leagueIsInProgress,
     };
   }
-  // Orchestration Methods (Mutations)
 
   async create(
     userId: string,
@@ -191,6 +190,24 @@ export class LeagueInvitesService {
 
       if (member.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER) {
         throw new ForbiddenError("You are not a commissioner");
+      }
+
+      const league = await this.leaguesQueryService.findById(
+        inviteData.leagueId,
+        tx,
+      );
+      if (!league) {
+        throw new NotFoundError("League not found");
+      }
+
+      const leagueCapacity = await this.getLeagueCapacity(league, tx);
+      if (leagueCapacity <= 0) {
+        throw new ValidationError("League is at capacity");
+      }
+
+      const leagueIsInProgress = await this.leagueSeasonInProgress(league, tx);
+      if (leagueIsInProgress) {
+        throw new ValidationError("League's season is in progress");
       }
 
       if (
@@ -367,8 +384,6 @@ export class LeagueInvitesService {
       await this.leagueInvitesMutationService.delete(inviteId, tx);
     });
   }
-
-  // Orchestration Methods (Queries)
 
   async getMyInvites(
     userId: string,
