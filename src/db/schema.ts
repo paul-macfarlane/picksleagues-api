@@ -263,18 +263,16 @@ export const leaguesTable = pgTable("leagues", {
       onDelete: "cascade",
     })
     .notNull(),
-  startPhaseTemplateId: uuid("start_phase_template_id").references(
-    () => phaseTemplatesTable.id,
-    {
+  startPhaseTemplateId: uuid("start_phase_template_id")
+    .references(() => phaseTemplatesTable.id, {
       onDelete: "cascade",
-    },
-  ),
-  endPhaseTemplateId: uuid("end_phase_template_id").references(
-    () => phaseTemplatesTable.id,
-    {
+    })
+    .notNull(),
+  endPhaseTemplateId: uuid("end_phase_template_id")
+    .references(() => phaseTemplatesTable.id, {
       onDelete: "cascade",
-    },
-  ),
+    })
+    .notNull(),
   visibility: text("visibility", {
     enum: [LEAGUE_VISIBILITIES.PRIVATE],
   }).notNull(),

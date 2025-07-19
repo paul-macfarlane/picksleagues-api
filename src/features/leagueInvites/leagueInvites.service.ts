@@ -27,6 +27,8 @@ import { LeagueInvitesQueryService } from "./leagueInvites.query.service";
 import { LeaguesQueryService } from "../leagues/leagues.query.service";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
 import { ProfilesQueryService } from "../profiles/profiles.query.service";
+import { PhasesQueryService } from "../phases/phases.query.service";
+import { DBLeague } from "../leagues/leagues.types";
 
 @injectable()
 export class LeagueInvitesService {
@@ -47,7 +49,38 @@ export class LeagueInvitesService {
     private leagueTypesQueryService: LeagueTypesQueryService,
     @inject(TYPES.ProfilesQueryService)
     private profilesQueryService: ProfilesQueryService,
+    @inject(TYPES.PhasesQueryService)
+    private phasesQueryService: PhasesQueryService,
   ) {}
+
+  // Private helper method to check league capacity
+  private async leagueHasCapacity(
+    league: DBLeague,
+    dbOrTx?: DBOrTx,
+  ): Promise<boolean> {
+    const members = await this.leagueMembersQueryService.listByLeagueId(
+      league.id,
+      dbOrTx,
+    );
+
+    return members.length < league.size;
+  }
+
+  // Private helper method to check if a league's season is in progress
+  private async leagueSeasonInProgress(
+    league: DBLeague,
+    dbOrTx?: DBOrTx,
+  ): Promise<boolean> {
+    const now = new Date();
+    const currentPhases = await this.phasesQueryService.findCurrentPhases(
+      league.startPhaseTemplateId,
+      league.endPhaseTemplateId,
+      now,
+      dbOrTx,
+    );
+
+    return currentPhases.length > 0;
+  }
 
   // Orchestration Methods (Mutations)
 
@@ -173,6 +206,26 @@ export class LeagueInvitesService {
         throw new ConflictError("You are already a member of the league");
       }
 
+      const league = await this.leaguesQueryService.findById(
+        invite.leagueId,
+        tx,
+      );
+      if (!league) {
+        throw new NotFoundError("League not found");
+      }
+
+      // Check league capacity and season status before responding
+      const hasCapacity = await this.leagueHasCapacity(league, tx);
+      if (!hasCapacity) {
+        throw new ValidationError("League is at capacity");
+      }
+
+      // Check if league's season is in progress before responding
+      const seasonInProgress = await this.leagueSeasonInProgress(league, tx);
+      if (!seasonInProgress) {
+        throw new ValidationError("League's season is not in progress");
+      }
+
       await this.leagueInvitesMutationService.update(
         inviteId,
         { status: response },
@@ -242,6 +295,27 @@ export class LeagueInvitesService {
       if (member) {
         // silently succeed
         return;
+      }
+
+      // Check league capacity and season status before joining
+      const league = await this.leaguesQueryService.findById(
+        invite.leagueId,
+        tx,
+      );
+      if (!league) {
+        throw new NotFoundError("League not found");
+      }
+
+      // Check if league's season is in progress before joining
+      const hasCapacity = await this.leagueHasCapacity(league, tx);
+      if (!hasCapacity) {
+        throw new ValidationError("League is at capacity");
+      }
+
+      // Check if league's season is in progress before joining
+      const seasonInProgress = await this.leagueSeasonInProgress(league, tx);
+      if (!seasonInProgress) {
+        throw new ValidationError("League's season is not in progress");
       }
 
       await this.leagueMembersMutationService.createLeagueMember(
