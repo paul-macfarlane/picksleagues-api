@@ -154,13 +154,14 @@ export class LeagueInvitesService {
             tx,
           );
         }
-      }
 
-      if (leagueCapacity > 1) {
-        return {
-          leagueIsAtCapacity: false,
-          leagueIsInProgress: false,
-        };
+        if (leagueCapacity - 1 > 0) {
+          // there is still capacity after this user joins, so no need to clean up
+          return {
+            leagueIsAtCapacity: false,
+            leagueIsInProgress: false,
+          };
+        }
       }
     }
 
