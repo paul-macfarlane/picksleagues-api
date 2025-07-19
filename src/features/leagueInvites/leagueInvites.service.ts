@@ -1,5 +1,5 @@
 import { inject, injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
+import { db, DBOrTx, DBTx } from "../../db";
 import {
   ConflictError,
   ForbiddenError,
@@ -54,16 +54,15 @@ export class LeagueInvitesService {
   ) {}
 
   // Private helper method to check league capacity
-  private async leagueHasCapacity(
+  private async getLeagueCapacity(
     league: DBLeague,
     dbOrTx?: DBOrTx,
-  ): Promise<boolean> {
+  ): Promise<number> {
     const members = await this.leagueMembersQueryService.listByLeagueId(
       league.id,
       dbOrTx,
     );
-
-    return members.length < league.size;
+    return league.size - members.length;
   }
 
   // Private helper method to check if a league's season is in progress
@@ -82,6 +81,98 @@ export class LeagueInvitesService {
     return currentPhases.length > 0;
   }
 
+  // Private helper method to clean up pending invites
+  private async cleanupPendingInvites(
+    leagueId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<void> {
+    const pendingInvites =
+      await this.leagueInvitesQueryService.listActiveByLeagueId(
+        leagueId,
+        dbOrTx,
+      );
+
+    // Delete all pending invites that haven't expired
+    await this.leagueInvitesMutationService.deleteByIds(
+      pendingInvites.map((i) => i.id),
+      dbOrTx,
+    );
+  }
+
+  // Private helper method to respond to an invite and clean up pending invites
+  private async respondAndCleanup(
+    userId: string,
+    invite: DBLeagueInvite,
+    response: LEAGUE_INVITE_STATUSES.ACCEPTED | LEAGUE_INVITE_STATUSES.DECLINED,
+    tx: DBTx,
+  ): Promise<{
+    leagueIsAtCapacity: boolean;
+    leagueIsInProgress: boolean;
+  }> {
+    if (invite.expiresAt && invite.expiresAt < new Date()) {
+      throw new ValidationError("Invite has expired");
+    }
+
+    const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
+      invite.leagueId,
+      userId,
+      tx,
+    );
+    if (member) {
+      return {
+        leagueIsAtCapacity: false,
+        leagueIsInProgress: false,
+      }; // silently succeed if user is already a member
+    }
+
+    const league = await this.leaguesQueryService.findById(invite.leagueId, tx);
+    if (!league) {
+      // this should never happen because of data integrity, but have to handle it
+      throw new Error("League not found for invite");
+    }
+
+    let leagueIsAtCapacity = true;
+    let leagueIsInProgress = true;
+    const leagueCapacity = await this.getLeagueCapacity(league, tx);
+    if (leagueCapacity > 0) {
+      leagueIsAtCapacity = false;
+      leagueIsInProgress = await this.leagueSeasonInProgress(league, tx);
+      if (!leagueIsInProgress) {
+        await this.leagueInvitesMutationService.update(
+          invite.id,
+          { status: response },
+          tx,
+        );
+
+        if (response === LEAGUE_INVITE_STATUSES.ACCEPTED) {
+          await this.leagueMembersMutationService.createLeagueMember(
+            {
+              leagueId: invite.leagueId,
+              userId,
+              role: invite.role,
+            },
+            tx,
+          );
+        }
+      }
+
+      if (leagueCapacity > 1) {
+        return {
+          leagueIsAtCapacity: false,
+          leagueIsInProgress: false,
+        };
+      }
+    }
+
+    // either the league is at capacity, in progress, or just reached capacity.
+    // In all cases, we need to clean up pending invites
+    await this.cleanupPendingInvites(invite.leagueId, tx);
+
+    return {
+      leagueIsAtCapacity,
+      leagueIsInProgress,
+    };
+  }
   // Orchestration Methods (Mutations)
 
   async create(
@@ -176,6 +267,9 @@ export class LeagueInvitesService {
     inviteId: string,
     response: LEAGUE_INVITE_STATUSES.ACCEPTED | LEAGUE_INVITE_STATUSES.DECLINED,
   ): Promise<void> {
+    let leagueIsAtCapacity = false;
+    let leagueIsInProgress = false;
+
     await db.transaction(async (tx) => {
       const invite = await this.leagueInvitesQueryService.findById(
         inviteId,
@@ -189,60 +283,62 @@ export class LeagueInvitesService {
         throw new ForbiddenError("You are not the invitee");
       }
 
-      if (invite.expiresAt && invite.expiresAt < new Date()) {
-        throw new ValidationError("Invite has expired");
-      }
-
       if (invite.status !== LEAGUE_INVITE_STATUSES.PENDING) {
-        throw new ValidationError("Invite is not pending");
+        throw new ValidationError("Invite already responded to");
       }
 
-      const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
-        invite.leagueId,
-        userId,
-        tx,
-      );
-      if (member) {
-        throw new ConflictError("You are already a member of the league");
-      }
+      const {
+        leagueIsAtCapacity: leagueIsAtCapacityFromCleanup,
+        leagueIsInProgress: leagueIsInProgressFromCleanup,
+      } = await this.respondAndCleanup(userId, invite, response, tx);
 
-      const league = await this.leaguesQueryService.findById(
-        invite.leagueId,
-        tx,
-      );
-      if (!league) {
-        throw new NotFoundError("League not found");
-      }
-
-      // Check league capacity and season status before responding
-      const hasCapacity = await this.leagueHasCapacity(league, tx);
-      if (!hasCapacity) {
-        throw new ValidationError("League is at capacity");
-      }
-
-      // Check if league's season is in progress before responding
-      const seasonInProgress = await this.leagueSeasonInProgress(league, tx);
-      if (!seasonInProgress) {
-        throw new ValidationError("League's season is not in progress");
-      }
-
-      await this.leagueInvitesMutationService.update(
-        inviteId,
-        { status: response },
-        tx,
-      );
-
-      if (response === LEAGUE_INVITE_STATUSES.ACCEPTED) {
-        await this.leagueMembersMutationService.createLeagueMember(
-          {
-            leagueId: invite.leagueId,
-            userId,
-            role: invite.role,
-          },
-          tx,
-        );
-      }
+      leagueIsAtCapacity = leagueIsAtCapacityFromCleanup;
+      leagueIsInProgress = leagueIsInProgressFromCleanup;
     });
+
+    if (leagueIsAtCapacity) {
+      throw new ValidationError("League is at capacity");
+    }
+
+    if (leagueIsInProgress) {
+      throw new ValidationError("League's season is in progress");
+    }
+  }
+
+  async joinWithToken(userId: string, token: string): Promise<void> {
+    let leagueIsAtCapacity = false;
+    let leagueIsInProgress = false;
+
+    await db.transaction(async (tx) => {
+      const invite = await this.leagueInvitesQueryService.findByToken(
+        token,
+        tx,
+      );
+      if (!invite) {
+        throw new NotFoundError("Invite not found");
+      }
+
+      const {
+        leagueIsAtCapacity: leagueIsAtCapacityFromCleanup,
+        leagueIsInProgress: leagueIsInProgressFromCleanup,
+      } = await this.respondAndCleanup(
+        userId,
+        invite,
+        LEAGUE_INVITE_STATUSES.ACCEPTED, // responding to a link is an accept
+        tx,
+      );
+
+      leagueIsAtCapacity = leagueIsAtCapacityFromCleanup;
+      leagueIsInProgress = leagueIsInProgressFromCleanup;
+    });
+
+    if (leagueIsAtCapacity) {
+      throw new ValidationError("League is at capacity");
+    }
+
+    if (leagueIsInProgress) {
+      throw new ValidationError("League's season is in progress");
+    }
   }
 
   async revoke(userId: string, inviteId: string): Promise<void> {
@@ -269,63 +365,6 @@ export class LeagueInvitesService {
       }
 
       await this.leagueInvitesMutationService.delete(inviteId, tx);
-    });
-  }
-
-  async joinWithToken(userId: string, token: string): Promise<void> {
-    await db.transaction(async (tx) => {
-      const invite = await this.leagueInvitesQueryService.findByToken(
-        token,
-        tx,
-      );
-      if (!invite) {
-        throw new NotFoundError("Invite not found");
-      }
-
-      if (invite.expiresAt && invite.expiresAt < new Date()) {
-        await this.leagueInvitesMutationService.delete(invite.id, tx);
-        throw new ValidationError("Invite has expired");
-      }
-
-      const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
-        invite.leagueId,
-        userId,
-        tx,
-      );
-      if (member) {
-        // silently succeed
-        return;
-      }
-
-      // Check league capacity and season status before joining
-      const league = await this.leaguesQueryService.findById(
-        invite.leagueId,
-        tx,
-      );
-      if (!league) {
-        throw new NotFoundError("League not found");
-      }
-
-      // Check if league's season is in progress before joining
-      const hasCapacity = await this.leagueHasCapacity(league, tx);
-      if (!hasCapacity) {
-        throw new ValidationError("League is at capacity");
-      }
-
-      // Check if league's season is in progress before joining
-      const seasonInProgress = await this.leagueSeasonInProgress(league, tx);
-      if (!seasonInProgress) {
-        throw new ValidationError("League's season is not in progress");
-      }
-
-      await this.leagueMembersMutationService.createLeagueMember(
-        {
-          leagueId: invite.leagueId,
-          userId,
-          role: invite.role,
-        },
-        tx,
-      );
     });
   }
 

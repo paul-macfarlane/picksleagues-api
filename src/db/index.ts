@@ -10,10 +10,12 @@ import { ExtractTablesWithRelations } from "drizzle-orm";
 
 export const db = drizzle(process.env.DATABASE_URL!, { schema });
 
-export type DBOrTx =
-  | NodePgDatabase<typeof schema>
-  | PgTransaction<
-      NodePgQueryResultHKT,
-      typeof schema,
-      ExtractTablesWithRelations<typeof schema>
-    >;
+export type DB = NodePgDatabase<typeof schema>;
+
+export type DBTx = PgTransaction<
+  NodePgQueryResultHKT,
+  typeof schema,
+  ExtractTablesWithRelations<typeof schema>
+>;
+
+export type DBOrTx = DB | DBTx;
