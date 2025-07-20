@@ -29,6 +29,13 @@
       "when": 1752896881902,
       "tag": "0003_late_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1753031654044,
+      "tag": "0004_premium_arachne",
+      "breakpoints": true
     }
   ]
 }

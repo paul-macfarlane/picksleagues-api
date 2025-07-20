@@ -14,4 +14,8 @@ export class LeaguesMutationService {
   async create(league: DBLeagueInsert, dbOrTx: DBOrTx = db): Promise<DBLeague> {
     return this.leaguesRepository.create(league, dbOrTx);
   }
+
+  async delete(id: string, dbOrTx: DBOrTx = db): Promise<void> {
+    return this.leaguesRepository.delete(id, dbOrTx);
+  }
 }

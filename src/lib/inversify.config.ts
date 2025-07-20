@@ -45,8 +45,44 @@ import { DataSourcesQueryService } from "../features/dataSources/dataSources.que
 import { DataSourcesMutationService } from "../features/dataSources/dataSources.mutation.service";
 import { SportLeaguesQueryService } from "../features/sportLeagues/sportLeagues.query.service";
 import { SportLeaguesMutationService } from "../features/sportLeagues/sportLeagues.mutation.service";
+import { AccountsRepository } from "../features/accounts/accounts.repository";
+import { AccountsMutationService } from "../features/accounts/accounts.mutation.service";
+import { SessionsRepository } from "../features/sessions/sessions.repository";
+import { SessionsMutationService } from "../features/sessions/sessions.mutation.service";
+import { VerificationsRepository } from "../features/verifications/verifications.repository";
+import { VerificationsMutationService } from "../features/verifications/verifications.mutation.service";
 
 const container = new Container();
+
+// Accounts Bindings
+container
+  .bind<AccountsRepository>(TYPES.AccountsRepository)
+  .to(AccountsRepository)
+  .inSingletonScope();
+container
+  .bind<AccountsMutationService>(TYPES.AccountsMutationService)
+  .to(AccountsMutationService)
+  .inSingletonScope();
+
+// Sessions Bindings
+container
+  .bind<SessionsRepository>(TYPES.SessionsRepository)
+  .to(SessionsRepository)
+  .inSingletonScope();
+container
+  .bind<SessionsMutationService>(TYPES.SessionsMutationService)
+  .to(SessionsMutationService)
+  .inSingletonScope();
+
+// Verifications Bindings
+container
+  .bind<VerificationsRepository>(TYPES.VerificationsRepository)
+  .to(VerificationsRepository)
+  .inSingletonScope();
+container
+  .bind<VerificationsMutationService>(TYPES.VerificationsMutationService)
+  .to(VerificationsMutationService)
+  .inSingletonScope();
 
 // Profiles Bindings
 container

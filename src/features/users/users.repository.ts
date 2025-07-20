@@ -1,8 +1,8 @@
-import { eq } from "drizzle-orm";
 import { injectable } from "inversify";
+import { eq } from "drizzle-orm";
 import { db, DBOrTx } from "../../db";
 import { usersTable } from "../../db/schema";
-import { DBUser } from "./users.types";
+import { DBUser, DBUserUpdate } from "./users.types";
 
 @injectable()
 export class UsersRepository {
@@ -13,5 +13,19 @@ export class UsersRepository {
       .where(eq(usersTable.id, id))
       .limit(1);
     return user;
+  }
+
+  async update(
+    id: string,
+    data: DBUserUpdate,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBUser> {
+    const updated = await dbOrTx
+      .update(usersTable)
+      .set(data)
+      .where(eq(usersTable.id, id))
+      .returning();
+
+    return updated[0];
   }
 }

@@ -1,5 +1,8 @@
 export const TYPES = {
   // Repositories
+  AccountsRepository: Symbol.for("AccountsRepository"),
+  SessionsRepository: Symbol.for("SessionsRepository"),
+  VerificationsRepository: Symbol.for("VerificationsRepository"),
   ProfilesRepository: Symbol.for("ProfilesRepository"),
   LeagueTypesRepository: Symbol.for("LeagueTypesRepository"),
   LeaguesRepository: Symbol.for("LeaguesRepository"),
@@ -39,6 +42,9 @@ export const TYPES = {
   SportLeaguesQueryService: Symbol.for("SportLeaguesQueryService"),
 
   // Mutation Services
+  AccountsMutationService: Symbol.for("AccountsMutationService"),
+  SessionsMutationService: Symbol.for("SessionsMutationService"),
+  VerificationsMutationService: Symbol.for("VerificationsMutationService"),
   LeagueMembersMutationService: Symbol.for("LeagueMembersMutationService"),
   UsersMutationService: Symbol.for("UsersMutationService"),
   LeagueInvitesMutationService: Symbol.for("LeagueInvitesMutationService"),

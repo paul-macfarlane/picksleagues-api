@@ -117,4 +117,21 @@ export class LeaguesRepository {
       );
     return result.map((row) => row.league);
   }
+
+  async listByUserId(userId: string, dbOrTx: DBOrTx = db): Promise<DBLeague[]> {
+    const result = await dbOrTx
+      .select({ league: leaguesTable })
+      .from(leaguesTable)
+      .innerJoin(
+        leagueMembersTable,
+        eq(leaguesTable.id, leagueMembersTable.leagueId),
+      )
+      .where(eq(leagueMembersTable.userId, userId));
+
+    return result.map((row) => row.league);
+  }
+
+  async delete(id: string, dbOrTx: DBOrTx = db): Promise<void> {
+    await dbOrTx.delete(leaguesTable).where(eq(leaguesTable.id, id));
+  }
 }

@@ -29,4 +29,11 @@ export class LeagueMembersQueryService {
   ): Promise<DBLeagueMember[]> {
     return this.leagueMembersRepository.listByLeagueId(leagueId, dbOrTx);
   }
+
+  async listByLeagueIds(
+    leagueIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBLeagueMember[]> {
+    return this.leagueMembersRepository.listByLeagueIds(leagueIds, dbOrTx);
+  }
 }

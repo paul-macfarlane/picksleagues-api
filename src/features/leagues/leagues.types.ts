@@ -4,6 +4,7 @@ import {
   LEAGUE_TYPE_SLUGS,
   DBLeagueType,
 } from "../leagueTypes/leagueTypes.types";
+import { DBLeagueMember } from "../leagueMembers/leagueMembers.types";
 
 // Constants
 export enum PICK_EM_PICK_TYPES {
@@ -24,7 +25,8 @@ export const MIN_LEAGUE_SIZE = 2;
 export const MAX_LEAGUE_SIZE = 20;
 
 export enum LEAGUE_INCLUDES {
-  LEAGUE_TYPE = "leagueType",
+  LEAGUE_TYPE = "league_type",
+  MEMBERS = "members",
 }
 
 // DB Types
@@ -35,7 +37,8 @@ export type DBLeagueWithLeagueType = DBLeague & {
 };
 
 export type PopulatedDBLeague = DBLeague & {
-  leagueType?: DBLeagueType;
+  leagueType?: DBLeagueType | null;
+  members?: DBLeagueMember[];
 };
 
 export type DBLeagueInsert = typeof leaguesTable.$inferInsert;
@@ -49,7 +52,9 @@ export const LeagueIncludeSchema = z
     include: z
       .string()
       .transform((val) => val.split(","))
-      .pipe(z.array(z.enum([LEAGUE_INCLUDES.LEAGUE_TYPE])))
+      .pipe(
+        z.array(z.enum([LEAGUE_INCLUDES.LEAGUE_TYPE, LEAGUE_INCLUDES.MEMBERS])),
+      )
       .optional(),
   })
   .optional();

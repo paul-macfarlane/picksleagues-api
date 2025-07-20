@@ -17,4 +17,8 @@ export class LeagueMembersMutationService {
   ): Promise<DBLeagueMember> {
     return this.leagueMembersRepository.create(data, dbOrTx);
   }
+
+  async deleteByUserId(userId: string, dbOrTx?: DBOrTx): Promise<void> {
+    return this.leagueMembersRepository.deleteByUserId(userId, dbOrTx);
+  }
 }

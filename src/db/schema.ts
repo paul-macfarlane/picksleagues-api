@@ -89,7 +89,7 @@ export const profilesTable = pgTable("profiles", {
     .references(() => usersTable.id, {
       onDelete: "cascade",
     }),
-  username: text("username").notNull().unique(),
+  username: text("username").notNull(), // is technically unique, with the exception of the anonymous user for deleted accounts
   firstName: text("first_name"),
   lastName: text("last_name"),
   avatarUrl: text("avatar_url"),

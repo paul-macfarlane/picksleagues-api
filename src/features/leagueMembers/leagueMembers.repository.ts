@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
 import { leagueMembersTable } from "../../db/schema";
@@ -25,6 +25,25 @@ export class LeagueMembersRepository {
       .select()
       .from(leagueMembersTable)
       .where(eq(leagueMembersTable.leagueId, leagueId));
+  }
+
+  async listByLeagueIds(
+    leagueIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBLeagueMember[]> {
+    if (leagueIds.length === 0) {
+      return [];
+    }
+    return dbOrTx
+      .select()
+      .from(leagueMembersTable)
+      .where(inArray(leagueMembersTable.leagueId, leagueIds));
+  }
+
+  async deleteByUserId(userId: string, dbOrTx: DBOrTx = db): Promise<void> {
+    await dbOrTx
+      .delete(leagueMembersTable)
+      .where(eq(leagueMembersTable.userId, userId));
   }
 
   async findByLeagueAndUserId(

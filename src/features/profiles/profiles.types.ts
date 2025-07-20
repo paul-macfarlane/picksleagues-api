@@ -2,6 +2,10 @@ import z from "zod";
 import { profilesTable } from "../../db/schema";
 
 // Constants
+export const ANONYMOUS_USERNAME = "anonymous";
+export const ANONYMOUS_FIRST_NAME = "Anonymous";
+export const ANONYMOUS_LAST_NAME = "User";
+
 export const MIN_USERNAME_LENGTH = 3;
 export const MAX_USERNAME_LENGTH = 50;
 export const MIN_NAME_LENGTH = 1;

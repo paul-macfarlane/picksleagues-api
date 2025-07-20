@@ -1,11 +1,17 @@
 import { db, DBOrTx } from "../../db";
 import {
+  ANONYMOUS_USERNAME,
   DBProfile,
   DBProfileUpdate,
   MAX_USERNAME_LENGTH,
   SearchProfilesSchema,
 } from "./profiles.types";
-import { ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "../../lib/errors";
 import { generateFromEmail } from "unique-username-generator";
 import { DBUser } from "../users/users.types";
 import { injectable, inject } from "inversify";
@@ -30,6 +36,10 @@ export class ProfilesService {
   ): Promise<DBProfile> {
     if (actingUserId !== targetUserId) {
       throw new ForbiddenError("You are not authorized to update this profile");
+    }
+
+    if (profileData.username && profileData.username === ANONYMOUS_USERNAME) {
+      throw new ValidationError("This username is reserved.");
     }
 
     return await db.transaction(async (tx) => {
@@ -72,7 +82,10 @@ export class ProfilesService {
         MAX_USERNAME_LENGTH,
       );
       let i = 1;
-      while (await this.profilesQueryService.isUsernameTaken(username, tx)) {
+      while (
+        (await this.profilesQueryService.isUsernameTaken(username, tx)) ||
+        username === ANONYMOUS_USERNAME
+      ) {
         username = generateFromEmail(user.email, i).slice(
           0,
           MAX_USERNAME_LENGTH,

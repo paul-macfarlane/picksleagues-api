@@ -43,4 +43,8 @@ export class LeaguesQueryService {
       dbOrTx,
     );
   }
+
+  async listByUserId(userId: string, dbOrTx?: DBOrTx): Promise<DBLeague[]> {
+    return this.leaguesRepository.listByUserId(userId, dbOrTx);
+  }
 }
