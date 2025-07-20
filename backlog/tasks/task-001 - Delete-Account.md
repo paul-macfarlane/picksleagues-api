@@ -1,7 +1,7 @@
 ---
 id: task-001
 title: Delete Account
-status: Done
+status: In Progress
 assignee:
   - '@paulmacfarlane'
 created_date: '2025-07-20'
@@ -30,8 +30,11 @@ This task is to create an API endpoint for account deletion. The endpoint will h
 
 ## Implementation Notes
 
-- Implemented the `DELETE /api/v1/users/me` endpoint to anonymize user accounts.
+- Implemented the `DELETE /api/v1/users/me` endpoint to anonymize user accounts in a transaction.
 - Added business logic to handle sole commissioners and single-member leagues.
 - Added a `listByUserId` method to the `leagues` feature to simplify fetching a user's leagues.
 - Refactored the code based on feedback to improve structure, error handling, and to correctly implement the anonymization logic.
 - Moved the `users.router.ts` to the correct feature directory.
+- Removed the unique constraint on the `username` in the `profiles` table and updated the profile creation/update logic to prevent the use of the "anonymous" username.
+- Refactored the anonymization logic to follow the standards by using the mutation services to update the user and profile data.
+- Refactored the business logic out of the mutation services and into the service layer, where it belongs.
