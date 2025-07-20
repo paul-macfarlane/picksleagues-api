@@ -1,7 +1,11 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
-import { externalPhasesTable, phasesTable } from "../../db/schema";
+import {
+  externalPhasesTable,
+  phasesTable,
+  phaseTemplatesTable,
+} from "../../db/schema";
 import {
   DBExternalPhase,
   DBExternalPhaseInsert,
@@ -80,5 +84,50 @@ export class PhasesRepository {
       )
       .returning();
     return updatedExternalPhase;
+  }
+
+  async findCurrentPhases(
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    currentDate: Date,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase[]> {
+    // Get all phases that:
+    // 1. Are between the start and end phase templates (inclusive)
+    // 2. Have the current date between their start and end dates
+    const phases = await dbOrTx
+      .select({
+        phase: phasesTable,
+      })
+      .from(phasesTable)
+      .innerJoin(
+        phaseTemplatesTable,
+        eq(phasesTable.phaseTemplateId, phaseTemplatesTable.id),
+      )
+      .where(
+        and(
+          // Phase template is between start and end templates (inclusive)
+          gte(
+            phaseTemplatesTable.sequence,
+            sql`(
+            SELECT sequence FROM ${phaseTemplatesTable}
+            WHERE id = ${startPhaseTemplateId}
+          )`,
+          ),
+          lte(
+            phaseTemplatesTable.sequence,
+            sql`(
+            SELECT sequence FROM ${phaseTemplatesTable}
+            WHERE id = ${endPhaseTemplateId}
+          )`,
+          ),
+          // Current date is between phase start and end dates
+          lte(phasesTable.startDate, currentDate),
+          gte(phasesTable.endDate, currentDate),
+          // so today is september 23 2025, and the phase is september 20 2025 to october 20 2025, then it should be included
+        ),
+      );
+
+    return phases.map((p) => p.phase);
   }
 }

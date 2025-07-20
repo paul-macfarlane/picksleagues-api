@@ -163,37 +163,61 @@ The prefix of a method name clearly defines its behavior when the requested reso
 
 ## Part 2: Testing Strategy
 
-_Note: This section outlines the testing strategy we will adopt. The actual implementation of tests is a future task._
+We use [Vitest](https://vitest.dev/) for unit and integration testing. Test files should be located alongside the files they are testing and named with a `.test.ts` suffix (e.g., `my-service.ts` and `my-service.test.ts`).
 
-Our testing strategy is pragmatic, focusing effort where it provides the most value.
+### Mocking
 
-### 2.1. Service Layer: Unit Tests (High Priority)
+Service dependencies should be mocked in unit tests to ensure isolation. We use [`vitest-mock-extended`](https://www.npmjs.com/package/vitest-mock-extended) to create type-safe mocks.
 
-The service layer contains our most complex business logic, making it the ideal candidate for unit tests.
+```typescript
+import { mock, MockProxy } from "vitest-mock-extended";
+import { MyService } from "./my.service";
+import { AnotherService } from "../another/another.service";
 
-- **Goal:** Test each service class in complete isolation from the database and other services.
-- **Method:** We will use a testing framework (e.g., Jest, Vitest) to write unit tests for our service classes.
-- **Mocking:** Dependencies (repositories, other services) will be provided as mock objects during test setup. This is made easy by our Dependency Injection pattern.
+describe("MyService", () => {
+  let anotherService: MockProxy<AnotherService>;
+  let myService: MyService;
 
-### 2.2. Repository Layer: Integration Tests (Medium Priority)
+  beforeEach(() => {
+    anotherService = mock<AnotherService>();
+    myService = new MyService(anotherService);
+  });
 
-Unit testing repositories provides little value, as they are simple wrappers around database queries.
+  // ... tests
+});
+```
 
-- **Goal:** Verify that our database queries are syntactically correct and behave as expected against a real database schema.
-- **Method:** We will write integration tests that run against a temporary, containerized test database. Each test will execute a repository method and assert the state of the database before and after.
+### Database Transactions
 
-### 2.4. Mocking Strategy: Pragmatic Mocks over Formal Interfaces
+For services that use database transactions (`db.transaction`), the transaction should be mocked to avoid actual database calls in unit tests.
 
-For unit testing our services, we will provide mocks for their dependencies (e.g., repositories). There are two common ways to do this:
+```typescript
+import { vi } from "vitest";
 
-1.  **Formal Interfaces:** Define an `interface` for each repository (e.g., `IProfilesRepository`) and create a mock class that `implements` this interface. This provides strong compile-time safety but adds significant boilerplate and maintenance overhead.
-2.  **Structural Mocks (Our Choice):** Create a plain JavaScript object that has the same methods and properties as the real repository class, using a library like Jest to create mock functions (`jest.fn()`).
+vi.mock("../../db", () => ({
+  db: {
+    transaction: vi.fn((callback) => callback()),
+  },
+}));
+```
 
-We have chosen **Option 2**. TypeScript's structural typing already gives us a strong degree of safety, ensuring our mock object has the correct "shape." This approach provides almost all of the benefits of formal interfaces with significantly less code duplication and maintenance cost, making it the more pragmatic choice for this project.
+### Asserting Errors
 
-### 2.3. Preventing Accidental DB Connections in Unit Tests
+When testing error paths, assert on the specific error class, not just the error message. This makes tests more robust against changes to error messages.
 
-To ensure our unit tests are fast and reliable, they must never touch a real database. We will enforce this by globally mocking the application's database client in our unit testing environment setup. This guarantees that any code that accidentally tries to connect to the database will receive a harmless mock object instead.
+```typescript
+import { NotFoundError } from "../../lib/errors";
+
+// Good:
+await expect(myService.doSomething("bad-id")).rejects.toThrow(
+  new NotFoundError("Thing not found"),
+);
+
+// Bad:
+await expect(myService.doSomething("bad-id")).rejects.toThrow(
+  "Thing not found",
+);
+```
 
 ---
 

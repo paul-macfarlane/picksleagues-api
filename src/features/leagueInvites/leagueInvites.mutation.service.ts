@@ -33,4 +33,8 @@ export class LeagueInvitesMutationService {
   async delete(id: string, dbOrTx?: DBOrTx): Promise<void> {
     return this.leagueInvitesRepository.delete(id, dbOrTx);
   }
+
+  async deleteByIds(ids: string[], dbOrTx?: DBOrTx): Promise<void> {
+    return this.leagueInvitesRepository.deleteByIds(ids, dbOrTx);
+  }
 }

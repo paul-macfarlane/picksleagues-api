@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull, or } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
 import { leagueInvitesTable } from "../../db/schema";
@@ -93,6 +93,12 @@ export class LeagueInvitesRepository {
     await dbOrTx
       .delete(leagueInvitesTable)
       .where(eq(leagueInvitesTable.id, inviteId));
+  }
+
+  async deleteByIds(ids: string[], dbOrTx: DBOrTx = db): Promise<void> {
+    await dbOrTx
+      .delete(leagueInvitesTable)
+      .where(inArray(leagueInvitesTable.id, ids));
   }
 
   async findByInviteeLeagueAndStatus(

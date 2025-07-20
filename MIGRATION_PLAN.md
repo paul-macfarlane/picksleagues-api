@@ -41,21 +41,22 @@ This document outlines the tactical steps to harden the codebase and ensure it f
 
 ---
 
-## Phase 3: Implement Testing (Future Goal)
+## Phase 3: Implement Testing
 
 **Goal:** Establish a robust testing suite for the application to ensure long-term stability and catch regressions.
 
 **Note:** This phase should only be started after the API standards compliance is complete.
 
-1.  **Set Up Testing Environment:**
+1.  **Set Up Testing Environment:** (Completed)
 
     - Configure a testing framework (e.g., Jest or Vitest).
     - Create a global setup file to mock the `db` client, preventing unit tests from making real database connections, as detailed in `STANDARDS.md`.
     - Set up a process for running integration tests against a test database.
 
-2.  **Write Service Unit Tests:**
+2.  **Write Service Unit Tests:** (In Progress)
 
     - For each feature, write comprehensive unit tests for the service class, mocking its dependencies (repositories and other services).
+    - **`leagueInvites`:** Completed. This is the reference implementation for service-layer testing.
 
 3.  **Write Repository Integration Tests:**
     - For each feature, write integration tests for the repository class, verifying its methods against a real database schema.
