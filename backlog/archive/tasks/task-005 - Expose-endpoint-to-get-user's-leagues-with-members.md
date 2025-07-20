@@ -3,9 +3,9 @@ id: task-005
 title: Expose endpoint to get user's leagues with members
 status: Done
 assignee:
-  - '@paulmacfarlane'
-created_date: '2025-07-20'
-updated_date: '2025-07-20'
+  - "@paulmacfarlane"
+created_date: "2025-07-20"
+updated_date: "2025-07-20"
 labels: []
 dependencies: []
 ---
@@ -31,3 +31,5 @@ To support the client-side account deletion flow, the client needs to check if t
 - Updated the `populateLeagues` private method to handle the `include=members` query parameter.
 - Added the `listByLeagueIds` method to `LeagueMembersQueryService` and `LeagueMembersRepository` to support fetching members for multiple leagues at once.
 - Added the new `GET /api/v1/users/me/leagues` route to `users.router.ts`.
+- Added unit tests for the `listLeaguesForUser` method.
+- **Remaining Work**: There is a persistent linter error in `leagues.service.test.ts` that needs to be resolved.
