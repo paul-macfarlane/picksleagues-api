@@ -1,10 +1,11 @@
 ---
 id: task-004
 title: Leave League
-status: To Do
-assignee: []
-created_date: "2025-07-20"
-updated_date: "2025-07-20"
+status: In Progress
+assignee:
+  - '@paulmacfarlane'
+created_date: '2025-07-20'
+updated_date: '2025-07-20'
 labels: []
 dependencies: []
 ---
@@ -21,3 +22,7 @@ This task is to create an API endpoint for a user to leave a league. This endpoi
 - [ ] The API returns an error if a commissioner tries to leave a league with other members without first designating another commissioner.
 - [ ] If the leaving user is the sole member of the league, the league is deleted.
 - [ ] Upon successfully leaving, the user is no longer a member of the league.
+
+## Implementation Plan
+
+1. **Router ():** Add a  route that calls the new  method in .\n2. **Orchestration Service ():** Create a new  method to handle the business logic.\n3. **Business Logic:** Inside , use a transaction to: a) verify the user is a member, b) check if the league is in season using , c) handle the case where a commissioner leaves (ensuring a replacement exists), d) delete the league if it's the last member, or e) delete the membership otherwise.\n4. **Unit Tests ():** Add a new  block for  with tests covering all acceptance criteria.
