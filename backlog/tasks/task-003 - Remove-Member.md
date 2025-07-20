@@ -11,14 +11,14 @@ dependencies: []
 
 ## Description
 
-As a league commissioner, I need the ability to remove members from a league. This is essential for managing league membership, for example, if a member no longer wishes to participate. To prevent accidental data loss, I should be warned of the consequences before finalizing the removal.
-
+This task is to create an API endpoint for removing a member from a league. The endpoint will be responsible for enforcing the business logic that governs when a member can be removed, such as checking if the league is in season. It will also handle the data modifications for removing the member while retaining their historical data.
 ## Acceptance Criteria
 
-- [ ] A league commissioner can initiate the removal of a league member.
-- [ ] Before confirming the removal
-- [ ] the commissioner is shown a warning about the consequences.
-- [ ] A member can only be removed from a league when the league is not in season.
-- [ ] When a member is removed
-- [ ] their historical pick and standings data is retained.
-- [ ] A commissioner cannot remove themselves from the league using this feature.
+- [ ] API provides an endpoint to remove a member from a league.
+- [ ] The endpoint requires authentication and authorization to ensure only a league commissioner can remove a member.
+- [ ] The API returns an error if a member removal is attempted while the league is in season.
+- [ ] Upon successful removal
+- [ ] the member is no longer associated with the league.
+- [ ] The removed member's historical data (picks
+- [ ] standings) is retained.
+- [ ] The API returns an error if a commissioner attempts to remove themselves from the league with this endpoint.
