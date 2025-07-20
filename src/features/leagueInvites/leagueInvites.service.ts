@@ -103,7 +103,10 @@ export class LeagueInvitesService {
   private async respondAndCleanup(
     userId: string,
     invite: DBLeagueInvite,
-    response: LEAGUE_INVITE_STATUSES.ACCEPTED | LEAGUE_INVITE_STATUSES.DECLINED,
+    response:
+      | LEAGUE_INVITE_STATUSES.ACCEPTED
+      | LEAGUE_INVITE_STATUSES.DECLINED
+      | null,
     tx: DBTx,
   ): Promise<{
     leagueIsAtCapacity: boolean;
@@ -144,7 +147,10 @@ export class LeagueInvitesService {
           tx,
         );
 
-        if (response === LEAGUE_INVITE_STATUSES.ACCEPTED) {
+        if (
+          response === LEAGUE_INVITE_STATUSES.ACCEPTED ||
+          response === null // link invites are accepted by default
+        ) {
           await this.leagueMembersMutationService.createLeagueMember(
             {
               leagueId: invite.leagueId,
@@ -342,7 +348,7 @@ export class LeagueInvitesService {
       } = await this.respondAndCleanup(
         userId,
         invite,
-        LEAGUE_INVITE_STATUSES.ACCEPTED, // responding to a link is an accept
+        null, // responding to a link is an accept by default
         tx,
       );
 
