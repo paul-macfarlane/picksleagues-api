@@ -14,7 +14,7 @@ dependencies: []
 This task is to create an API endpoint for account deletion. The endpoint will handle all the business logic and data modifications required to securely remove a user from the system. It will ensure that all personally identifiable information is erased while maintaining the integrity of historical, anonymized data.
 ## Acceptance Criteria
 
-- [ ] API provides an endpoint to delete a user account.
+- [ ] The API provides an endpoint to delete a user account.
 - [ ] The endpoint requires authentication to ensure a user can only delete their own account.
 - [ ] Upon successful deletion
 - [ ] the user's PII is permanently removed from the database.
