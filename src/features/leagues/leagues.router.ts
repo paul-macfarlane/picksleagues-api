@@ -8,7 +8,10 @@ import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
 import { LeaguesService } from "./leagues.service";
 import { requireAuth } from "../../lib/auth.middleware";
-import { LeagueMemberIncludeSchema } from "../leagueMembers/leagueMembers.types";
+import {
+  LeagueMemberIncludeSchema,
+  UpdateLeagueMemberSchema,
+} from "../leagueMembers/leagueMembers.types";
 import { LeagueMembersService } from "../leagueMembers/leagueMembers.service";
 import { LeagueInviteIncludeSchema } from "../leagueInvites/leagueInvites.types";
 import { LeagueInvitesService } from "../leagueInvites/leagueInvites.service";
@@ -68,6 +71,23 @@ router.get(
     );
 
     res.status(200).json(invites);
+  },
+);
+
+router.patch(
+  "/:leagueId/members/:userId",
+  async (req: Request, res: Response): Promise<void> => {
+    const { leagueId, userId } = req.params;
+    const update = UpdateLeagueMemberSchema.parse(req.body);
+
+    const updatedMember = await leagueMembersService.update(
+      req.user!.id,
+      leagueId,
+      userId,
+      update,
+    );
+
+    res.status(200).json(updatedMember);
   },
 );
 

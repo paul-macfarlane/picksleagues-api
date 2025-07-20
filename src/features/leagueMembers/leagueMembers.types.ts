@@ -44,3 +44,7 @@ export const LeagueMemberIncludeSchema = z
       .optional(),
   })
   .optional();
+
+export const UpdateLeagueMemberSchema = z.object({
+  role: z.enum([LEAGUE_MEMBER_ROLES.MEMBER, LEAGUE_MEMBER_ROLES.COMMISSIONER]),
+});

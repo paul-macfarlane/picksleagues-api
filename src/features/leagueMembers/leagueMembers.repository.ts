@@ -2,7 +2,11 @@ import { and, eq, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
 import { leagueMembersTable } from "../../db/schema";
-import { DBLeagueMember, DBLeagueMemberInsert } from "./leagueMembers.types";
+import {
+  DBLeagueMember,
+  DBLeagueMemberInsert,
+  DBLeagueMemberUpdate,
+} from "./leagueMembers.types";
 
 @injectable()
 export class LeagueMembersRepository {
@@ -38,6 +42,26 @@ export class LeagueMembersRepository {
       .select()
       .from(leagueMembersTable)
       .where(inArray(leagueMembersTable.leagueId, leagueIds));
+  }
+
+  async update(
+    leagueId: string,
+    userId: string,
+    data: DBLeagueMemberUpdate,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBLeagueMember> {
+    const updated = await dbOrTx
+      .update(leagueMembersTable)
+      .set(data)
+      .where(
+        and(
+          eq(leagueMembersTable.leagueId, leagueId),
+          eq(leagueMembersTable.userId, userId),
+        ),
+      )
+      .returning();
+
+    return updated[0];
   }
 
   async deleteByUserId(userId: string, dbOrTx: DBOrTx = db): Promise<void> {
