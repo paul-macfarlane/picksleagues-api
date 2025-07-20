@@ -5,12 +5,19 @@ import {
   DBLeagueMemberWithProfile,
   LeagueMemberIncludeSchema,
   PopulatedDBLeagueMember,
+  LEAGUE_MEMBER_ROLES,
+  UpdateLeagueMemberSchema,
 } from "./leagueMembers.types";
 import { LeagueMembersQueryService } from "./leagueMembers.query.service";
 import { ProfilesQueryService } from "../profiles/profiles.query.service";
 import { LeaguesQueryService } from "../leagues/leagues.query.service";
 import { TYPES } from "../../lib/inversify.types";
-import { NotFoundError } from "../../lib/errors";
+import {
+  NotFoundError,
+  ForbiddenError,
+  ValidationError,
+} from "../../lib/errors";
+import { LeagueMembersMutationService } from "./leagueMembers.mutation.service";
 
 @injectable()
 export class LeagueMembersService {
@@ -21,6 +28,8 @@ export class LeagueMembersService {
     private profilesQueryService: ProfilesQueryService,
     @inject(TYPES.LeaguesQueryService)
     private leaguesQueryService: LeaguesQueryService,
+    @inject(TYPES.LeagueMembersMutationService)
+    private leagueMembersMutationService: LeagueMembersMutationService,
   ) {}
 
   private async populateMembers(
@@ -67,5 +76,57 @@ export class LeagueMembersService {
       await this.leagueMembersQueryService.listByLeagueId(leagueId);
 
     return this.populateMembers(members, query);
+  }
+
+  async update(
+    actingUserId: string,
+    leagueId: string,
+    targetUserId: string,
+    update: z.infer<typeof UpdateLeagueMemberSchema>,
+  ): Promise<DBLeagueMember> {
+    const actingUserMember =
+      await this.leagueMembersQueryService.findByLeagueAndUserId(
+        leagueId,
+        actingUserId,
+      );
+    if (
+      !actingUserMember ||
+      actingUserMember.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER
+    ) {
+      throw new ForbiddenError(
+        "You are not authorized to update members in this league",
+      );
+    }
+
+    const targetUserMember =
+      await this.leagueMembersQueryService.findByLeagueAndUserId(
+        leagueId,
+        targetUserId,
+      );
+    if (!targetUserMember) {
+      throw new NotFoundError("Target user is not a member of this league");
+    }
+
+    if (actingUserId === targetUserId) {
+      const allMembers =
+        await this.leagueMembersQueryService.listByLeagueId(leagueId);
+      const commissioners = allMembers.filter(
+        (m) => m.role === LEAGUE_MEMBER_ROLES.COMMISSIONER,
+      );
+      if (
+        commissioners.length === 1 &&
+        update.role === LEAGUE_MEMBER_ROLES.MEMBER
+      ) {
+        throw new ValidationError(
+          "You cannot change your own role to member if you are the sole commissioner",
+        );
+      }
+    }
+
+    return this.leagueMembersMutationService.update(
+      leagueId,
+      targetUserId,
+      update,
+    );
   }
 }

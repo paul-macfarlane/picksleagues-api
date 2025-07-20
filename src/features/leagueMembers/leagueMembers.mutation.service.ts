@@ -2,7 +2,11 @@ import { injectable, inject } from "inversify";
 import { DBOrTx } from "../../db";
 import { TYPES } from "../../lib/inversify.types";
 import { LeagueMembersRepository } from "./leagueMembers.repository";
-import { DBLeagueMember, DBLeagueMemberInsert } from "./leagueMembers.types";
+import {
+  DBLeagueMember,
+  DBLeagueMemberInsert,
+  DBLeagueMemberUpdate,
+} from "./leagueMembers.types";
 
 @injectable()
 export class LeagueMembersMutationService {
@@ -10,6 +14,15 @@ export class LeagueMembersMutationService {
     @inject(TYPES.LeagueMembersRepository)
     private leagueMembersRepository: LeagueMembersRepository,
   ) {}
+
+  async update(
+    leagueId: string,
+    userId: string,
+    data: DBLeagueMemberUpdate,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBLeagueMember> {
+    return this.leagueMembersRepository.update(leagueId, userId, data, dbOrTx);
+  }
 
   async createLeagueMember(
     data: DBLeagueMemberInsert,
