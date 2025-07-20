@@ -28,7 +28,7 @@ import { LeaguesQueryService } from "../leagues/leagues.query.service";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
 import { ProfilesQueryService } from "../profiles/profiles.query.service";
 import { PhasesQueryService } from "../phases/phases.query.service";
-import { DBLeague } from "../leagues/leagues.types";
+import { LeaguesUtilService } from "../leagues/leagues.util.service";
 
 @injectable()
 export class LeagueInvitesService {
@@ -51,35 +51,9 @@ export class LeagueInvitesService {
     private profilesQueryService: ProfilesQueryService,
     @inject(TYPES.PhasesQueryService)
     private phasesQueryService: PhasesQueryService,
+    @inject(TYPES.LeaguesUtilService)
+    private leaguesUtilService: LeaguesUtilService,
   ) {}
-
-  // Private helper method to check league capacity
-  private async getLeagueCapacity(
-    league: DBLeague,
-    dbOrTx?: DBOrTx,
-  ): Promise<number> {
-    const members = await this.leagueMembersQueryService.listByLeagueId(
-      league.id,
-      dbOrTx,
-    );
-    return league.size - members.length;
-  }
-
-  // Private helper method to check if a league's season is in progress
-  private async leagueSeasonInProgress(
-    league: DBLeague,
-    dbOrTx?: DBOrTx,
-  ): Promise<boolean> {
-    const now = new Date();
-    const currentPhases = await this.phasesQueryService.findCurrentPhases(
-      league.startPhaseTemplateId,
-      league.endPhaseTemplateId,
-      now,
-      dbOrTx,
-    );
-
-    return currentPhases.length > 0;
-  }
 
   // Private helper method to clean up pending invites
   private async cleanupPendingInvites(
@@ -93,10 +67,12 @@ export class LeagueInvitesService {
       );
 
     // Delete all pending invites that haven't expired
-    await this.leagueInvitesMutationService.deleteByIds(
-      pendingInvites.map((i) => i.id),
-      dbOrTx,
-    );
+    if (pendingInvites?.length > 0) {
+      await this.leagueInvitesMutationService.deleteByIds(
+        pendingInvites.map((i) => i.id),
+        dbOrTx,
+      );
+    }
   }
 
   // Private helper method to respond to an invite and clean up pending invites
@@ -134,12 +110,30 @@ export class LeagueInvitesService {
       throw new Error("League not found for invite");
     }
 
+    if (response === LEAGUE_INVITE_STATUSES.DECLINED) {
+      await this.leagueInvitesMutationService.update(
+        invite.id,
+        { status: response },
+        tx,
+      );
+      return {
+        leagueIsAtCapacity: false,
+        leagueIsInProgress: false,
+      };
+    }
+
     let leagueIsAtCapacity = true;
     let leagueIsInProgress = true;
-    const leagueCapacity = await this.getLeagueCapacity(league, tx);
+    const leagueCapacity = await this.leaguesUtilService.getLeagueCapacity(
+      league,
+      tx,
+    );
     if (leagueCapacity > 0) {
       leagueIsAtCapacity = false;
-      leagueIsInProgress = await this.leagueSeasonInProgress(league, tx);
+      leagueIsInProgress = await this.leaguesUtilService.leagueSeasonInProgress(
+        league,
+        tx,
+      );
       if (!leagueIsInProgress) {
         await this.leagueInvitesMutationService.update(
           invite.id,
@@ -207,12 +201,16 @@ export class LeagueInvitesService {
         throw new NotFoundError("League not found");
       }
 
-      const leagueCapacity = await this.getLeagueCapacity(league, tx);
+      const leagueCapacity = await this.leaguesUtilService.getLeagueCapacity(
+        league,
+        tx,
+      );
       if (leagueCapacity <= 0) {
         throw new ValidationError("League is at capacity");
       }
 
-      const leagueIsInProgress = await this.leagueSeasonInProgress(league, tx);
+      const leagueIsInProgress =
+        await this.leaguesUtilService.leagueSeasonInProgress(league, tx);
       if (leagueIsInProgress) {
         throw new ValidationError("League's season is in progress");
       }

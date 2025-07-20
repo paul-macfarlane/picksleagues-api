@@ -84,9 +84,9 @@ We employ a two-tiered validation strategy:
 - **Shape Validation (in the Router):** The router is responsible for validating the _shape_ and _data types_ of the incoming request payload. It should use `zodSchema.parse()` to achieve this. This ensures that the service layer never receives a malformed request. If parsing fails, a `ZodError` is thrown and handled by our central error handler.
 - **Business Rule Validation (in the Service):** The service is responsible for validating the data against _business rules_ (e.g., checking if a username is already taken). This logic requires application context and often database access.
 
-### 1.8. Cross-Feature Communication: The Three-Service Pattern
+### 1.8. Cross-Feature Communication: The Service Patterns
 
-To ensure code is maintainable, testable, and free of circular dependencies, we use a formal, three-service pattern for each feature. A "feature" (`leagues`, `profiles`, etc.) is composed of the following services:
+To ensure code is maintainable, testable, and free of circular dependencies, we use a formal set of service patterns for each feature. A "feature" (`leagues`, `profiles`, etc.) is composed of the following services:
 
 1.  **`[Feature]QueryService` (For Reading Data)**
 
@@ -101,9 +101,15 @@ To ensure code is maintainable, testable, and free of circular dependencies, we 
     - **Why?** This guarantees `MutationService`s are simple, predictable, and can never be part of a dependency cycle. They do one thing: change their own entity's state in the database.
 
 3.  **`[Feature]Service` (For Orchestration and Business Logic)**
+
     - **Responsibility:** This is the "root" service and the primary entry point for a feature's capabilities. It contains the complex business logic that orchestrates calls to multiple services to fulfill a single use case.
     - **Dependencies:** Can depend on any `QueryService` (to get data for validation) and any `MutationService` (to command state changes).
     - **Why?** This centralizes complex business process logic. For any process that crosses feature boundaries (e.g., "accepting an invite" touches `invites` and `members`), the initiating service (`LeagueInvitesService`) orchestrates the entire flow, ensuring it happens within a single transaction and in the correct order. The call chain is always linear (e.g., `A_Service -> B_MutationService`), preventing cycles.
+
+4.  **`[Feature]UtilService` (For Shared Business Logic)**
+    - **Responsibility:** To encapsulate a piece of business logic that is required by more than one orchestrating `[Feature]Service`. This is the designated solution to prevent duplicating logic and creating complex dependency graphs or **circular dependencies**.
+    - **Dependencies:** A `UtilService` can **only** depend on `QueryService`s and other `UtilService`s. It **cannot** depend on a `[Feature]Service` or a `MutationService`.
+    - **Why?** This rule is critical. By restricting its dependencies, the `UtilService` is guaranteed to be a "leaf" node in the dependency tree. It can be safely injected into any `[Feature]Service` without any risk of creating a dependency cycle.
 
 This separation provides a clear, predictable, and scalable architecture.
 

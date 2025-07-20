@@ -15,6 +15,7 @@ import {
 import { LeagueMembersService } from "../leagueMembers/leagueMembers.service";
 import { LeagueInviteIncludeSchema } from "../leagueInvites/leagueInvites.types";
 import { LeagueInvitesService } from "../leagueInvites/leagueInvites.service";
+import { UserIdSchema } from "../profiles/profiles.types";
 
 const router = Router();
 const leaguesService = container.get<LeaguesService>(TYPES.LeaguesService);
@@ -77,17 +78,34 @@ router.get(
 router.patch(
   "/:leagueId/members/:userId",
   async (req: Request, res: Response): Promise<void> => {
-    const { leagueId, userId } = req.params;
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const targetUserId = UserIdSchema.parse(req.params.userId);
     const update = UpdateLeagueMemberSchema.parse(req.body);
 
     const updatedMember = await leagueMembersService.update(
       req.user!.id,
       leagueId,
-      userId,
+      targetUserId,
       update,
     );
 
     res.status(200).json(updatedMember);
+  },
+);
+
+router.delete(
+  "/:leagueId/members/:userId",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const targetUserId = UserIdSchema.parse(req.params.userId);
+
+    await leagueMembersService.removeMember(
+      req.user!.id,
+      leagueId,
+      targetUserId,
+    );
+
+    res.status(204).send();
   },
 );
 

@@ -18,6 +18,7 @@ import {
   ValidationError,
 } from "../../lib/errors";
 import { LeagueMembersMutationService } from "./leagueMembers.mutation.service";
+import { LeaguesUtilService } from "../leagues/leagues.util.service";
 
 @injectable()
 export class LeagueMembersService {
@@ -30,6 +31,8 @@ export class LeagueMembersService {
     private leaguesQueryService: LeaguesQueryService,
     @inject(TYPES.LeagueMembersMutationService)
     private leagueMembersMutationService: LeagueMembersMutationService,
+    @inject(TYPES.LeaguesUtilService)
+    private leaguesUtilService: LeaguesUtilService,
   ) {}
 
   private async populateMembers(
@@ -128,5 +131,53 @@ export class LeagueMembersService {
       targetUserId,
       update,
     );
+  }
+
+  async removeMember(
+    actingUserId: string,
+    leagueId: string,
+    targetUserId: string,
+  ): Promise<void> {
+    const actingUserMember =
+      await this.leagueMembersQueryService.findByLeagueAndUserId(
+        leagueId,
+        actingUserId,
+      );
+    if (
+      !actingUserMember ||
+      actingUserMember.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER
+    ) {
+      throw new ForbiddenError(
+        "You are not authorized to remove members from this league",
+      );
+    }
+
+    if (actingUserId === targetUserId) {
+      throw new ValidationError("You cannot remove yourself from the league");
+    }
+
+    const targetUserMember =
+      await this.leagueMembersQueryService.findByLeagueAndUserId(
+        leagueId,
+        targetUserId,
+      );
+    if (!targetUserMember) {
+      throw new NotFoundError("Target user is not a member of this league");
+    }
+
+    const league = await this.leaguesQueryService.findById(leagueId);
+    if (!league) {
+      throw new NotFoundError("League not found");
+    }
+
+    const leagueIsInProgress =
+      await this.leaguesUtilService.leagueSeasonInProgress(league);
+    if (leagueIsInProgress) {
+      throw new ValidationError(
+        "You cannot remove members while the league is in season",
+      );
+    }
+
+    await this.leagueMembersMutationService.delete(leagueId, targetUserId);
   }
 }
