@@ -34,3 +34,5 @@ This task is to create an API endpoint for account deletion. The endpoint will h
 - Removed the unique constraint on the `username` in the `profiles` table and updated the profile creation/update logic to prevent the use of the "anonymous" username.
 - Refactored the anonymization logic to follow the standards by using the mutation services to update the user and profile data.
 - Refactored the business logic out of the mutation services and into the service layer, where it belongs.
+
+- Created a new `listLeaguesForUser` method in `LeaguesService` to fetch all leagues for a user.\n- Updated the `populateLeagues` private method to handle the `include=members` query parameter.\n- Added the `listByLeagueIds` method to `LeagueMembersQueryService` and `LeagueMembersRepository` to support fetching members for multiple leagues at once.\n- Added the new `GET /api/v1/users/me/leagues` route to `users.router.ts`.\n- Added unit tests for the `listLeaguesForUser` method.
