@@ -3,13 +3,23 @@ id: task-004
 title: Leave League
 status: To Do
 assignee: []
-created_date: "2025-07-20"
+created_date: '2025-07-20'
+updated_date: '2025-07-20'
 labels: []
 dependencies: []
 ---
 
 ## Description
 
-As a league member, I can leave a league. If I am a commissioner in a league with other people, I have to designate at least 1 other commissioner before I leave. If I am in a league by myself, the league will be deleted and I am warned of the consequences.
+As a league member, I should be able to leave a league I am a part of. This provides users with the autonomy to manage their participation in leagues. It also includes safeguards to ensure league continuity, such as requiring a commissioner to designate a replacement before leaving and handling the deletion of single-member leagues.
 
-I can only leave a league when its not in-season.
+## Acceptance Criteria
+
+- [ ] A league member can choose to leave a league.
+- [ ] A member can only leave a league when it is not in-season.
+- [ ] If a commissioner attempts to leave a league with other members
+- [ ] they must designate at least one other commissioner before they can leave.
+- [ ] If a member is the only person in a league and they leave
+- [ ] the league is deleted.
+- [ ] Before leaving a single-member league
+- [ ] the user is warned that the league will be deleted.
