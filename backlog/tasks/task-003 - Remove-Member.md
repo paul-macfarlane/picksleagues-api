@@ -3,9 +3,9 @@ id: task-003
 title: Remove Member
 status: Done
 assignee:
-  - '@paulmacfarlane'
-created_date: '2025-07-20'
-updated_date: '2025-07-20'
+  - "@paulmacfarlane"
+created_date: "2025-07-20"
+updated_date: "2025-07-20"
 labels: []
 dependencies: []
 ---
