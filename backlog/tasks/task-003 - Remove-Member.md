@@ -22,3 +22,7 @@ This task is to create an API endpoint for removing a member from a league. The 
 - [ ] Upon successful removal, the member is no longer associated with the league.
 - [ ] The removed member's historical data (picks, standings) is retained.
 - [ ] The API returns an error if a commissioner attempts to remove themselves from the league with this endpoint.
+
+## Implementation Plan
+
+1. **Router:** Create a new `DELETE /api/v1/leagues/:leagueId/members/:userId` route in `leagues.router.ts`.\n2. **Orchestration Service (`LeagueMembersService`):** Create a new `removeMember` method to contain the business logic.\n3. **Business Logic:** Inside `removeMember`, the service will verify that the acting user is a commissioner. It will also prevent a commissioner from removing themselves and check if the league is in season.\n4. **Mutation Service (`LeagueMembersMutationService`):** Create a simple `delete` method that is a pass-through to the repository.\n5. **Repository (`LeagueMembersRepository`):** Create a `delete` method to perform the database operation.\n6. **Unit Tests:** Add unit tests for the new logic in `LeagueMembersService`.
