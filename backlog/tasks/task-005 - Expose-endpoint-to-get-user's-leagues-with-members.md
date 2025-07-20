@@ -20,3 +20,7 @@ To support the client-side account deletion flow, the client needs to check if t
 - [ ] The endpoint returns all leagues the authenticated user is a member of.
 - [ ] The endpoint supports an include=members query parameter to also return the list of members for each league.
 - [ ] The endpoint is authenticated and only returns leagues for the current user.
+
+## Implementation Plan
+
+1. Create a new  method in  that will orchestrate fetching the leagues and their members.\n2. This method will use  to get the leagues.\n3. If members are requested, it will then use  to fetch the members for all the leagues in a single query.\n4. It will then map the members to their respective leagues.\n5. Add a new  route to .\n6. This route will call the  method and handle the  query parameter.
