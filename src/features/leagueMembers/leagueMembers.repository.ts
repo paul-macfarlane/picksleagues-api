@@ -64,6 +64,21 @@ export class LeagueMembersRepository {
     return updated[0];
   }
 
+  async delete(
+    leagueId: string,
+    userId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<void> {
+    await dbOrTx
+      .delete(leagueMembersTable)
+      .where(
+        and(
+          eq(leagueMembersTable.leagueId, leagueId),
+          eq(leagueMembersTable.userId, userId),
+        ),
+      );
+  }
+
   async deleteByUserId(userId: string, dbOrTx: DBOrTx = db): Promise<void> {
     await dbOrTx
       .delete(leagueMembersTable)

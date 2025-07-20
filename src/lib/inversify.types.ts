@@ -28,6 +28,9 @@ export const TYPES = {
   SportLeaguesService: Symbol.for("SportLeaguesService"),
   SeasonsService: Symbol.for("SeasonsService"),
 
+  // Util Services
+  LeaguesUtilService: Symbol.for("LeaguesUtilService"),
+
   // Query Services
   LeaguesQueryService: Symbol.for("LeaguesQueryService"),
   LeagueTypesQueryService: Symbol.for("LeagueTypesQueryService"),

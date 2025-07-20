@@ -45,6 +45,7 @@ import { DataSourcesQueryService } from "../features/dataSources/dataSources.que
 import { DataSourcesMutationService } from "../features/dataSources/dataSources.mutation.service";
 import { SportLeaguesQueryService } from "../features/sportLeagues/sportLeagues.query.service";
 import { SportLeaguesMutationService } from "../features/sportLeagues/sportLeagues.mutation.service";
+import { LeaguesUtilService } from "../features/leagues/leagues.util.service";
 import { AccountsRepository } from "../features/accounts/accounts.repository";
 import { AccountsMutationService } from "../features/accounts/accounts.mutation.service";
 import { SessionsRepository } from "../features/sessions/sessions.repository";
@@ -244,6 +245,12 @@ container
 container
   .bind<SportLeaguesQueryService>(TYPES.SportLeaguesQueryService)
   .to(SportLeaguesQueryService)
+  .inSingletonScope();
+
+// Util Services
+container
+  .bind<LeaguesUtilService>(TYPES.LeaguesUtilService)
+  .to(LeaguesUtilService)
   .inSingletonScope();
 
 // Mutation Services

@@ -11,6 +11,8 @@ import {
   NotFoundError,
   ValidationError,
 } from "../../lib/errors";
+import { LeaguesUtilService } from "../leagues/leagues.util.service";
+import { DBLeague, LEAGUE_VISIBILITIES } from "../leagues/leagues.types";
 
 describe("LeagueMembersService", () => {
   let leagueMembersService: LeagueMembersService;
@@ -18,18 +20,21 @@ describe("LeagueMembersService", () => {
   let profilesQueryService: MockProxy<ProfilesQueryService>;
   let leaguesQueryService: MockProxy<LeaguesQueryService>;
   let leagueMembersMutationService: MockProxy<LeagueMembersMutationService>;
+  let leaguesUtilService: MockProxy<LeaguesUtilService>;
 
   beforeEach(() => {
     leagueMembersQueryService = mock<LeagueMembersQueryService>();
     profilesQueryService = mock<ProfilesQueryService>();
     leaguesQueryService = mock<LeaguesQueryService>();
     leagueMembersMutationService = mock<LeagueMembersMutationService>();
+    leaguesUtilService = mock<LeaguesUtilService>();
 
     leagueMembersService = new LeagueMembersService(
       leagueMembersQueryService,
       profilesQueryService,
       leaguesQueryService,
       leagueMembersMutationService,
+      leaguesUtilService,
     );
   });
 
@@ -116,6 +121,128 @@ describe("LeagueMembersService", () => {
       ).rejects.toThrow(
         new ValidationError(
           "You cannot change your own role to member if you are the sole commissioner",
+        ),
+      );
+    });
+  });
+
+  describe("removeMember", () => {
+    it("should successfully remove a member", async () => {
+      const actingUserMember = {
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+      } as DBLeagueMember;
+      const targetUserMember = {} as DBLeagueMember;
+      const league: DBLeague = {
+        id: "league-1",
+        name: "Test League",
+        image: null,
+        leagueTypeId: "type-1",
+        startPhaseTemplateId: "phase-1",
+        endPhaseTemplateId: "phase-2",
+        visibility: LEAGUE_VISIBILITIES.PRIVATE,
+        size: 1,
+        settings: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValueOnce(
+        actingUserMember,
+      );
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValueOnce(
+        targetUserMember,
+      );
+      leaguesQueryService.findById.mockResolvedValue(league);
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(false);
+      leagueMembersMutationService.delete.mockResolvedValue();
+
+      await leagueMembersService.removeMember(
+        "acting-user",
+        "league-1",
+        "target-user",
+      );
+
+      expect(leagueMembersMutationService.delete).toHaveBeenCalledWith(
+        "league-1",
+        "target-user",
+      );
+    });
+
+    it("should throw a forbidden error if the acting user is not a commissioner", async () => {
+      const actingUserMember = {
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+      } as DBLeagueMember;
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        actingUserMember,
+      );
+
+      await expect(
+        leagueMembersService.removeMember(
+          "acting-user",
+          "league-1",
+          "target-user",
+        ),
+      ).rejects.toThrow(
+        new ForbiddenError(
+          "You are not authorized to remove members from this league",
+        ),
+      );
+    });
+
+    it("should throw a validation error if a commissioner tries to remove themselves", async () => {
+      const actingUserMember = {
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+      } as DBLeagueMember;
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        actingUserMember,
+      );
+
+      await expect(
+        leagueMembersService.removeMember(
+          "acting-user",
+          "league-1",
+          "acting-user",
+        ),
+      ).rejects.toThrow(
+        new ValidationError("You cannot remove yourself from the league"),
+      );
+    });
+
+    it("should throw a validation error if the league is in season", async () => {
+      const actingUserMember = {
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+      } as DBLeagueMember;
+      const targetUserMember = {} as DBLeagueMember;
+      const league: DBLeague = {
+        id: "league-1",
+        name: "Test League",
+        image: null,
+        leagueTypeId: "type-1",
+        startPhaseTemplateId: "phase-1",
+        endPhaseTemplateId: "phase-2",
+        visibility: LEAGUE_VISIBILITIES.PRIVATE,
+        size: 1,
+        settings: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValueOnce(
+        actingUserMember,
+      );
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValueOnce(
+        targetUserMember,
+      );
+      leaguesQueryService.findById.mockResolvedValue(league);
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(true);
+
+      await expect(
+        leagueMembersService.removeMember(
+          "acting-user",
+          "league-1",
+          "target-user",
+        ),
+      ).rejects.toThrow(
+        new ValidationError(
+          "You cannot remove members while the league is in season",
         ),
       );
     });
