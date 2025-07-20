@@ -11,11 +11,13 @@ dependencies: []
 
 ## Description
 
-As a league commissioner, I need the ability to manage the roles of other league members. This allows for flexible administration of the league, enabling me to grant or revoke commissioner privileges as needed.
-
+This task is to create an API endpoint for managing league member roles. The endpoint will allow authenticated league commissioners to change the roles of other members within a league. The API will enforce the business rules that prevent a league from being left without a commissioner.
 ## Acceptance Criteria
 
-- [ ] A league commissioner can change another member's role from 'member' to 'commissioner'.
-- [ ] A league commissioner can change another member's role from 'commissioner' to 'member'.
-- [ ] A commissioner cannot change their own role to 'member' if they are the only commissioner in the league.
-- [ ] A commissioner can change their own role to 'member' if at least one other commissioner exists in the league.
+- [ ] API provides an endpoint to update a league member's role.
+- [ ] The endpoint requires authentication and authorization to ensure only a league commissioner can change roles.
+- [ ] The API validates that the new role is a valid role (e.g.
+- [ ] 'member' or 'commissioner').
+- [ ] A commissioner can successfully change another member's role.
+- [ ] The API returns an error if a commissioner attempts to change their own role to 'member' when they are the sole commissioner in the league.
+- [ ] A commissioner can successfully change their own role to 'member' if at least one other commissioner exists.
