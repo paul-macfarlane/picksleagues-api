@@ -58,6 +58,27 @@ npm run dev
 
 The API will be available at `http://localhost:3001`.
 
+## Task Management with Backlog.md
+
+This project uses [Backlog.md](https://github.com/MrLesk/Backlog.md) for managing tasks. All tasks are defined as Markdown files in the `backlog/tasks` directory.
+
+### Using the Command Line
+
+A set of `npm` scripts are provided for common `backlog.md` operations:
+
+- `npm run backlog:list`: Lists all tasks in the backlog.
+- `npm run backlog:view <task-id>`: Displays the details of a specific task.
+- `npm run backlog:create "Task Title"`: Creates a new task.
+- `npm run backlog:edit <task-id>`: Edits an existing task.
+
+### Using the Web Interface
+
+`Backlog.md` also provides a web-based UI for a more visual way to manage tasks.
+
+- `npm run backlog:ui`: Starts the `backlog.md` web interface.
+
+Once started, you can access the UI at the URL provided in the console (usually `http://localhost:6421`).
+
 ### 6. (Optional) Populate with Dynamic Sports Data
 
 To populate the database with real-world sports data (leagues and seasons), you can run the cron job endpoints manually.
@@ -88,3 +109,8 @@ curl http://localhost:3001/api/crons/phases --header "x-cron-api-key: local"
 - `npm run db:studio`: Opens Drizzle Studio to view and manage your database.
 - `npm run build`: Compiles the TypeScript code to JavaScript.
 - `npm start`: Starts the compiled application (for production).
+- `npm run backlog:list`: Lists all tasks in the backlog.
+- `npm run backlog:view <task-id>`: Displays the details of a specific task.
+- `npm run backlog:create "Task Title"`: Creates a new task.
+- `npm run backlog:edit <task-id>`: Edits an existing task.
+- `npm run backlog:ui`: Starts the `backlog.md` web interface.

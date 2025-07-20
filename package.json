@@ -16,6 +16,11 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed/index.ts",
     "setup:dev": "npm run db:migrate && npm run db:seed",
+    "backlog:list": "backlog task list --plain",
+    "backlog:view": "backlog task",
+    "backlog:create": "backlog task create",
+    "backlog:edit": "backlog task edit",
+    "backlog:ui": "backlog browser",
     "test": "vitest"
   },
   "dependencies": {
