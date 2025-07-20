@@ -1,7 +1,7 @@
 ---
 id: task-003
 title: Remove Member
-status: In Progress
+status: Done
 assignee:
   - '@paulmacfarlane'
 created_date: '2025-07-20'
@@ -16,12 +16,12 @@ This task is to create an API endpoint for removing a member from a league. The 
 
 ## Acceptance Criteria
 
-- [ ] The API provides an endpoint to remove a member from a league.
-- [ ] The endpoint requires authentication and authorization to ensure only a league commissioner can remove a member.
-- [ ] The API returns an error if a member removal is attempted while the league is in season.
-- [ ] Upon successful removal, the member is no longer associated with the league.
-- [ ] The removed member's historical data (picks, standings) is retained.
-- [ ] The API returns an error if a commissioner attempts to remove themselves from the league with this endpoint.
+- [x] The API provides an endpoint to remove a member from a league.
+- [x] The endpoint requires authentication and authorization to ensure only a league commissioner can remove a member.
+- [x] The API returns an error if a member removal is attempted while the league is in season.
+- [x] Upon successful removal, the member is no longer associated with the league.
+- [x] The removed member's historical data (picks, standings) is retained.
+- [x] The API returns an error if a commissioner attempts to remove themselves from the league with this endpoint.
 
 ## Implementation Plan
 
@@ -29,4 +29,4 @@ This task is to create an API endpoint for removing a member from a league. The 
 
 ## Implementation Notes
 
-Implemented the  endpoint. Added the  method to  to orchestrate the removal, including business logic to ensure the requester is a commissioner, prevent self-removal by commissioners, and block removal if the league's season is active. Added corresponding  methods to the  and . Covered all new logic with unit tests.
+Implemented the endpoint. Added the method to to orchestrate the removal, including business logic to ensure the requester is a commissioner, prevent self-removal by commissioners, and block removal if the league's season is active. Added corresponding methods to the and . Covered all new logic with unit tests.
