@@ -1,10 +1,11 @@
 ---
 id: task-003
 title: Remove Member
-status: To Do
-assignee: []
-created_date: "2025-07-20"
-updated_date: "2025-07-20"
+status: In Progress
+assignee:
+  - '@paulmacfarlane'
+created_date: '2025-07-20'
+updated_date: '2025-07-20'
 labels: []
 dependencies: []
 ---
