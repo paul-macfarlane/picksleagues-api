@@ -1,9 +1,11 @@
 ---
 id: task-005
 title: Expose endpoint to get user's leagues with members
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@paulmacfarlane'
 created_date: '2025-07-20'
+updated_date: '2025-07-20'
 labels: []
 dependencies: []
 ---
