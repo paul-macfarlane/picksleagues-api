@@ -16,14 +16,10 @@ This task is to create an API endpoint for account deletion. The endpoint will h
 
 ## Acceptance Criteria
 
-- [x] The API provides an endpoint to delete a user account.
-- [x] The endpoint requires authentication to ensure a user can only delete their own account.
-- [x] Upon successful deletion, the user's PII is permanently removed from the database by anonymizing the user's record.
-- [x] The user's authentication credentials are invalidated, preventing future logins.
-- [x] All historical records (e.g., picks, standings) associated with the user are retained but anonymized.
-- [x] If the user is the sole member of a league, that league is deleted.
-- [x] The API returns an error if a user tries to delete their account while being the sole commissioner of a league with other members.
-
+- [ ] A GET /api/v1/users/me/leagues endpoint is created.
+- [ ] The endpoint returns all leagues the authenticated user is a member of.
+- [ ] The endpoint supports an include=members query parameter to also return the list of members for each league.
+- [ ] The endpoint is authenticated and only returns leagues for the current user.
 ## Implementation Plan
 
 1. Create a new method in that will contain the core logic for deleting a user.\n2. In this method, first check if the user is the sole commissioner of any leagues with other members. If so, throw an error.\n3. Identify and delete any leagues where the user is the sole member.\n4. Anonymize all historical data associated with the user, such as picks and standings.\n5. Delete the user's PII from the database.\n6. Add a new route in a new file to handle the request.\n7. This route will call the method and handle success and error responses.\n8. Add authentication middleware to the new route to ensure only the authenticated user can delete their own account.
