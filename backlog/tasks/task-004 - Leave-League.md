@@ -3,9 +3,9 @@ id: task-004
 title: Leave League
 status: Done
 assignee:
-  - '@paulmacfarlane'
-created_date: '2025-07-20'
-updated_date: '2025-07-21'
+  - "@paulmacfarlane"
+created_date: "2025-07-20"
+updated_date: "2025-07-21"
 labels: []
 dependencies: []
 ---
@@ -29,12 +29,18 @@ This task is to create an API endpoint for a user to leave a league. This endpoi
 
 ## Implementation Notes
 
-- Added a `POST /leagues/:leagueId/leave` endpoint.
-- Implemented `leaveLeague` in `LeagueMembersService` to handle the core logic.
-- Business rules enforced:
-  - Cannot leave a league that is in season.
-  - A sole commissioner cannot leave if other members are present.
-- If the last member leaves, the entire league is deleted.
-- Otherwise, the user's membership is removed.
-- Added extensive unit tests in `leagueMembers.service.test.ts` to verify all scenarios.
-- Modified files: `src/features/leagues/leagues.router.ts`, `src/features/leagueMembers/leagueMembers.service.ts`, `src/features/leagueMembers/leagueMembers.service.test.ts`.
+- Added a `DELETE /leagues/:leagueId/members/me` endpoint in `leagues.router.ts` to allow users to leave a league.
+- Implemented the core logic in the `leaveLeague` method within `leagueMembers.service.ts`.
+- Business rules are enforced to prevent leaving a league during a season and to handle commissioner succession.
+- The league is deleted if the last member leaves; otherwise, only the user's membership is removed.
+- In `leagues.service.ts`, the constructor was updated to inject the new `LeaguesUtilService`.
+- Added `IS_IN_SEASON` to the `LEAGUE_INCLUDES` enum in `leagues.types.ts` to support checking the league's status.
+- Registered `LeaguesUtilService` in `inversify.config.ts` for dependency injection.
+- Added comprehensive unit tests in `leagueMembers.service.test.ts` to cover all scenarios.
+- **Modified files**:
+  - `src/features/leagues/leagues.router.ts`
+  - `src/features/leagueMembers/leagueMembers.service.ts`
+  - `src/features/leagues/leagues.service.ts`
+  - `src/features/leagues/leagues.types.ts`
+  - `src/lib/inversify.config.ts`
+  - `src/features/leagueMembers/leagueMembers.service.test.ts`
