@@ -5,6 +5,7 @@ import {
   PopulatedDBLeague,
   LeagueIncludeSchema,
   LEAGUE_INCLUDES,
+  UpdateLeagueSchema,
 } from "./leagues.types";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
@@ -99,6 +100,80 @@ export class LeaguesService {
         tx,
       );
       return newLeague;
+    });
+  }
+
+  async update(
+    userId: string,
+    leagueId: string,
+    update: z.infer<typeof UpdateLeagueSchema>,
+  ): Promise<DBLeague> {
+    return db.transaction(async (tx) => {
+      const league = await this.leaguesQueryService.findById(leagueId, tx);
+      if (!league) {
+        throw new NotFoundError("League not found");
+      }
+
+      const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
+        leagueId,
+        userId,
+        tx,
+      );
+      if (!member) {
+        throw new ForbiddenError("You are not a member of this league");
+      }
+      if (member.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER) {
+        throw new ForbiddenError(
+          "You must be a commissioner to edit this league's settings",
+        );
+      }
+
+      const isInSeason = await this.leaguesUtilService.leagueSeasonInProgress(
+        league,
+        tx,
+      );
+
+      const updateToMake: Partial<DBLeague> = {
+        name: update.name,
+        image: update.image,
+      };
+
+      if (isInSeason) {
+        if (
+          update.startPhaseTemplateId ||
+          update.endPhaseTemplateId ||
+          update.size ||
+          update.settings
+        ) {
+          throw new ForbiddenError(
+            "Some settings cannot be changed while the league is in season.",
+          );
+        }
+      } else {
+        updateToMake.startPhaseTemplateId = update.startPhaseTemplateId;
+        updateToMake.endPhaseTemplateId = update.endPhaseTemplateId;
+        updateToMake.settings = update.settings;
+
+        if (update.size) {
+          const members = await this.leagueMembersQueryService.listByLeagueId(
+            leagueId,
+            tx,
+          );
+          if (update.size < members.length) {
+            throw new ValidationError(
+              "League size cannot be smaller than the current number of members.",
+            );
+          }
+          updateToMake.size = update.size;
+        }
+      }
+
+      const updatedLeague = await this.leaguesMutationService.update(
+        leagueId,
+        updateToMake,
+        tx,
+      );
+      return updatedLeague;
     });
   }
 

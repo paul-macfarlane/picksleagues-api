@@ -6,7 +6,7 @@ import {
   leaguesTable,
   leagueTypesTable,
 } from "../../db/schema";
-import { DBLeague, DBLeagueInsert } from "./leagues.types";
+import { DBLeague, DBLeagueInsert, DBLeagueUpdate } from "./leagues.types";
 import { LEAGUE_TYPE_SLUGS } from "../leagueTypes/leagueTypes.types";
 
 @injectable()
@@ -17,6 +17,19 @@ export class LeaguesRepository {
       .values(league)
       .returning();
     return newLeague;
+  }
+
+  async update(
+    id: string,
+    league: DBLeagueUpdate,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBLeague> {
+    const [updatedLeague] = await dbOrTx
+      .update(leaguesTable)
+      .set(league)
+      .where(eq(leaguesTable.id, id))
+      .returning();
+    return updatedLeague;
   }
 
   async findByUserIdAndLeagueTypeId(
