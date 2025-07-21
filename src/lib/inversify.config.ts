@@ -11,6 +11,7 @@ import { LeagueTypesRepository } from "../features/leagueTypes/leagueTypes.repos
 import { LeagueTypesService } from "../features/leagueTypes/leagueTypes.service";
 import { LeaguesRepository } from "../features/leagues/leagues.repository";
 import { LeaguesService } from "../features/leagues/leagues.service";
+import { LeaguesMutationService } from "../features/leagues/leagues.mutation.service";
 import { PhasesRepository } from "../features/phases/phases.repository";
 import { PhasesService } from "../features/phases/phases.service";
 import { PhaseTemplatesRepository } from "../features/phaseTemplates/phaseTemplates.repository";
@@ -36,7 +37,6 @@ import { LeagueInvitesQueryService } from "../features/leagueInvites/leagueInvit
 import { LeagueInvitesMutationService } from "../features/leagueInvites/leagueInvites.mutation.service";
 import { ProfilesQueryService } from "../features/profiles/profiles.query.service";
 import { ProfilesMutationService } from "../features/profiles/profiles.mutation.service";
-import { LeaguesMutationService } from "../features/leagues/leagues.mutation.service";
 import { PhasesQueryService } from "../features/phases/phases.query.service";
 import { PhasesMutationService } from "../features/phases/phases.mutation.service";
 import { SeasonsQueryService } from "../features/seasons/seasons.query.service";

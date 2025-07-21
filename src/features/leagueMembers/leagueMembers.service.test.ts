@@ -13,6 +13,7 @@ import {
 } from "../../lib/errors";
 import { LeaguesUtilService } from "../leagues/leagues.util.service";
 import { DBLeague, LEAGUE_VISIBILITIES } from "../leagues/leagues.types";
+import { LeaguesMutationService } from "../leagues/leagues.mutation.service";
 
 describe("LeagueMembersService", () => {
   let leagueMembersService: LeagueMembersService;
@@ -21,6 +22,7 @@ describe("LeagueMembersService", () => {
   let leaguesQueryService: MockProxy<LeaguesQueryService>;
   let leagueMembersMutationService: MockProxy<LeagueMembersMutationService>;
   let leaguesUtilService: MockProxy<LeaguesUtilService>;
+  let leaguesMutationService: MockProxy<LeaguesMutationService>;
 
   beforeEach(() => {
     leagueMembersQueryService = mock<LeagueMembersQueryService>();
@@ -28,17 +30,19 @@ describe("LeagueMembersService", () => {
     leaguesQueryService = mock<LeaguesQueryService>();
     leagueMembersMutationService = mock<LeagueMembersMutationService>();
     leaguesUtilService = mock<LeaguesUtilService>();
+    leaguesMutationService = mock<LeaguesMutationService>();
 
     leagueMembersService = new LeagueMembersService(
       leagueMembersQueryService,
-      profilesQueryService,
-      leaguesQueryService,
       leagueMembersMutationService,
       leaguesUtilService,
+      leaguesQueryService,
+      leaguesMutationService,
+      profilesQueryService,
     );
   });
 
-  describe("updateMemberRole", () => {
+  describe("update", () => {
     it("should successfully update a member role", async () => {
       const actingUserMember = {
         role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
@@ -105,6 +109,7 @@ describe("LeagueMembersService", () => {
 
     it("should throw a validation error if a sole commissioner tries to demote themselves", async () => {
       const actingUserMember = {
+        userId: "acting-user",
         role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
       } as DBLeagueMember;
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
@@ -245,6 +250,148 @@ describe("LeagueMembersService", () => {
           "You cannot remove members while the league is in season",
         ),
       );
+    });
+  });
+
+  describe("leaveLeague", () => {
+    const leagueId = "league-1";
+    const userId = "user-1";
+    const mockLeague: DBLeague = {
+      id: leagueId,
+      name: "Test League",
+      image: null,
+      leagueTypeId: "type-1",
+      startPhaseTemplateId: "phase-1",
+      endPhaseTemplateId: "phase-2",
+      visibility: LEAGUE_VISIBILITIES.PRIVATE,
+      size: 10,
+      settings: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it("should allow a member to leave a league", async () => {
+      const mockMember = {
+        userId,
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+      } as DBLeagueMember;
+      leaguesQueryService.findById.mockResolvedValue(mockLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember,
+      );
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(false);
+      leagueMembersQueryService.listByLeagueId.mockResolvedValue([
+        mockMember,
+        { userId: "user-2" } as DBLeagueMember,
+      ]);
+
+      await leagueMembersService.leaveLeague(userId, leagueId);
+
+      expect(leagueMembersMutationService.delete).toHaveBeenCalledWith(
+        leagueId,
+        userId,
+      );
+    });
+
+    it("should throw an error if league is in season", async () => {
+      leaguesQueryService.findById.mockResolvedValue(mockLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        {} as DBLeagueMember,
+      );
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(true);
+
+      await expect(
+        leagueMembersService.leaveLeague(userId, leagueId),
+      ).rejects.toThrow(
+        new ValidationError("Cannot leave a league that is in season."),
+      );
+    });
+
+    it("should delete the league if the last member leaves", async () => {
+      const mockMember = {
+        userId,
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+      } as DBLeagueMember;
+      leaguesQueryService.findById.mockResolvedValue(mockLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember,
+      );
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(false);
+      leagueMembersQueryService.listByLeagueId.mockResolvedValue([mockMember]);
+
+      await leagueMembersService.leaveLeague(userId, leagueId);
+
+      expect(leaguesMutationService.delete).toHaveBeenCalledWith(leagueId);
+      expect(leagueMembersMutationService.delete).not.toHaveBeenCalled();
+    });
+
+    it("should throw an error if a sole commissioner tries to leave", async () => {
+      const mockMember = {
+        userId,
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+      } as DBLeagueMember;
+      leaguesQueryService.findById.mockResolvedValue(mockLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember,
+      );
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(false);
+      leagueMembersQueryService.listByLeagueId.mockResolvedValue([
+        mockMember,
+        {
+          userId: "user-2",
+          role: LEAGUE_MEMBER_ROLES.MEMBER,
+        } as DBLeagueMember,
+      ]);
+
+      await expect(
+        leagueMembersService.leaveLeague(userId, leagueId),
+      ).rejects.toThrow(
+        new ValidationError(
+          "A commissioner cannot leave the league without another commissioner present.",
+        ),
+      );
+    });
+
+    it("should allow a commissioner to leave if another commissioner exists", async () => {
+      const mockMember = {
+        userId,
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+      } as DBLeagueMember;
+      const otherCommissioner = {
+        userId: "user-2",
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+      } as DBLeagueMember;
+      leaguesQueryService.findById.mockResolvedValue(mockLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember,
+      );
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(false);
+      leagueMembersQueryService.listByLeagueId.mockResolvedValue([
+        mockMember,
+        otherCommissioner,
+      ]);
+
+      await leagueMembersService.leaveLeague(userId, leagueId);
+
+      expect(leagueMembersMutationService.delete).toHaveBeenCalledWith(
+        leagueId,
+        userId,
+      );
+    });
+
+    it("should throw an error if the league is not found", async () => {
+      leaguesQueryService.findById.mockResolvedValue(null);
+      await expect(
+        leagueMembersService.leaveLeague(userId, leagueId),
+      ).rejects.toThrow(new NotFoundError("League not found."));
+    });
+
+    it("should throw an error if the user is not a member of the league", async () => {
+      leaguesQueryService.findById.mockResolvedValue(mockLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(null);
+      await expect(
+        leagueMembersService.leaveLeague(userId, leagueId),
+      ).rejects.toThrow(new NotFoundError("Member not found in league."));
     });
   });
 });

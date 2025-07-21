@@ -13,7 +13,6 @@ import {
   NotFoundError,
   ValidationError,
 } from "../../lib/errors";
-import { LeagueInvitesQueryService } from "../leagueInvites/leagueInvites.query.service";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
 import { z } from "zod";
 import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service";
@@ -28,6 +27,7 @@ import {
   LeagueTypeIdSchema,
 } from "../leagueTypes/leagueTypes.types";
 import { DBLeagueMember } from "../leagueMembers/leagueMembers.types";
+import { LeaguesUtilService } from "./leagues.util.service";
 
 @injectable()
 export class LeaguesService {
@@ -40,12 +40,12 @@ export class LeaguesService {
     private leagueMembersQueryService: LeagueMembersQueryService,
     @inject(TYPES.LeagueMembersMutationService)
     private leagueMembersMutationService: LeagueMembersMutationService,
-    @inject(TYPES.LeagueInvitesQueryService)
-    private leagueInvitesQueryService: LeagueInvitesQueryService,
     @inject(TYPES.LeagueTypesQueryService)
     private leagueTypesQueryService: LeagueTypesQueryService,
     @inject(TYPES.PhaseTemplatesQueryService)
     private phaseTemplatesQueryService: PhaseTemplatesQueryService,
+    @inject(TYPES.LeaguesUtilService)
+    private leaguesUtilService: LeaguesUtilService,
   ) {}
 
   async create(
@@ -147,6 +147,13 @@ export class LeaguesService {
 
         for (const league of populatedLeagues) {
           league.members = membersByLeagueId[league.id] || [];
+        }
+      }
+
+      if (includes.includes(LEAGUE_INCLUDES.IS_IN_SEASON)) {
+        for (const league of populatedLeagues) {
+          league.isInSeason =
+            await this.leaguesUtilService.leagueSeasonInProgress(league);
         }
       }
     }

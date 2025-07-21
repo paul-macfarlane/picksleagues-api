@@ -1,38 +1,41 @@
-import { injectable, inject } from "inversify";
+import { inject, injectable } from "inversify";
 import { z } from "zod";
+import { TYPES } from "../../lib/inversify.types";
 import {
   DBLeagueMember,
   DBLeagueMemberWithProfile,
+  LEAGUE_MEMBER_ROLES,
   LeagueMemberIncludeSchema,
   PopulatedDBLeagueMember,
-  LEAGUE_MEMBER_ROLES,
   UpdateLeagueMemberSchema,
 } from "./leagueMembers.types";
+import { LeagueMembersMutationService } from "./leagueMembers.mutation.service";
 import { LeagueMembersQueryService } from "./leagueMembers.query.service";
-import { ProfilesQueryService } from "../profiles/profiles.query.service";
-import { LeaguesQueryService } from "../leagues/leagues.query.service";
-import { TYPES } from "../../lib/inversify.types";
+import { LeaguesUtilService } from "../leagues/leagues.util.service";
 import {
-  NotFoundError,
   ForbiddenError,
+  NotFoundError,
   ValidationError,
 } from "../../lib/errors";
-import { LeagueMembersMutationService } from "./leagueMembers.mutation.service";
-import { LeaguesUtilService } from "../leagues/leagues.util.service";
+import { LeaguesQueryService } from "../leagues/leagues.query.service";
+import { LeaguesMutationService } from "../leagues/leagues.mutation.service";
+import { ProfilesQueryService } from "../profiles/profiles.query.service";
 
 @injectable()
 export class LeagueMembersService {
   constructor(
     @inject(TYPES.LeagueMembersQueryService)
     private leagueMembersQueryService: LeagueMembersQueryService,
-    @inject(TYPES.ProfilesQueryService)
-    private profilesQueryService: ProfilesQueryService,
-    @inject(TYPES.LeaguesQueryService)
-    private leaguesQueryService: LeaguesQueryService,
     @inject(TYPES.LeagueMembersMutationService)
     private leagueMembersMutationService: LeagueMembersMutationService,
     @inject(TYPES.LeaguesUtilService)
     private leaguesUtilService: LeaguesUtilService,
+    @inject(TYPES.LeaguesQueryService)
+    private leaguesQueryService: LeaguesQueryService,
+    @inject(TYPES.LeaguesMutationService)
+    private leaguesMutationService: LeaguesMutationService,
+    @inject(TYPES.ProfilesQueryService)
+    private profilesQueryService: ProfilesQueryService,
   ) {}
 
   private async populateMembers(
@@ -42,18 +45,15 @@ export class LeagueMembersService {
     if (!query?.include?.includes("profile")) {
       return members;
     }
-
     const userIds = members.map((member) => member.userId);
     const profiles = await this.profilesQueryService.listByUserIds(userIds);
     const profilesByUserId = new Map(profiles.map((p) => [p.userId, p]));
-
     const populatedMembers: DBLeagueMemberWithProfile[] = members.map(
       (member) => ({
         ...member,
         profile: profilesByUserId.get(member.userId)!,
       }),
     );
-
     return populatedMembers;
   }
 
@@ -77,7 +77,6 @@ export class LeagueMembersService {
 
     const members =
       await this.leagueMembersQueryService.listByLeagueId(leagueId);
-
     return this.populateMembers(members, query);
   }
 
@@ -179,5 +178,45 @@ export class LeagueMembersService {
     }
 
     await this.leagueMembersMutationService.delete(leagueId, targetUserId);
+  }
+
+  async leaveLeague(userId: string, leagueId: string): Promise<void> {
+    const league = await this.leaguesQueryService.findById(leagueId);
+    if (!league) {
+      throw new NotFoundError("League not found.");
+    }
+    const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
+      leagueId,
+      userId,
+    );
+    if (!member) {
+      throw new NotFoundError("Member not found in league.");
+    }
+
+    if (await this.leaguesUtilService.leagueSeasonInProgress(league)) {
+      throw new ValidationError("Cannot leave a league that is in season.");
+    }
+
+    const allMembers =
+      await this.leagueMembersQueryService.listByLeagueId(leagueId);
+    if (allMembers.length === 1) {
+      await this.leaguesMutationService.delete(leagueId);
+      return;
+    }
+
+    if (member.role === LEAGUE_MEMBER_ROLES.COMMISSIONER) {
+      const otherCommissioners = allMembers.filter(
+        (m) =>
+          m.role === LEAGUE_MEMBER_ROLES.COMMISSIONER && m.userId !== userId,
+      );
+
+      if (otherCommissioners.length === 0) {
+        throw new ValidationError(
+          "A commissioner cannot leave the league without another commissioner present.",
+        );
+      }
+    }
+
+    await this.leagueMembersMutationService.delete(leagueId, member.userId);
   }
 }
