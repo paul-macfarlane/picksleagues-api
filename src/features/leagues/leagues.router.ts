@@ -3,6 +3,7 @@ import {
   CreateLeagueSchema,
   LeagueIdSchema,
   LeagueIncludeSchema,
+  UpdateLeagueSchema,
 } from "./leagues.types";
 import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
@@ -44,6 +45,22 @@ router.get("/:leagueId", async (req: Request, res: Response): Promise<void> => {
 
   res.status(200).json(league);
 });
+
+router.patch(
+  "/:leagueId",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const update = UpdateLeagueSchema.parse(req.body);
+
+    const updatedLeague = await leaguesService.update(
+      req.user!.id,
+      leagueId,
+      update,
+    );
+
+    res.status(200).json(updatedLeague);
+  },
+);
 
 router.delete(
   "/:leagueId",

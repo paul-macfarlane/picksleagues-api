@@ -106,5 +106,15 @@ export const CreateLeagueSchema = z.object({
     .max(MAX_LEAGUE_SIZE, {
       message: `Size must be at most ${MAX_LEAGUE_SIZE}`,
     }),
-  settings: PickEmLeagueSettingsSchema,
+  settings: PickEmLeagueSettingsSchema, // TODO: handle other league types here
 });
+
+export const UpdateLeagueSchema = CreateLeagueSchema.pick({
+  name: true,
+  image: true,
+  startPhaseTemplateId: true,
+  endPhaseTemplateId: true,
+  visibility: true,
+  size: true,
+  settings: true,
+}).partial();

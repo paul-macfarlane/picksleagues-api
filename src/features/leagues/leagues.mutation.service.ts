@@ -2,7 +2,7 @@ import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
 import { LeaguesRepository } from "./leagues.repository";
 import { DBOrTx, db } from "../../db";
-import { DBLeague, DBLeagueInsert } from "./leagues.types";
+import { DBLeague, DBLeagueInsert, DBLeagueUpdate } from "./leagues.types";
 
 @injectable()
 export class LeaguesMutationService {
@@ -13,6 +13,14 @@ export class LeaguesMutationService {
 
   async create(league: DBLeagueInsert, dbOrTx: DBOrTx = db): Promise<DBLeague> {
     return this.leaguesRepository.create(league, dbOrTx);
+  }
+
+  async update(
+    id: string,
+    league: DBLeagueUpdate,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBLeague> {
+    return this.leaguesRepository.update(id, league, dbOrTx);
   }
 
   async delete(id: string, dbOrTx: DBOrTx = db): Promise<void> {

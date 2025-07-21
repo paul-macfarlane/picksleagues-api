@@ -11,6 +11,7 @@ import {
   DBLeague,
   LEAGUE_INCLUDES,
   LEAGUE_VISIBILITIES,
+  PICK_EM_PICK_TYPES,
 } from "./leagues.types";
 import {
   DBLeagueMember,
@@ -262,6 +263,146 @@ describe("LeaguesService", () => {
         leagueId,
         undefined,
       );
+    });
+  });
+
+  describe("updateSettings", () => {
+    const leagueId = "league-1";
+    const userId = "user-1";
+    const league: DBLeague = {
+      id: leagueId,
+      name: "Original Name",
+      image: "original.jpg",
+      leagueTypeId: "type-1",
+      startPhaseTemplateId: "phase-1",
+      endPhaseTemplateId: "phase-2",
+      visibility: LEAGUE_VISIBILITIES.PRIVATE,
+      size: 10,
+      settings: {
+        picksPerPhase: 5,
+        pickType: PICK_EM_PICK_TYPES.STRAIGHT_UP,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const commissioner: DBLeagueMember = {
+      leagueId,
+      userId,
+      role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it("should throw an error if the user is not a member of the league", async () => {
+      leaguesQueryService.findById.mockResolvedValue(league);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(null);
+
+      await expect(leaguesService.update(userId, leagueId, {})).rejects.toThrow(
+        new ForbiddenError("You are not a member of this league"),
+      );
+    });
+
+    it("should throw an error if the user is not a commissioner", async () => {
+      const member: DBLeagueMember = {
+        ...commissioner,
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+      };
+      leaguesQueryService.findById.mockResolvedValue(league);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(member);
+
+      await expect(leaguesService.update(userId, leagueId, {})).rejects.toThrow(
+        new ForbiddenError(
+          "You must be a commissioner to edit this league's settings",
+        ),
+      );
+    });
+
+    it("should allow a commissioner to update name and image when in-season", async () => {
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        commissioner,
+      );
+      leaguesQueryService.findById.mockResolvedValue(league);
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(true);
+      leaguesMutationService.update.mockResolvedValue({
+        ...league,
+        name: "New Name",
+        image: "new.jpg",
+      });
+
+      const updates = { name: "New Name", image: "new.jpg" };
+      const result = await leaguesService.update(userId, leagueId, updates);
+
+      expect(leaguesMutationService.update).toHaveBeenCalledWith(
+        leagueId,
+        updates,
+        undefined,
+      );
+      expect(result.name).toBe("New Name");
+    });
+
+    it("should prevent updating other settings when in-season", async () => {
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        commissioner,
+      );
+      leaguesQueryService.findById.mockResolvedValue(league);
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(true);
+
+      await expect(
+        leaguesService.update(userId, leagueId, { size: 12 }),
+      ).rejects.toThrow(
+        new ForbiddenError(
+          "Some settings cannot be changed while the league is in season.",
+        ),
+      );
+    });
+
+    it("should prevent updating league size to be smaller than current member count", async () => {
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        commissioner,
+      );
+      leaguesQueryService.findById.mockResolvedValue(league);
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(false);
+      leagueMembersQueryService.listByLeagueId.mockResolvedValue([
+        commissioner,
+        { ...commissioner, userId: "user-2" },
+      ]); // 2 members
+
+      await expect(
+        leaguesService.update(userId, leagueId, { size: 1 }),
+      ).rejects.toThrow(
+        "League size cannot be smaller than the current number of members.",
+      );
+    });
+
+    it("should allow a commissioner to update all settings when not in-season", async () => {
+      const updates = {
+        name: "New Name",
+        image: "new.jpg",
+        startPhaseTemplateId: "new-phase-1",
+        endPhaseTemplateId: "new-phase-2",
+        size: 15,
+        settings: { picksPerPhase: 10, pickType: PICK_EM_PICK_TYPES.SPREAD },
+      };
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        commissioner,
+      );
+      leaguesQueryService.findById.mockResolvedValue(league);
+      leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(false);
+      leagueMembersQueryService.listByLeagueId.mockResolvedValue([]);
+      leaguesMutationService.update.mockResolvedValue({
+        ...league,
+        ...updates,
+      });
+
+      const result = await leaguesService.update(userId, leagueId, updates);
+
+      expect(leaguesMutationService.update).toHaveBeenCalledWith(
+        leagueId,
+        updates,
+        undefined,
+      );
+      expect(result.name).toBe(updates.name);
+      expect(result.size).toBe(updates.size);
     });
   });
 });
