@@ -23,7 +23,12 @@ To support the client-side account deletion flow, the client needs to check if t
 
 ## Implementation Plan
 
-1. Create a new method in that will orchestrate fetching the leagues and their members.\n2. This method will use to get the leagues.\n3. If members are requested, it will then use to fetch the members for all the leagues in a single query.\n4. It will then map the members to their respective leagues.\n5. Add a new route to .\n6. This route will call the method and handle the query parameter.
+1. Create a new method in that will orchestrate fetching the leagues and their members.
+2. This method will use to get the leagues.
+3. If members are requested, it will then use to fetch the members for all the leagues in a single query.
+4. It will then map the members to their respective leagues.
+5. Add a new route to .
+6. This route will call the method and handle the query parameter.
 
 ## Implementation Notes
 
