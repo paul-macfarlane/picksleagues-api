@@ -102,6 +102,27 @@ export class LeaguesService {
     });
   }
 
+  async delete(userId: string, leagueId: string): Promise<void> {
+    return db.transaction(async (tx) => {
+      const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
+        leagueId,
+        userId,
+        tx,
+      );
+      if (!member) {
+        throw new ForbiddenError("You are not a member of this league");
+      }
+      if (member.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER) {
+        throw new ForbiddenError(
+          "You must be a commissioner to delete this league",
+        );
+      }
+
+      // only need to delete the league, the other data will be deleted by cascade
+      await this.leaguesMutationService.delete(leagueId, tx);
+    });
+  }
+
   private async populateLeagues(
     leagues: DBLeague[],
     query: z.infer<typeof LeagueIncludeSchema>,
