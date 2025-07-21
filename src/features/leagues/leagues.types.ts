@@ -25,6 +25,7 @@ export const MIN_LEAGUE_SIZE = 2;
 export const MAX_LEAGUE_SIZE = 20;
 
 export enum LEAGUE_INCLUDES {
+  IS_IN_SEASON = "is_in_season",
   LEAGUE_TYPE = "league_type",
   MEMBERS = "members",
 }
@@ -37,6 +38,7 @@ export type DBLeagueWithLeagueType = DBLeague & {
 };
 
 export type PopulatedDBLeague = DBLeague & {
+  isInSeason?: boolean;
   leagueType?: DBLeagueType | null;
   members?: DBLeagueMember[];
 };
@@ -53,7 +55,13 @@ export const LeagueIncludeSchema = z
       .string()
       .transform((val) => val.split(","))
       .pipe(
-        z.array(z.enum([LEAGUE_INCLUDES.LEAGUE_TYPE, LEAGUE_INCLUDES.MEMBERS])),
+        z.array(
+          z.enum([
+            LEAGUE_INCLUDES.LEAGUE_TYPE,
+            LEAGUE_INCLUDES.MEMBERS,
+            LEAGUE_INCLUDES.IS_IN_SEASON,
+          ]),
+        ),
       )
       .optional(),
   })

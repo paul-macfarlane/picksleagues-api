@@ -94,6 +94,17 @@ router.patch(
 );
 
 router.delete(
+  "/:leagueId/members/me",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+
+    await leagueMembersService.leaveLeague(req.user!.id, leagueId);
+
+    res.status(204).send();
+  },
+);
+
+router.delete(
   "/:leagueId/members/:userId",
   async (req: Request, res: Response): Promise<void> => {
     const leagueId = LeagueIdSchema.parse(req.params.leagueId);

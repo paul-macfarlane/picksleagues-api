@@ -5,7 +5,6 @@ import { LeaguesQueryService } from "./leagues.query.service";
 import { LeaguesMutationService } from "./leagues.mutation.service";
 import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service";
 import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service";
-import { LeagueInvitesQueryService } from "../leagueInvites/leagueInvites.query.service";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
 import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service";
 import {
@@ -22,6 +21,7 @@ import {
   LEAGUE_TYPE_NAMES,
   LEAGUE_TYPE_SLUGS,
 } from "../leagueTypes/leagueTypes.types";
+import { LeaguesUtilService } from "./leagues.util.service";
 
 describe("LeaguesService", () => {
   let leaguesService: LeaguesService;
@@ -29,27 +29,27 @@ describe("LeaguesService", () => {
   let leaguesMutationService: MockProxy<LeaguesMutationService>;
   let leagueMembersQueryService: MockProxy<LeagueMembersQueryService>;
   let leagueMembersMutationService: MockProxy<LeagueMembersMutationService>;
-  let leagueInvitesQueryService: MockProxy<LeagueInvitesQueryService>;
   let leagueTypesQueryService: MockProxy<LeagueTypesQueryService>;
   let phaseTemplatesQueryService: MockProxy<PhaseTemplatesQueryService>;
+  let leaguesUtilService: MockProxy<LeaguesUtilService>;
 
   beforeEach(() => {
     leaguesQueryService = mock<LeaguesQueryService>();
     leaguesMutationService = mock<LeaguesMutationService>();
     leagueMembersQueryService = mock<LeagueMembersQueryService>();
     leagueMembersMutationService = mock<LeagueMembersMutationService>();
-    leagueInvitesQueryService = mock<LeagueInvitesQueryService>();
     leagueTypesQueryService = mock<LeagueTypesQueryService>();
     phaseTemplatesQueryService = mock<PhaseTemplatesQueryService>();
+    leaguesUtilService = mock<LeaguesUtilService>();
 
     leaguesService = new LeaguesService(
       leaguesQueryService,
       leaguesMutationService,
       leagueMembersQueryService,
       leagueMembersMutationService,
-      leagueInvitesQueryService,
       leagueTypesQueryService,
       phaseTemplatesQueryService,
+      leaguesUtilService,
     );
   });
 
