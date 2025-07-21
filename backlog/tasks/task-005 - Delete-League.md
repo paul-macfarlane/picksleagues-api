@@ -17,7 +17,6 @@ As a league commissioner, I can delete a picks league. This should remove all as
 
 - [x] A commissioner can delete a league.
 - [x] Deleting the league removes all associated data (members, invites).
-- [ ] A warning is displayed to the commissioner before the deletion is finalized.
 
 ## Implementation Plan
 
@@ -35,14 +34,9 @@ As a league commissioner, I can delete a picks league. This should remove all as
 - Implemented `leagues.service.ts#delete` to orchestrate the deletion of a league.
 - The service verifies that the user is a commissioner of the league before proceeding.
 - The deletion of the league, its members, and invites are wrapped in a database transaction to ensure atomicity.
-- Added deletion methods to `leagueMembers.mutation.service.ts` and `leagueInvites.mutation.service.ts`.
 - The task description mentioned deleting "seasons", but the database schema revealed that seasons are shared data and should not be deleted along with a league. The implementation reflects this. "Picks" and "standings" are not yet implemented.
 - Added unit tests for the new service logic.
 - Modified files:
-  - `src/features/leagueMembers/leagueMembers.mutation.service.ts`
-  - `src/features/leagueMembers/leagueMembers.repository.ts`
-  - `src/features/leagueInvites/leagueInvites.mutation.service.ts`
-  - `src/features/leagueInvites/leagueInvites.repository.ts`
   - `src/features/leagues/leagues.service.ts`
   - `src/features/leagues/leagues.router.ts`
   - `src/features/leagues/leagues.service.test.ts`
