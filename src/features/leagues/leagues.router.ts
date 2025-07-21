@@ -45,6 +45,15 @@ router.get("/:leagueId", async (req: Request, res: Response): Promise<void> => {
   res.status(200).json(league);
 });
 
+router.delete(
+  "/:leagueId",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    await leaguesService.delete(req.user!.id, leagueId);
+    res.status(204).send();
+  },
+);
+
 router.get(
   "/:leagueId/members",
   async (req: Request, res: Response): Promise<void> => {

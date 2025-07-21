@@ -22,6 +22,14 @@ import {
   LEAGUE_TYPE_SLUGS,
 } from "../leagueTypes/leagueTypes.types";
 import { LeaguesUtilService } from "./leagues.util.service";
+import { ForbiddenError } from "../../lib/errors";
+import { vi } from "vitest";
+
+vi.mock("../../db", () => ({
+  db: {
+    transaction: vi.fn((callback) => callback()),
+  },
+}));
 
 describe("LeaguesService", () => {
   let leaguesService: LeaguesService;
@@ -208,6 +216,52 @@ describe("LeaguesService", () => {
       );
       expect(result[0].members).toEqual([member]);
       expect(result[0].leagueType).toEqual(leagueType);
+    });
+  });
+
+  describe("delete", () => {
+    const leagueId = "league-1";
+    const userId = "user-1";
+
+    it("should throw an error if the user is not a member of the league", async () => {
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(null);
+
+      await expect(leaguesService.delete(userId, leagueId)).rejects.toThrow(
+        new ForbiddenError("You are not a member of this league"),
+      );
+    });
+
+    it("should throw an error if the user is not a commissioner", async () => {
+      const member: DBLeagueMember = {
+        leagueId,
+        userId,
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(member);
+
+      await expect(leaguesService.delete(userId, leagueId)).rejects.toThrow(
+        new ForbiddenError("You must be a commissioner to delete this league"),
+      );
+    });
+
+    it("should delete the league and its members if the user is a commissioner", async () => {
+      const member: DBLeagueMember = {
+        leagueId,
+        userId,
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(member);
+
+      await leaguesService.delete(userId, leagueId);
+
+      expect(leaguesMutationService.delete).toHaveBeenCalledWith(
+        leagueId,
+        undefined,
+      );
     });
   });
 });
