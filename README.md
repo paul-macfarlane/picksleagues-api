@@ -89,6 +89,9 @@ _Note: You will need the `CRON_API_KEY` from your `.env` file._
 # First, sync the available sport leagues
 curl http://localhost:3001/api/crons/sport-leagues --header "x-cron-api-key: local"
 
+# Then, sync the teams for those leagues
+curl http://localhost:3001/api/crons/teams --header "x-cron-api-key: local"
+
 # run the seed script again to populate the database with the phase templates based off of the NFL league that was created
 npm run db:seed
 

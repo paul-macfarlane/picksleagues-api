@@ -36,6 +36,13 @@
       "when": 1753031654044,
       "tag": "0004_premium_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1753147540425,
+      "tag": "0005_lean_devos",
+      "breakpoints": true
     }
   ]
 }

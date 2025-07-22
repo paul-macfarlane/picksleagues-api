@@ -173,3 +173,56 @@ export type ESPNWeek = {
   rankings: ESPNRef;
   events: ESPNRef;
 };
+
+export type ESPNTeam = {
+  $ref?: string;
+  id: string;
+  guid: string;
+  uid: string;
+  alternateIds?: {
+    sdr: string;
+  };
+  slug: string;
+  location: string;
+  name: string;
+  nickname: string;
+  abbreviation: string;
+  displayName: string;
+  shortDisplayName: string;
+  color: string;
+  alternateColor: string;
+  isActive: boolean;
+  isAllStar: boolean;
+  logos: ESPNLogo[];
+  record?: ESPNRef;
+  oddsRecords?: ESPNRef;
+  athletes?: ESPNRef;
+  venue?: ESPNVenue;
+  groups?: ESPNRef;
+  ranks?: ESPNRef;
+  statistics?: ESPNRef;
+  leaders?: ESPNRef;
+  links: ESPNLink[];
+  injuries?: ESPNRef;
+  notes?: ESPNRef;
+  againstTheSpreadRecords?: ESPNRef;
+  franchise?: ESPNRef;
+  depthCharts?: ESPNRef;
+  projection?: ESPNRef;
+  events?: ESPNRef;
+  transactions?: ESPNRef;
+  coaches?: ESPNRef;
+};
+
+export type ESPNVenue = {
+  id: string;
+  fullName: string;
+  address: {
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  grass: boolean;
+  indoor: boolean;
+  images?: ESPNLogo[];
+};

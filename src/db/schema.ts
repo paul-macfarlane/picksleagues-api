@@ -252,6 +252,49 @@ export const externalPhasesTable = pgTable(
   (table) => [primaryKey({ columns: [table.externalId, table.dataSourceId] })],
 );
 
+export const teamsTable = pgTable("teams", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sportLeagueId: uuid("sport_league_id")
+    .references(() => sportsLeaguesTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  name: text("name").notNull(), // "Jets"
+  location: text("location").notNull(), // "New York"
+  abbreviation: text("abbreviation").notNull(), // "NYJ"
+  imageLight: text("image_light"),
+  imageDark: text("image_dark"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const externalTeamsTable = pgTable(
+  "external_teams",
+  {
+    dataSourceId: uuid("data_source_id")
+      .references(() => dataSourcesTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    externalId: text("external_id").notNull(),
+    teamId: uuid("team_id")
+      .references(() => teamsTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    metadata: jsonb("metadata").default({}),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [primaryKey({ columns: [table.externalId, table.dataSourceId] })],
+);
+
 // leagues
 
 export const leaguesTable = pgTable("leagues", {
@@ -377,3 +420,53 @@ export const leagueInvitesTable = pgTable("league_invites", {
   // Link invites
   token: text("token").unique(),
 });
+
+// CREATE TABLE events (
+//   id UUID PRIMARY KEY,
+//   season_id UUID REFERENCES seasons(id),
+//   phase_id UUID REFERENCES phases(id),
+//   start_time TIMESTAMP,
+//   type TEXT NOT NULL,          -- 'game', 'match', 'tournament'
+//   home_team_id UUID REFERENCES teams(id),
+//   away_team_id UUID REFERENCES teams(id),
+//   participants JSONB DEFAULT '[]', -- fallback for individual or non-team sports
+//   metadata JSONB DEFAULT '{}'
+// );
+
+// CREATE TABLE live_scores (
+//   event_id UUID PRIMARY KEY REFERENCES events(id),
+//   home_score INT,
+//   away_score INT,
+//   status TEXT NOT NULL,         -- 'not_started', 'in_progress', 'final'
+//   quarter TEXT,
+//   clock TEXT,
+//   updated_at TIMESTAMP DEFAULT now()
+// );
+
+// CREATE TABLE outcomes (
+//   event_id UUID PRIMARY KEY REFERENCES events(id),
+//   result TEXT,                  -- 'home', 'away', 'tie'
+//   home_score INT,
+//   away_score INT,
+// );
+
+// CREATE TABLE sportsbooks (
+//   id UUID PRIMARY KEY,
+//   name TEXT NOT NULL,
+//   slug TEXT UNIQUE NOT NULL,
+//   is_default BOOLEAN DEFAULT FALSE,
+//   created_at TIMESTAMP DEFAULT now()
+// );
+
+// CREATE TABLE odds (
+//   id UUID PRIMARY KEY,
+//   event_id UUID REFERENCES events(id),
+//   sportsbook_id UUID REFERENCES sportsbooks(id),
+//   spread_home NUMERIC,
+//   spread_away NUMERIC,
+//   moneyline_home INT,
+//   moneyline_away INT,
+//   total NUMERIC,
+//   updated_at TIMESTAMP DEFAULT now(),
+//   metadata JSONB DEFAULT '{}'
+// );
