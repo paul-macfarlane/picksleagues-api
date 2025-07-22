@@ -52,6 +52,10 @@ import { SessionsRepository } from "../features/sessions/sessions.repository";
 import { SessionsMutationService } from "../features/sessions/sessions.mutation.service";
 import { VerificationsRepository } from "../features/verifications/verifications.repository";
 import { VerificationsMutationService } from "../features/verifications/verifications.mutation.service";
+import { TeamsQueryService } from "../features/teams/teams.query.service";
+import { TeamsRepository } from "../features/teams/teams.repository";
+import { TeamsService } from "../features/teams/teams.service";
+import { TeamsMutationService } from "../features/teams/teams.mutation.service";
 
 const container = new Container();
 
@@ -201,6 +205,16 @@ container
   .to(EspnService)
   .inSingletonScope();
 
+// Teams Bindings
+container
+  .bind<TeamsRepository>(TYPES.TeamsRepository)
+  .to(TeamsRepository)
+  .inSingletonScope();
+container
+  .bind<TeamsService>(TYPES.TeamsService)
+  .to(TeamsService)
+  .inSingletonScope();
+
 // Query Services
 container
   .bind<LeaguesQueryService>(TYPES.LeaguesQueryService)
@@ -245,6 +259,10 @@ container
 container
   .bind<SportLeaguesQueryService>(TYPES.SportLeaguesQueryService)
   .to(SportLeaguesQueryService)
+  .inSingletonScope();
+container
+  .bind<TeamsQueryService>(TYPES.TeamsQueryService)
+  .to(TeamsQueryService)
   .inSingletonScope();
 
 // Util Services
@@ -293,6 +311,10 @@ container
 container
   .bind<SportLeaguesMutationService>(TYPES.SportLeaguesMutationService)
   .to(SportLeaguesMutationService)
+  .inSingletonScope();
+container
+  .bind<TeamsMutationService>(TYPES.TeamsMutationService)
+  .to(TeamsMutationService)
   .inSingletonScope();
 
 // Add other feature bindings here as we migrate them

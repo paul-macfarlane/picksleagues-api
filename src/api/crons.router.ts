@@ -2,6 +2,7 @@ import { Router } from "express";
 import sportLeaguesRouter from "./crons/sport-leagues.cron";
 import seasonsRouter from "./crons/seasons.cron";
 import phasesRouter from "./crons/phases.cron";
+import teamsRouter from "./crons/teams.cron";
 
 const router = Router();
 
@@ -23,5 +24,6 @@ router.use((req, res, next) => {
 router.use("/sport-leagues", sportLeaguesRouter);
 router.use("/seasons", seasonsRouter);
 router.use("/phases", phasesRouter);
+router.use("/teams", teamsRouter);
 
 export default router;

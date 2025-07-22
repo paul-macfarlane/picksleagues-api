@@ -9,6 +9,7 @@ import {
   ESPNSeason,
   ESPN_SEASON_TYPES,
   ESPNWeek,
+  ESPNTeam,
 } from "./espn.types";
 
 @injectable()
@@ -129,5 +130,25 @@ export class EspnService {
     }
 
     return weeks;
+  }
+
+  async getESPNSportLeagueTeams(
+    sportSlug: ESPN_SPORT_SLUGS,
+    leagueSlug: ESPN_LEAGUE_SLUGS,
+    seasonDisplayName: string,
+  ): Promise<ESPNTeam[]> {
+    const teamRefs = await this.getAllRefUrlsFromESPNListUrl(
+      `https://sports.core.api.espn.com/v2/sports/${sportSlug}/leagues/${leagueSlug}/seasons/${seasonDisplayName}/teams?lang=en&region=us`,
+    );
+
+    const teams: ESPNTeam[] = [];
+    for (const teamRef of teamRefs) {
+      const teamResponse = await axios.get<ESPNTeam>(
+        teamRef.replace("http://", "https://"),
+      );
+      teams.push(teamResponse.data);
+    }
+
+    return teams;
   }
 }
