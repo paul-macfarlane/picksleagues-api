@@ -18,6 +18,13 @@ export class TeamsQueryService {
     return this.teamsRepository.listBySportLeagueId(sportLeagueId, dbOrTx);
   }
 
+  async listBySportLeagueIds(
+    sportLeagueIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBTeam[]> {
+    return this.teamsRepository.listBySportLeagueIds(sportLeagueIds, dbOrTx);
+  }
+
   async findExternalByDataSourceIdAndExternalId(
     dataSourceId: string,
     externalId: string,

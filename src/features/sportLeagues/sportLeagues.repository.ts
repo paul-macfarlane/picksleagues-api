@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
 import { externalSportLeaguesTable, sportsLeaguesTable } from "../../db/schema";
@@ -63,6 +63,25 @@ export class SportLeaguesRepository {
 
   async list(dbOrTx: DBOrTx = db): Promise<DBSportLeague[]> {
     return dbOrTx.select().from(sportsLeaguesTable);
+  }
+
+  async listExternalBySourceAndSportLeagueIds(
+    dataSourceId: string,
+    sportLeagueIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalSportLeague[]> {
+    if (sportLeagueIds.length === 0) {
+      return [];
+    }
+    return dbOrTx
+      .select()
+      .from(externalSportLeaguesTable)
+      .where(
+        and(
+          eq(externalSportLeaguesTable.dataSourceId, dataSourceId),
+          inArray(externalSportLeaguesTable.sportLeagueId, sportLeagueIds),
+        ),
+      );
   }
 
   async findExternalBySourceAndExternalId(

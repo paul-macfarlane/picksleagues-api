@@ -49,4 +49,16 @@ export class SportLeaguesQueryService {
   async list(dbOrTx?: DBOrTx): Promise<DBSportLeague[]> {
     return this.sportLeaguesRepository.list(dbOrTx);
   }
+
+  async listExternalBySourceAndSportLeagueIds(
+    dataSourceId: string,
+    sportLeagueIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBExternalSportLeague[]> {
+    return this.sportLeaguesRepository.listExternalBySourceAndSportLeagueIds(
+      dataSourceId,
+      sportLeagueIds,
+      dbOrTx,
+    );
+  }
 }

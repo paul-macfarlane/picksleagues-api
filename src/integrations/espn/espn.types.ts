@@ -105,7 +105,7 @@ export const ESPN_DESIRED_SEASON_TYPES = [
   ESPN_SEASON_TYPES.POST_SEASON,
 ];
 
-type ESPNSeasonWeek = {
+export type ESPNSeasonWeek = {
   $ref: string;
   number: number;
   startDate: string;
@@ -116,7 +116,7 @@ type ESPNSeasonWeek = {
   talentpicks: ESPNRef;
 };
 
-type ESPNSeasonType = {
+export type ESPNSeasonType = {
   $ref: string;
   id: string;
   type: number;
@@ -140,7 +140,7 @@ type ESPNSeasonTypeItem = ESPNSeasonType & {
   week?: ESPNSeasonWeek;
 };
 
-type ESPNSeasonTypes = {
+export type ESPNSeasonTypes = {
   $ref: string;
   count: number;
   pageIndex: number;

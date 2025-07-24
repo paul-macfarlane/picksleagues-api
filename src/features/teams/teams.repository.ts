@@ -42,6 +42,19 @@ export class TeamsRepository {
     return teams;
   }
 
+  async listBySportLeagueIds(
+    sportLeagueIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBTeam[]> {
+    if (sportLeagueIds.length === 0) {
+      return [];
+    }
+    return dbOrTx
+      .select()
+      .from(teamsTable)
+      .where(inArray(teamsTable.sportLeagueId, sportLeagueIds));
+  }
+
   async createExternal(
     externalTeam: DBExternalTeamInsert,
     dbOrTx: DBOrTx = db,

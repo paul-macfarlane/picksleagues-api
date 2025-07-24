@@ -36,6 +36,7 @@
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
     "inversify": "^7.5.4",
+    "p-limit": "^6.2.0",
     "pg": "^8.16.2",
     "reflect-metadata": "^0.2.2",
     "unique-username-generator": "^1.4.0",

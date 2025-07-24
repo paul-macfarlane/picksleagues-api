@@ -1,15 +1,13 @@
-import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { EventsRepository } from "./events.repository";
-import { DBOrTx } from "../../db";
+import { inject, injectable } from "inversify";
 import {
-  DBEvent,
   DBEventInsert,
-  DBEventUpdate,
-  DBExternalEvent,
   DBExternalEventInsert,
+  DBEventUpdate,
   DBExternalEventUpdate,
 } from "./events.types";
+import { EventsRepository } from "./events.repository";
+import { DBOrTx } from "../../db";
+import { TYPES } from "../../lib/inversify.types";
 
 @injectable()
 export class EventsMutationService {
@@ -18,36 +16,37 @@ export class EventsMutationService {
     private eventsRepository: EventsRepository,
   ) {}
 
-  async createExternal(
-    event: DBExternalEventInsert,
-    dbOrTx?: DBOrTx,
-  ): Promise<DBExternalEvent> {
-    return this.eventsRepository.createExternal(event, dbOrTx);
+  async create(values: DBEventInsert, dbOrTx?: DBOrTx) {
+    return this.eventsRepository.create(values, dbOrTx);
+  }
+
+  async update(id: string, values: DBEventUpdate, dbOrTx?: DBOrTx) {
+    return this.eventsRepository.update(id, values, dbOrTx);
+  }
+
+  async bulkCreate(values: DBEventInsert[], dbOrTx?: DBOrTx) {
+    return this.eventsRepository.bulkCreate(values, dbOrTx);
+  }
+
+  async createExternal(values: DBExternalEventInsert, dbOrTx?: DBOrTx) {
+    return this.eventsRepository.createExternal(values, dbOrTx);
   }
 
   async updateExternal(
     dataSourceId: string,
     externalId: string,
-    event: DBExternalEventUpdate,
+    values: DBExternalEventUpdate,
     dbOrTx?: DBOrTx,
-  ): Promise<DBExternalEvent> {
+  ) {
     return this.eventsRepository.updateExternal(
       dataSourceId,
       externalId,
-      event,
+      values,
       dbOrTx,
     );
   }
 
-  async create(event: DBEventInsert, dbOrTx?: DBOrTx): Promise<DBEvent> {
-    return this.eventsRepository.create(event, dbOrTx);
-  }
-
-  async update(
-    id: string,
-    event: DBEventUpdate,
-    dbOrTx?: DBOrTx,
-  ): Promise<DBEvent> {
-    return this.eventsRepository.update(id, event, dbOrTx);
+  async bulkCreateExternal(values: DBExternalEventInsert[], dbOrTx?: DBOrTx) {
+    return this.eventsRepository.bulkCreateExternal(values, dbOrTx);
   }
 }

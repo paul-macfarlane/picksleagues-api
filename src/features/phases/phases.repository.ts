@@ -131,15 +131,17 @@ export class PhasesRepository {
     return phases.map((p) => p.phase);
   }
 
-  async listBySeasonId(
-    seasonId: string,
+  async listBySeasonIds(
+    seasonIds: string[],
     dbOrTx: DBOrTx = db,
   ): Promise<DBPhase[]> {
-    const phases = await dbOrTx
+    if (seasonIds.length === 0) {
+      return [];
+    }
+    return dbOrTx
       .select()
       .from(phasesTable)
-      .where(eq(phasesTable.seasonId, seasonId));
-    return phases;
+      .where(inArray(phasesTable.seasonId, seasonIds));
   }
 
   async listExternalByPhaseIds(

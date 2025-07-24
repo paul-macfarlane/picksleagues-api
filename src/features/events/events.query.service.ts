@@ -22,4 +22,14 @@ export class EventsQueryService {
       dbOrTx,
     );
   }
+
+  async listExternalByDataSourceId(
+    dataSourceId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBExternalEvent[]> {
+    return this.eventsRepository.listExternalByDataSourceId(
+      dataSourceId,
+      dbOrTx,
+    );
+  }
 }

@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, lte, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
 import { externalSeasonsTable, seasonsTable } from "../../db/schema";
@@ -35,19 +35,40 @@ export class SeasonsRepository {
     sportLeagueId: string,
     dbOrTx: DBOrTx = db,
   ): Promise<DBSeason | null> {
+    const now = new Date();
     const [season] = await dbOrTx
       .select()
       .from(seasonsTable)
       .where(
         and(
           eq(seasonsTable.sportLeagueId, sportLeagueId),
-          gte(seasonsTable.startDate, new Date()),
-          lte(seasonsTable.endDate, new Date()),
+          lte(seasonsTable.startDate, now),
+          gte(seasonsTable.endDate, now),
         ),
       )
       .orderBy(desc(seasonsTable.startDate))
       .limit(1);
     return season ?? null;
+  }
+
+  async findCurrentBySportLeagueIds(
+    sportLeagueIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBSeason[]> {
+    if (sportLeagueIds.length === 0) {
+      return [];
+    }
+    const now = new Date();
+    return dbOrTx
+      .select()
+      .from(seasonsTable)
+      .where(
+        and(
+          inArray(seasonsTable.sportLeagueId, sportLeagueIds),
+          lte(seasonsTable.startDate, now),
+          gte(seasonsTable.endDate, now),
+        ),
+      );
   }
 
   async findLatestBySportLeagueId(
@@ -61,6 +82,28 @@ export class SeasonsRepository {
       .orderBy(desc(seasonsTable.startDate))
       .limit(1);
     return season ?? null;
+  }
+
+  async findLatestBySportLeagueIds(
+    sportLeagueIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBSeason[]> {
+    if (sportLeagueIds.length === 0) {
+      return [];
+    }
+    const result = await dbOrTx
+      .select()
+      .from(seasonsTable)
+      .where(inArray(seasonsTable.sportLeagueId, sportLeagueIds))
+      .orderBy(seasonsTable.sportLeagueId, desc(seasonsTable.startDate));
+
+    const latestSeasonsMap = new Map<string, DBSeason>();
+    for (const row of result) {
+      if (!latestSeasonsMap.has(row.sportLeagueId)) {
+        latestSeasonsMap.set(row.sportLeagueId, row);
+      }
+    }
+    return Array.from(latestSeasonsMap.values());
   }
 
   async findExternalBySourceAndExternalId(
@@ -97,6 +140,19 @@ export class SeasonsRepository {
       )
       .limit(1);
     return externalSeason ?? null;
+  }
+
+  async listExternalBySeasonIds(
+    seasonIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalSeason[]> {
+    if (seasonIds.length === 0) {
+      return [];
+    }
+    return dbOrTx
+      .select()
+      .from(externalSeasonsTable)
+      .where(inArray(externalSeasonsTable.seasonId, seasonIds));
   }
 
   async createExternal(

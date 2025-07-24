@@ -31,27 +31,44 @@ export class EventsRepository {
     return externalEvents[0] || null;
   }
 
+  async listExternalByDataSourceId(
+    dataSourceId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalEvent[]> {
+    return dbOrTx
+      .select()
+      .from(externalEventsTable)
+      .where(eq(externalEventsTable.dataSourceId, dataSourceId));
+  }
+
   async createExternal(
-    event: DBExternalEventInsert,
+    values: DBExternalEventInsert,
     dbOrTx: DBOrTx = db,
   ): Promise<DBExternalEvent> {
     const createdExternalEvent = await dbOrTx
       .insert(externalEventsTable)
-      .values(event)
+      .values(values)
       .returning();
 
     return createdExternalEvent[0];
   }
 
+  async bulkCreateExternal(
+    values: DBExternalEventInsert[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalEvent[]> {
+    return dbOrTx.insert(externalEventsTable).values(values).returning();
+  }
+
   async updateExternal(
     dataSourceId: string,
     externalId: string,
-    event: DBExternalEventUpdate,
+    values: DBExternalEventUpdate,
     dbOrTx: DBOrTx = db,
   ): Promise<DBExternalEvent> {
     const updatedExternalEvent = await dbOrTx
       .update(externalEventsTable)
-      .set(event)
+      .set(values)
       .where(
         and(
           eq(externalEventsTable.externalId, externalId),
@@ -63,23 +80,30 @@ export class EventsRepository {
     return updatedExternalEvent[0];
   }
 
-  async create(event: DBEventInsert, dbOrTx: DBOrTx = db): Promise<DBEvent> {
+  async create(values: DBEventInsert, dbOrTx: DBOrTx = db): Promise<DBEvent> {
     const createdEvent = await dbOrTx
       .insert(eventsTable)
-      .values(event)
+      .values(values)
       .returning();
 
     return createdEvent[0];
   }
 
+  async bulkCreate(
+    values: DBEventInsert[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBEvent[]> {
+    return dbOrTx.insert(eventsTable).values(values).returning();
+  }
+
   async update(
     id: string,
-    event: DBEventUpdate,
+    values: DBEventUpdate,
     dbOrTx: DBOrTx = db,
   ): Promise<DBEvent> {
     const updatedEvent = await dbOrTx
       .update(eventsTable)
-      .set(event)
+      .set(values)
       .where(eq(eventsTable.id, id))
       .returning();
 

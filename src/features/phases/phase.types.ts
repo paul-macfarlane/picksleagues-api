@@ -15,6 +15,6 @@ export type DBExternalPhaseUpdate = Partial<DBExternalPhaseInsert>;
 // Validation Schemas
 
 export const EspnExternalPhaseMetadataSchema = z.object({
-  type: z.nativeEnum(ESPN_SEASON_TYPES),
   number: z.number(),
+  type: z.nativeEnum(ESPN_SEASON_TYPES),
 });

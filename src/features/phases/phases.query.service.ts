@@ -37,8 +37,11 @@ export class PhasesQueryService {
     );
   }
 
-  async listBySeasonId(seasonId: string, dbOrTx?: DBOrTx): Promise<DBPhase[]> {
-    return this.phasesRepository.listBySeasonId(seasonId, dbOrTx);
+  async listBySeasonIds(
+    seasonIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPhase[]> {
+    return this.phasesRepository.listBySeasonIds(seasonIds, dbOrTx);
   }
 
   async listExternalByPhaseIds(

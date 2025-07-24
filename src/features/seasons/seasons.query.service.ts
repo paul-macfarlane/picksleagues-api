@@ -45,6 +45,16 @@ export class SeasonsQueryService {
     );
   }
 
+  async findCurrentBySportLeagueIds(
+    sportLeagueIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBSeason[]> {
+    return this.seasonsRepository.findCurrentBySportLeagueIds(
+      sportLeagueIds,
+      dbOrTx,
+    );
+  }
+
   async findLatestBySportLeagueId(
     sportLeagueId: string,
     dbOrTx?: DBOrTx,
@@ -53,5 +63,22 @@ export class SeasonsQueryService {
       sportLeagueId,
       dbOrTx,
     );
+  }
+
+  async findLatestBySportLeagueIds(
+    sportLeagueIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBSeason[]> {
+    return this.seasonsRepository.findLatestBySportLeagueIds(
+      sportLeagueIds,
+      dbOrTx,
+    );
+  }
+
+  async listExternalBySeasonIds(
+    seasonIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBExternalSeason[]> {
+    return this.seasonsRepository.listExternalBySeasonIds(seasonIds, dbOrTx);
   }
 }
