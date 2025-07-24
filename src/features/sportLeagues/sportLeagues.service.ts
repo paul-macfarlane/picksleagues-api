@@ -42,8 +42,13 @@ export class SportLeaguesService {
           `Processing league for sport ${desiredLeague.sportSlug} and league slug ${desiredLeague.leagueSlug} with external id ${espnLeague.id} from ${dataSource.name}`,
         );
 
+        const externalMetadata = {
+          sportSlug: desiredLeague.sportSlug,
+          leagueSlug: espnLeague.slug,
+        };
+
         const existingExternalLeague =
-          await this.sportLeaguesQueryService.findExternalBySourceAndId(
+          await this.sportLeaguesQueryService.findExternalBySourceAndExternalId(
             dataSource.id,
             espnLeague.id,
             tx,
@@ -58,9 +63,7 @@ export class SportLeaguesService {
               dataSource.id,
               espnLeague.id,
               {
-                metadata: {
-                  slug: espnLeague.slug,
-                },
+                metadata: externalMetadata,
               },
               tx,
             );
@@ -100,9 +103,7 @@ export class SportLeaguesService {
                 dataSourceId: dataSource.id,
                 externalId: espnLeague.id,
                 sportLeagueId: newSportLeague.id,
-                metadata: {
-                  slug: espnLeague.slug,
-                },
+                metadata: externalMetadata,
               },
               tx,
             );

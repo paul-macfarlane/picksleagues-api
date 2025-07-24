@@ -2,7 +2,7 @@ import { injectable, inject } from "inversify";
 import { DBOrTx } from "../../db";
 import { TYPES } from "../../lib/inversify.types";
 import { SeasonsRepository } from "./seasons.repository";
-import { DBExternalSeason } from "./seasons.types";
+import { DBExternalSeason, DBSeason } from "./seasons.types";
 
 @injectable()
 export class SeasonsQueryService {
@@ -11,14 +11,46 @@ export class SeasonsQueryService {
     private seasonsRepository: SeasonsRepository,
   ) {}
 
-  async findExternalBySourceAndId(
+  async findExternalBySourceAndExternalId(
     dataSourceId: string,
     externalId: string,
     dbOrTx?: DBOrTx,
   ): Promise<DBExternalSeason | null> {
-    return this.seasonsRepository.findExternalBySourceAndId(
+    return this.seasonsRepository.findExternalBySourceAndExternalId(
       dataSourceId,
       externalId,
+      dbOrTx,
+    );
+  }
+
+  async findExternalBySourceAndSeasonId(
+    dataSourceId: string,
+    seasonId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBExternalSeason | null> {
+    return this.seasonsRepository.findExternalBySourceAndSeasonId(
+      dataSourceId,
+      seasonId,
+      dbOrTx,
+    );
+  }
+
+  async findCurrentBySportLeagueId(
+    sportLeagueId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBSeason | null> {
+    return this.seasonsRepository.findCurrentBySportLeagueId(
+      sportLeagueId,
+      dbOrTx,
+    );
+  }
+
+  async findLatestBySportLeagueId(
+    sportLeagueId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBSeason | null> {
+    return this.seasonsRepository.findLatestBySportLeagueId(
+      sportLeagueId,
       dbOrTx,
     );
   }

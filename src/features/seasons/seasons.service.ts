@@ -3,12 +3,12 @@ import { TYPES } from "../../lib/inversify.types";
 import { db } from "../../db";
 import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
 import { EspnService } from "../../integrations/espn/espn.service";
-import { ESPN_DESIRED_LEAGUES } from "../../integrations/espn/espn.types";
 import { SeasonsQueryService } from "./seasons.query.service";
 import { SeasonsMutationService } from "./seasons.mutation.service";
 import { DataSourcesQueryService } from "../dataSources/dataSources.query.service";
 import { NotFoundError } from "../../lib/errors";
 import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service";
+import { EspnExternalSportLeagueMetadataSchema } from "../sportLeagues/sportLeagues.types";
 
 @injectable()
 export class SeasonsService {
@@ -35,15 +35,46 @@ export class SeasonsService {
         throw new NotFoundError("ESPN data source not found");
       }
 
-      for (const desiredLeague of ESPN_DESIRED_LEAGUES) {
+      const sportLeagues = await this.sportLeaguesQueryService.list(tx);
+      console.log(`Found ${sportLeagues.length} sport leagues`);
+
+      for (const sportLeague of sportLeagues) {
+        const externalSportLeague =
+          await this.sportLeaguesQueryService.findExternalBySourceAndSportLeagueId(
+            dataSource.id,
+            sportLeague.id,
+            tx,
+          );
+        if (!externalSportLeague) {
+          console.error(
+            `External sport league not found for ${sportLeague.id}`,
+          );
+          continue;
+        }
+
+        const parsedExternalSportLeagueMetadata =
+          EspnExternalSportLeagueMetadataSchema.safeParse(
+            externalSportLeague.metadata,
+          );
+        if (!parsedExternalSportLeagueMetadata.success) {
+          console.error(
+            `Invalid metadata for ${sportLeague.id}: ${parsedExternalSportLeagueMetadata.error}`,
+          );
+          continue;
+        }
+
         const espnLeagueSeasons = await this.espnService.getESPNLeagueSeasons(
-          desiredLeague.sportSlug,
-          desiredLeague.leagueSlug,
+          parsedExternalSportLeagueMetadata.data.sportSlug,
+          parsedExternalSportLeagueMetadata.data.leagueSlug,
         );
 
         for (const espnLeagueSeason of espnLeagueSeasons) {
+          const externalMetadata = {
+            slug: espnLeagueSeason.displayName,
+          };
+
           const existingExternalSeason =
-            await this.seasonsQueryService.findExternalBySourceAndId(
+            await this.seasonsQueryService.findExternalBySourceAndExternalId(
               dataSource.id,
               espnLeagueSeason.displayName,
               tx,
@@ -68,9 +99,7 @@ export class SeasonsService {
                 espnLeagueSeason.displayName,
                 {
                   seasonId: existingExternalSeason.seasonId,
-                  metadata: {
-                    slug: espnLeagueSeason.displayName,
-                  },
+                  metadata: externalMetadata,
                 },
                 tx,
               );
@@ -79,21 +108,6 @@ export class SeasonsService {
               `Updated external season ${JSON.stringify(updatedExternalSeason)}`,
             );
           } else {
-            const externalSportLeague =
-              await this.sportLeaguesQueryService.findExternalBySourceAndMetadata(
-                dataSource.id,
-                {
-                  slug: desiredLeague.leagueSlug,
-                },
-                tx,
-              );
-            if (!externalSportLeague) {
-              console.error(
-                `Sport league not found for ${desiredLeague.sportSlug} ${desiredLeague.leagueSlug}`,
-              );
-              continue;
-            }
-
             console.log(`Inserting season ${espnLeagueSeason.displayName}`);
 
             const insertedSeason = await this.seasonsMutationService.create(
@@ -102,7 +116,7 @@ export class SeasonsService {
                 year: espnLeagueSeason.year.toString(),
                 startDate: new Date(espnLeagueSeason.startDate),
                 endDate: new Date(espnLeagueSeason.endDate),
-                sportLeagueId: externalSportLeague.sportLeagueId,
+                sportLeagueId: sportLeague.id,
               },
               tx,
             );
@@ -115,9 +129,7 @@ export class SeasonsService {
                   dataSourceId: dataSource.id,
                   externalId: espnLeagueSeason.displayName,
                   seasonId: insertedSeason.id,
-                  metadata: {
-                    slug: espnLeagueSeason.displayName,
-                  },
+                  metadata: externalMetadata,
                 },
                 tx,
               );

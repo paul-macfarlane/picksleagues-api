@@ -1,12 +1,20 @@
-import { phasesTable } from "../../db/schema";
+import { ESPN_SEASON_TYPES } from "../../integrations/espn/espn.types";
+import { externalPhasesTable, phasesTable } from "../../db/schema";
+import { z } from "zod";
 
 // Constants
 
 // DB Types
 export type DBPhase = typeof phasesTable.$inferSelect;
-
 export type DBPhaseInsert = typeof phasesTable.$inferInsert;
-
 export type DBPhaseUpdate = Partial<DBPhaseInsert>;
+export type DBExternalPhase = typeof externalPhasesTable.$inferSelect;
+export type DBExternalPhaseInsert = typeof externalPhasesTable.$inferInsert;
+export type DBExternalPhaseUpdate = Partial<DBExternalPhaseInsert>;
 
 // Validation Schemas
+
+export const EspnExternalPhaseMetadataSchema = z.object({
+  type: z.nativeEnum(ESPN_SEASON_TYPES),
+  number: z.number(),
+});

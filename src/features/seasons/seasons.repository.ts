@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
 import { externalSeasonsTable, seasonsTable } from "../../db/schema";
@@ -31,7 +31,39 @@ export class SeasonsRepository {
     return season;
   }
 
-  async findExternalBySourceAndId(
+  async findCurrentBySportLeagueId(
+    sportLeagueId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBSeason | null> {
+    const [season] = await dbOrTx
+      .select()
+      .from(seasonsTable)
+      .where(
+        and(
+          eq(seasonsTable.sportLeagueId, sportLeagueId),
+          gte(seasonsTable.startDate, new Date()),
+          lte(seasonsTable.endDate, new Date()),
+        ),
+      )
+      .orderBy(desc(seasonsTable.startDate))
+      .limit(1);
+    return season ?? null;
+  }
+
+  async findLatestBySportLeagueId(
+    sportLeagueId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBSeason | null> {
+    const [season] = await dbOrTx
+      .select()
+      .from(seasonsTable)
+      .where(eq(seasonsTable.sportLeagueId, sportLeagueId))
+      .orderBy(desc(seasonsTable.startDate))
+      .limit(1);
+    return season ?? null;
+  }
+
+  async findExternalBySourceAndExternalId(
     dataSourceId: string,
     externalId: string,
     dbOrTx: DBOrTx = db,
@@ -46,6 +78,24 @@ export class SeasonsRepository {
         ),
       );
 
+    return externalSeason ?? null;
+  }
+
+  async findExternalBySourceAndSeasonId(
+    dataSourceId: string,
+    seasonId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalSeason | null> {
+    const [externalSeason] = await dbOrTx
+      .select()
+      .from(externalSeasonsTable)
+      .where(
+        and(
+          eq(externalSeasonsTable.dataSourceId, dataSourceId),
+          eq(externalSeasonsTable.seasonId, seasonId),
+        ),
+      )
+      .limit(1);
     return externalSeason ?? null;
   }
 

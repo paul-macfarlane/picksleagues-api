@@ -1,4 +1,9 @@
+import {
+  ESPN_LEAGUE_SLUGS,
+  ESPN_SPORT_SLUGS,
+} from "../../integrations/espn/espn.types";
 import { externalSportLeaguesTable, sportsLeaguesTable } from "../../db/schema";
+import { z } from "zod";
 
 // Constants
 
@@ -19,3 +24,8 @@ export type DBExternalSportLeagueInsert =
 export type DBExternalSportLeagueUpdate = Partial<DBExternalSportLeagueInsert>;
 
 // Validation Schemas
+
+export const EspnExternalSportLeagueMetadataSchema = z.object({
+  sportSlug: z.nativeEnum(ESPN_SPORT_SLUGS),
+  leagueSlug: z.nativeEnum(ESPN_LEAGUE_SLUGS),
+});

@@ -1,16 +1,17 @@
 import { Router, Request, Response } from "express";
 import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
-import { SeasonsService } from "../../features/seasons/seasons.service";
+import { EventsService } from "../../features/events/events.service";
 
 const router = Router();
-const seasonsService = container.get<SeasonsService>(TYPES.SeasonsService);
+const eventsService = container.get<EventsService>(TYPES.EventsService);
 
-const cronLabel = "Seasons cron";
+const cronLabel = "Events cron";
 
+// todo this takes 37 seconds, need to optimize
 router.get("/", async (_req: Request, res: Response) => {
   console.time(cronLabel);
-  await seasonsService.syncSeasons();
+  await eventsService.syncEvents();
   console.timeEnd(cronLabel);
   res.status(200).json({ message: "success" });
 });

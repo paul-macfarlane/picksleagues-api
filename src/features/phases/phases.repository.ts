@@ -1,4 +1,4 @@
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
 import {
@@ -38,7 +38,7 @@ export class PhasesRepository {
     return updatedPhase;
   }
 
-  async findExternalBySourceAndId(
+  async findExternalBySourceAndExternalId(
     dataSourceId: string,
     externalId: string,
     dbOrTx: DBOrTx = db,
@@ -129,5 +129,27 @@ export class PhasesRepository {
       );
 
     return phases.map((p) => p.phase);
+  }
+
+  async listBySeasonId(
+    seasonId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase[]> {
+    const phases = await dbOrTx
+      .select()
+      .from(phasesTable)
+      .where(eq(phasesTable.seasonId, seasonId));
+    return phases;
+  }
+
+  async listExternalByPhaseIds(
+    phaseIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalPhase[]> {
+    const externalPhases = await dbOrTx
+      .select()
+      .from(externalPhasesTable)
+      .where(inArray(externalPhasesTable.phaseId, phaseIds));
+    return externalPhases;
   }
 }

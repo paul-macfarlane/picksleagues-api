@@ -3,6 +3,7 @@ import sportLeaguesRouter from "./crons/sport-leagues.cron";
 import seasonsRouter from "./crons/seasons.cron";
 import phasesRouter from "./crons/phases.cron";
 import teamsRouter from "./crons/teams.cron";
+import eventsRouter from "./crons/events.cron";
 
 const router = Router();
 
@@ -25,5 +26,6 @@ router.use("/sport-leagues", sportLeaguesRouter);
 router.use("/seasons", seasonsRouter);
 router.use("/phases", phasesRouter);
 router.use("/teams", teamsRouter);
+router.use("/events", eventsRouter);
 
 export default router;

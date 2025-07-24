@@ -15,6 +15,7 @@ export const TYPES = {
   SeasonsRepository: Symbol.for("SeasonsRepository"),
   UsersRepository: Symbol.for("UsersRepository"),
   TeamsRepository: Symbol.for("TeamsRepository"),
+  EventsRepository: Symbol.for("EventsRepository"),
 
   // Services
   ProfilesService: Symbol.for("ProfilesService"),
@@ -29,9 +30,11 @@ export const TYPES = {
   SportLeaguesService: Symbol.for("SportLeaguesService"),
   SeasonsService: Symbol.for("SeasonsService"),
   TeamsService: Symbol.for("TeamsService"),
+  EventsService: Symbol.for("EventsService"),
 
   // Util Services
   LeaguesUtilService: Symbol.for("LeaguesUtilService"),
+  SeasonsUtilService: Symbol.for("SeasonsUtilService"),
 
   // Query Services
   LeaguesQueryService: Symbol.for("LeaguesQueryService"),
@@ -46,6 +49,7 @@ export const TYPES = {
   DataSourcesQueryService: Symbol.for("DataSourcesQueryService"),
   SportLeaguesQueryService: Symbol.for("SportLeaguesQueryService"),
   TeamsQueryService: Symbol.for("TeamsQueryService"),
+  EventsQueryService: Symbol.for("EventsQueryService"),
 
   // Mutation Services
   AccountsMutationService: Symbol.for("AccountsMutationService"),
@@ -62,6 +66,7 @@ export const TYPES = {
   DataSourcesMutationService: Symbol.for("DataSourcesMutationService"),
   SportLeaguesMutationService: Symbol.for("SportLeaguesMutationService"),
   TeamsMutationService: Symbol.for("TeamsMutationService"),
+  EventsMutationService: Symbol.for("EventsMutationService"),
 
   // External Services
   EspnService: Symbol.for("EspnService"),

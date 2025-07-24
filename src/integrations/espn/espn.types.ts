@@ -226,3 +226,98 @@ export type ESPNVenue = {
   indoor: boolean;
   images?: ESPNLogo[];
 };
+
+export type ESPNEvent = {
+  $ref: string;
+  id: string;
+  uid: string;
+  date: string;
+  name: string;
+  shortName: string;
+  season: ESPNRef;
+  seasonType: ESPNRef;
+  week: ESPNRef;
+  timeValid: boolean;
+  competitions: ESPNCompetition[];
+};
+
+export type ESPNCompetition = {
+  $ref: string;
+  id: string;
+  guid: string;
+  uid: string;
+  date: string;
+  attendance: number;
+  type: CompetitionType;
+  timeValid: boolean;
+  dateValid: boolean;
+  neutralSite: boolean;
+  divisionCompetition: boolean;
+  conferenceCompetition: boolean;
+  previewAvailable: boolean;
+  recapAvailable: boolean;
+  boxscoreAvailable: boolean;
+  lineupAvailable: boolean;
+  gamecastAvailable: boolean;
+  playByPlayAvailable: boolean;
+  conversationAvailable: boolean;
+  commentaryAvailable: boolean;
+  pickcenterAvailable: boolean;
+  summaryAvailable: boolean;
+  liveAvailable: boolean;
+  ticketsAvailable: boolean;
+  shotChartAvailable: boolean;
+  timeoutsAvailable: boolean;
+  possessionArrowAvailable: boolean;
+  onWatchESPN: boolean;
+  recent: boolean;
+  bracketAvailable: boolean;
+  wallclockAvailable: boolean;
+  gameSource: Source;
+  boxscoreSource: Source;
+  playByPlaySource: Source;
+  linescoreSource: Source;
+  statsSource: Source;
+  venue: ESPNVenue;
+  competitors: ESPNCompetitor[];
+  notes: unknown[]; // Define if needed
+  situation: ESPNRef;
+  status: ESPNRef;
+  odds: ESPNRef;
+  broadcasts: ESPNRef;
+  officials: ESPNRef;
+  details: ESPNRef;
+  leaders: ESPNRef;
+  links: ESPNLink[];
+};
+
+export type CompetitionType = {
+  id: string;
+  text: string;
+  abbreviation: string;
+  slug: string;
+  type: string;
+};
+
+export type Source = {
+  id: string;
+  description: string;
+  state: string;
+};
+
+export type ESPNCompetitor = {
+  $ref: string;
+  id: string;
+  uid: string;
+  type: string;
+  order: number;
+  homeAway: string;
+  winner: boolean;
+  team: ESPNRef;
+  score: ESPNRef;
+  linescores: ESPNRef;
+  roster: ESPNRef;
+  statistics: ESPNRef;
+  leaders: ESPNRef;
+  record: ESPNRef;
+};

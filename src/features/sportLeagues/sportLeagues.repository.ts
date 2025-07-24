@@ -61,24 +61,11 @@ export class SportLeaguesRepository {
     return sportLeague ?? null;
   }
 
-  async findExternalBySourceAndMetadata(
-    dataSourceId: string,
-    metadata: Record<string, string>,
-    dbOrTx: DBOrTx = db,
-  ): Promise<DBExternalSportLeague | null> {
-    const [externalSportLeague] = await dbOrTx
-      .select()
-      .from(externalSportLeaguesTable)
-      .where(
-        and(
-          eq(externalSportLeaguesTable.dataSourceId, dataSourceId),
-          eq(externalSportLeaguesTable.metadata, metadata),
-        ),
-      );
-    return externalSportLeague ?? null;
+  async list(dbOrTx: DBOrTx = db): Promise<DBSportLeague[]> {
+    return dbOrTx.select().from(sportsLeaguesTable);
   }
 
-  async findExternalBySourceAndId(
+  async findExternalBySourceAndExternalId(
     sourceId: string,
     externalId: string,
     dbOrTx: DBOrTx = db,
@@ -90,6 +77,24 @@ export class SportLeaguesRepository {
         and(
           eq(externalSportLeaguesTable.dataSourceId, sourceId),
           eq(externalSportLeaguesTable.externalId, externalId),
+        ),
+      )
+      .limit(1);
+    return externalSportLeague;
+  }
+
+  async findExternalBySourceAndSportLeagueId(
+    sourceId: string,
+    sportLeagueId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalSportLeague | null> {
+    const [externalSportLeague] = await dbOrTx
+      .select()
+      .from(externalSportLeaguesTable)
+      .where(
+        and(
+          eq(externalSportLeaguesTable.dataSourceId, sourceId),
+          eq(externalSportLeaguesTable.sportLeagueId, sportLeagueId),
         ),
       )
       .limit(1);

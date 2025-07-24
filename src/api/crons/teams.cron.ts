@@ -6,10 +6,12 @@ import { TeamsService } from "../../features/teams/teams.service";
 const router = Router();
 const teamsService = container.get<TeamsService>(TYPES.TeamsService);
 
+const cronLabel = "Teams cron";
+
 router.get("/", async (_req: Request, res: Response) => {
-  console.log("Starting teams cron");
+  console.time(cronLabel);
   await teamsService.syncTeams();
-  console.log("Teams cron completed");
+  console.timeEnd(cronLabel);
   res.status(200).json({ message: "success" });
 });
 

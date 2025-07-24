@@ -6,9 +6,10 @@ import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
 import { NotFoundError } from "../../lib/errors";
 import { db } from "../../db";
 import { DataSourcesQueryService } from "../dataSources/dataSources.query.service";
-import { ESPN_DESIRED_LEAGUES } from "../../integrations/espn/espn.types";
 import { EspnService } from "../../integrations/espn/espn.service";
 import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service";
+import { SeasonsQueryService } from "../seasons/seasons.query.service";
+import { EspnExternalSportLeagueMetadataSchema } from "../sportLeagues/sportLeagues.types";
 
 @injectable()
 export class TeamsService {
@@ -23,6 +24,8 @@ export class TeamsService {
     private espnService: EspnService,
     @inject(TYPES.SportLeaguesQueryService)
     private sportLeaguesQueryService: SportLeaguesQueryService,
+    @inject(TYPES.SeasonsQueryService)
+    private seasonsQueryService: SeasonsQueryService,
   ) {}
 
   async syncTeams(): Promise<void> {
@@ -35,35 +38,66 @@ export class TeamsService {
         throw new NotFoundError("ESPN data source not found");
       }
 
-      for (const desiredLeague of ESPN_DESIRED_LEAGUES) {
+      const sportLeagues = await this.sportLeaguesQueryService.list(tx);
+      console.log(`Found ${sportLeagues.length} sport leagues`);
+
+      for (const sportLeague of sportLeagues) {
         const externalSportLeague =
-          await this.sportLeaguesQueryService.findExternalBySourceAndMetadata(
+          await this.sportLeaguesQueryService.findExternalBySourceAndSportLeagueId(
             dataSource.id,
-            {
-              slug: desiredLeague.leagueSlug,
-            },
+            sportLeague.id,
             tx,
           );
         if (!externalSportLeague) {
           console.error(
-            `Sport league not found for ${desiredLeague.leagueSlug}`,
+            `External sport league not found for ${sportLeague.id}`,
           );
           continue;
         }
 
-        // only use the first season, we only need the latest season
-        const [espnLeagueSeason] = await this.espnService.getESPNLeagueSeasons(
-          desiredLeague.sportSlug,
-          desiredLeague.leagueSlug,
-        );
+        const parsedExternalSportLeagueMetadata =
+          EspnExternalSportLeagueMetadataSchema.safeParse(
+            externalSportLeague.metadata,
+          );
+        if (!parsedExternalSportLeagueMetadata.success) {
+          console.error(
+            `Invalid metadata for ${sportLeague.id}: ${parsedExternalSportLeagueMetadata.error}`,
+          );
+          continue;
+        }
+
+        const latestSeason =
+          await this.seasonsQueryService.findLatestBySportLeagueId(
+            sportLeague.id,
+            tx,
+          );
+        if (!latestSeason) {
+          console.error(`Latest season not found for ${sportLeague.id}`);
+          continue;
+        }
+
+        const latestExternalSeason =
+          await this.seasonsQueryService.findExternalBySourceAndSeasonId(
+            dataSource.id,
+            latestSeason.id,
+            tx,
+          );
+        if (!latestExternalSeason) {
+          console.error(
+            `Latest external season not found for ${latestSeason.id}`,
+          );
+          continue;
+        }
 
         const espnTeams = await this.espnService.getESPNSportLeagueTeams(
-          desiredLeague.sportSlug,
-          desiredLeague.leagueSlug,
-          espnLeagueSeason.displayName,
+          parsedExternalSportLeagueMetadata.data.sportSlug,
+          parsedExternalSportLeagueMetadata.data.leagueSlug,
+          latestExternalSeason.externalId,
         );
 
         for (const espnTeam of espnTeams) {
+          const externalMetadata = {};
+
           const existingExternalTeam =
             await this.teamsQueryService.findExternalByDataSourceIdAndExternalId(
               dataSource.id,
@@ -71,16 +105,20 @@ export class TeamsService {
               tx,
             );
           if (existingExternalTeam) {
-            await this.teamsMutationService.updateExternal(
-              dataSource.id,
-              espnTeam.id,
-              {
-                metadata: {},
-              },
-              tx,
+            const updatedExternalTeam =
+              await this.teamsMutationService.updateExternal(
+                dataSource.id,
+                espnTeam.id,
+                {
+                  metadata: externalMetadata,
+                },
+                tx,
+              );
+            console.log(
+              `Updated external team ${JSON.stringify(updatedExternalTeam)}`,
             );
 
-            await this.teamsMutationService.update(
+            const updatedTeam = await this.teamsMutationService.update(
               existingExternalTeam.teamId,
               {
                 name: espnTeam.name,
@@ -91,6 +129,8 @@ export class TeamsService {
               },
               tx,
             );
+
+            console.log(`Updated team ${JSON.stringify(updatedTeam)}`);
           } else {
             const newTeam = await this.teamsMutationService.create(
               {
@@ -104,14 +144,21 @@ export class TeamsService {
               tx,
             );
 
-            await this.teamsMutationService.createExternal(
-              {
-                dataSourceId: dataSource.id,
-                externalId: espnTeam.id,
-                teamId: newTeam.id,
-                metadata: {},
-              },
-              tx,
+            console.log(`Created team ${JSON.stringify(newTeam)}`);
+
+            const insertedExternalTeam =
+              await this.teamsMutationService.createExternal(
+                {
+                  dataSourceId: dataSource.id,
+                  externalId: espnTeam.id,
+                  teamId: newTeam.id,
+                  metadata: externalMetadata,
+                },
+                tx,
+              );
+
+            console.log(
+              `Created external team ${JSON.stringify(insertedExternalTeam)}`,
             );
           }
         }

@@ -86,11 +86,10 @@ To populate the database with real-world sports data (leagues and seasons), you 
 _Note: You will need the `CRON_API_KEY` from your `.env` file._
 
 ```bash
+# assumes you have run the setup:dev script
+
 # First, sync the available sport leagues
 curl http://localhost:3001/api/crons/sport-leagues --header "x-cron-api-key: local"
-
-# Then, sync the teams for those leagues
-curl http://localhost:3001/api/crons/teams --header "x-cron-api-key: local"
 
 # run the seed script again to populate the database with the phase templates based off of the NFL league that was created
 npm run db:seed
@@ -98,8 +97,14 @@ npm run db:seed
 # Then, sync the seasons for those leagues
 curl http://localhost:3001/api/crons/seasons --header "x-cron-api-key: local"
 
+# Then, sync the teams for those leagues
+curl http://localhost:3001/api/crons/teams --header "x-cron-api-key: local"
+
 # Then, sync the phases for those seasons
 curl http://localhost:3001/api/crons/phases --header "x-cron-api-key: local"
+
+# Then, sync the events for those phases
+curl http://localhost:3001/api/crons/events --header "x-cron-api-key: local"
 ```
 
 ## Available Scripts
