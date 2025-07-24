@@ -8,7 +8,6 @@ const eventsService = container.get<EventsService>(TYPES.EventsService);
 
 const cronLabel = "Events cron";
 
-// todo this takes 37 seconds, need to optimize
 router.get("/", async (_req: Request, res: Response) => {
   console.time(cronLabel);
   await eventsService.syncEvents();
