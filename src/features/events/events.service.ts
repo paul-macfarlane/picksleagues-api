@@ -231,7 +231,7 @@ export class EventsService {
       { sportSlug: string; leagueSlug: string } | null
     >,
   ) {
-    const pLimit = (await import("p-limit")).default;
+    const pLimit = (await new Function('return import("p-limit")')()).default;
     const limit = pLimit(10);
     const eventPromises = externalPhases.map((externalPhase) => {
       const phase = phasesToProcess.find((p) => p.id === externalPhase.phaseId);
@@ -510,7 +510,7 @@ export class EventsService {
       console.log(`Found ${futureEspnEvents.length} future events from ESPN.`);
 
       // Pre-fetch all unique season types in parallel to avoid serial requests in the loop.
-      const pLimit = (await import("p-limit")).default;
+      const pLimit = (await new Function('return import("p-limit")')()).default;
       const limit = pLimit(10);
       const uniqueSeasonTypeRefs = [
         ...new Set(futureEspnEvents.map((event) => event.seasonType.$ref)),

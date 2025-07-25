@@ -2,10 +2,12 @@ import { db, DBOrTx } from "..";
 import { DATA_SOURCE_NAMES } from "../../features/dataSources/dataSources.types";
 import { DataSourcesQueryService } from "../../features/dataSources/dataSources.query.service";
 import { SportsbooksMutationService } from "../../features/sportsbooks/sportsbooks.mutation.service";
+import { SportsbooksQueryService } from "../../features/sportsbooks/sportsbooks.query.service";
 
 export async function seedSportsbooks(
   dataSourcesQueryService: DataSourcesQueryService,
   sportsbooksMutationService: SportsbooksMutationService,
+  sportsbooksQueryService: SportsbooksQueryService,
   dbOrTx: DBOrTx = db,
 ) {
   console.log("Seeding sportsbooks...");
@@ -17,6 +19,13 @@ export async function seedSportsbooks(
 
   if (!espnDataSource) {
     throw new Error("ESPN data source not found");
+  }
+
+  // avoid re-seeding if already exists
+  const existingSportsbook = await sportsbooksQueryService.findDefault(dbOrTx);
+  if (existingSportsbook) {
+    console.log("Sportsbooks already seeded. Skipping...");
+    return;
   }
 
   // it's ok to hardcode this for now because we only have one sportsbook that espn consistently provides odds for

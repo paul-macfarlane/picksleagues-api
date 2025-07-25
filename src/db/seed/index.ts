@@ -12,6 +12,7 @@ import { LeagueTypesService } from "../../features/leagueTypes/leagueTypes.servi
 import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service";
 import { SportsbooksMutationService } from "../../features/sportsbooks/sportsbooks.mutation.service";
 import { DataSourcesQueryService } from "../../features/dataSources/dataSources.query.service";
+import { SportsbooksQueryService } from "../../features/sportsbooks/sportsbooks.query.service";
 
 async function seed() {
   try {
@@ -32,6 +33,9 @@ async function seed() {
         container.get<SportsbooksMutationService>(
           TYPES.SportsbooksMutationService,
         );
+      const sportsbooksQueryService = container.get<SportsbooksQueryService>(
+        TYPES.SportsbooksQueryService,
+      );
       const dataSourcesQueryService = container.get<DataSourcesQueryService>(
         TYPES.DataSourcesQueryService,
       );
@@ -46,6 +50,7 @@ async function seed() {
       await seedSportsbooks(
         dataSourcesQueryService,
         sportsbooksMutationService,
+        sportsbooksQueryService,
         tx,
       );
     });
