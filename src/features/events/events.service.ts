@@ -1,10 +1,9 @@
 import { injectable, inject } from "inversify";
-import { db } from "../../db";
+import { db, DBTx } from "../../db";
 import {
   EVENT_TYPES,
   EspnExternalEventMetadataSchema,
   espnStatusToLiveScoreStatus,
-  DBExternalEvent,
   DBEventInsert,
   DBEventUpdate,
   DBExternalEventUpdate,
@@ -14,6 +13,8 @@ import {
   ESPNEvent,
   ESPNSeasonType,
   ESPN_SPORT_LEAGUE_GAME_STATUSES,
+  ESPN_SPORT_SLUGS,
+  ESPN_LEAGUE_SLUGS,
 } from "../../integrations/espn/espn.types";
 import axios from "axios";
 import pLimit from "p-limit";
@@ -37,6 +38,8 @@ import { OddsMutationService } from "../odds/odds.mutation.service";
 import { LiveScoresQueryService } from "../liveScores/liveScores.query.service";
 import { LiveScoresMutationService } from "../liveScores/liveScores.mutation.service";
 import { OutcomesQueryService } from "../outcomes/outcomes.query.service";
+import { DBPhase, DBExternalPhase } from "../phases/phase.types";
+import { DBSeason } from "../seasons/seasons.types";
 
 @injectable()
 export class EventsService {
@@ -72,6 +75,300 @@ export class EventsService {
     @inject(TYPES.OutcomesMutationService)
     private outcomesMutationService: OutcomesMutationService,
   ) {}
+
+  private async _prepareSyncData(tx: DBTx) {
+    const dataSource = await this.dataSourcesQueryService.findByName(
+      DATA_SOURCE_NAMES.ESPN,
+      tx,
+    );
+    if (!dataSource) {
+      console.error("ESPN data source not found. Exiting sync.");
+      throw new NotFoundError("ESPN data source not found");
+    }
+    console.log("Data source found.");
+
+    const sportLeagues = await this.sportLeaguesQueryService.list(tx);
+    console.log(`Found ${sportLeagues.length} sport leagues to process.`);
+
+    if (sportLeagues.length === 0) {
+      return {
+        dataSource,
+        sportLeagues,
+        phasesToProcess: [],
+        externalPhases: [],
+        seasonsToProcess: [],
+        seasonIdToExternalIdMap: new Map(),
+        sportLeagueIdToExternalMetadataMap: new Map(),
+        externalTeamIdToTeamIdMap: new Map(),
+      };
+    }
+
+    const externalSportLeagues =
+      await this.sportLeaguesQueryService.listExternalBySourceAndSportLeagueIds(
+        dataSource.id,
+        sportLeagues.map((sl) => sl.id),
+        tx,
+      );
+
+    const sportLeagueIdToExternalMetadataMap = new Map(
+      externalSportLeagues.map((esl) => {
+        const parsedMetadata = EspnExternalSportLeagueMetadataSchema.safeParse(
+          esl.metadata,
+        );
+        return [
+          esl.sportLeagueId,
+          parsedMetadata.success ? parsedMetadata.data : null,
+        ];
+      }),
+    );
+
+    // Seasons
+    let seasonsToProcess =
+      await this.seasonsQueryService.findCurrentBySportLeagueIds(
+        sportLeagues.map((sl) => sl.id),
+        tx,
+      );
+    if (seasonsToProcess.length === 0) {
+      seasonsToProcess =
+        await this.seasonsQueryService.findLatestBySportLeagueIds(
+          sportLeagues.map((sl) => sl.id),
+          tx,
+        );
+      console.log(`Found ${seasonsToProcess.length} latest seasons.`);
+    }
+
+    if (seasonsToProcess.length === 0) {
+      return {
+        dataSource,
+        sportLeagues,
+        seasonsToProcess,
+        phasesToProcess: [],
+        externalPhases: [],
+        seasonIdToExternalIdMap: new Map(),
+        sportLeagueIdToExternalMetadataMap,
+        externalTeamIdToTeamIdMap: new Map(),
+      };
+    }
+
+    const externalSeasons =
+      await this.seasonsQueryService.listExternalBySeasonIds(
+        seasonsToProcess.map((s) => s.id),
+        tx,
+      );
+    const seasonIdToExternalIdMap = new Map(
+      externalSeasons.map((es) => [es.seasonId, es.externalId]),
+    );
+
+    // Phases
+    let phasesToProcess = await this.phasesQueryService.findCurrentBySeasonIds(
+      seasonsToProcess.map((s) => s.id),
+      tx,
+    );
+    console.log(`Found ${phasesToProcess.length} current phases.`);
+    if (phasesToProcess.length === 0) {
+      console.log(
+        "No current phases found. Falling back to next future phases.",
+      );
+      phasesToProcess = await this.phasesQueryService.findNextBySeasonIds(
+        seasonsToProcess.map((s) => s.id),
+        tx,
+      );
+      console.log(`Found ${phasesToProcess.length} next future phases.`);
+    }
+
+    if (phasesToProcess.length === 0) {
+      return {
+        dataSource,
+        sportLeagues,
+        seasonsToProcess,
+        phasesToProcess,
+        externalPhases: [],
+        seasonIdToExternalIdMap,
+        sportLeagueIdToExternalMetadataMap,
+        externalTeamIdToTeamIdMap: new Map(),
+      };
+    }
+
+    const externalPhases = await this.phasesQueryService.listExternalByPhaseIds(
+      phasesToProcess.map((p) => p.id),
+      tx,
+    );
+
+    // Teams
+    const teams = await this.teamsQueryService.listBySportLeagueIds(
+      sportLeagues.map((sl) => sl.id),
+      tx,
+    );
+    const externalTeams =
+      await this.teamsQueryService.listExternalByDataSourceIdAndTeamIds(
+        dataSource.id,
+        teams.map((t) => t.id),
+        tx,
+      );
+    const externalTeamIdToTeamIdMap = new Map(
+      externalTeams.map((et) => [et.externalId, et.teamId]),
+    );
+
+    return {
+      dataSource,
+      sportLeagues,
+      sportLeagueIdToExternalMetadataMap,
+      seasonsToProcess,
+      seasonIdToExternalIdMap,
+      phasesToProcess,
+      externalPhases,
+      teams,
+      externalTeamIdToTeamIdMap,
+    };
+  }
+
+  private async _fetchEspnEvents(
+    externalPhases: DBExternalPhase[],
+    phasesToProcess: DBPhase[],
+    seasonsToProcess: DBSeason[],
+    seasonIdToExternalIdMap: Map<string, string>,
+    sportLeagueIdToExternalMetadataMap: Map<
+      string,
+      { sportSlug: string; leagueSlug: string } | null
+    >,
+  ) {
+    const limit = pLimit(10);
+    const eventPromises = externalPhases.map((externalPhase) => {
+      const phase = phasesToProcess.find((p) => p.id === externalPhase.phaseId);
+      if (!phase) return Promise.resolve([]);
+
+      const season = seasonsToProcess.find((s) => s.id === phase.seasonId);
+      if (!season) return Promise.resolve([]);
+
+      const externalSeasonId = seasonIdToExternalIdMap.get(season.id);
+      if (!externalSeasonId) return Promise.resolve([]);
+
+      const externalSportLeagueMetadata =
+        sportLeagueIdToExternalMetadataMap.get(season.sportLeagueId);
+      if (!externalSportLeagueMetadata) return Promise.resolve([]);
+
+      const parsedMetadata = EspnExternalPhaseMetadataSchema.safeParse(
+        externalPhase.metadata,
+      );
+      if (!parsedMetadata.success) return Promise.resolve([]);
+
+      return limit(() =>
+        this.espnService.getESPNEvents(
+          externalSportLeagueMetadata.sportSlug as ESPN_SPORT_SLUGS,
+          externalSportLeagueMetadata.leagueSlug as ESPN_LEAGUE_SLUGS,
+          externalSeasonId,
+          parsedMetadata.data.type,
+          parsedMetadata.data.number,
+        ),
+      );
+    });
+
+    const espnEventsByPhase = await Promise.all(eventPromises);
+    const allEspnEvents: ESPNEvent[] = espnEventsByPhase.flat();
+    console.log(`Fetched a total of ${allEspnEvents.length} events from ESPN.`);
+    return allEspnEvents;
+  }
+
+  private async _createOrUpdateEvent(
+    espnEvent: ESPNEvent,
+    dataSourceId: string,
+    phasesToProcess: DBPhase[],
+    externalPhases: DBExternalPhase[],
+    externalTeamIdToTeamIdMap: Map<string, string>,
+    tx: DBTx,
+  ) {
+    const espnHomeTeam = espnEvent.competitions[0].competitors.find(
+      (c) => c.homeAway === "home",
+    );
+    const espnAwayTeam = espnEvent.competitions[0].competitors.find(
+      (c) => c.homeAway === "away",
+    );
+    if (!espnHomeTeam || !espnAwayTeam)
+      return { event: null, status: "skipped" };
+
+    const homeTeamId = externalTeamIdToTeamIdMap.get(espnHomeTeam.id);
+    const awayTeamId = externalTeamIdToTeamIdMap.get(espnAwayTeam.id);
+    if (!homeTeamId || !awayTeamId) return { event: null, status: "skipped" };
+
+    const seasonTypeResponse = await axios.get<ESPNSeasonType>(
+      espnEvent.seasonType.$ref.replace("http://", "https://"),
+    );
+    const espnSeasonType = seasonTypeResponse.data;
+
+    const phase = phasesToProcess.find((p) => {
+      const externalPhase = externalPhases.find((ep) => ep.phaseId === p.id);
+      if (!externalPhase) return false;
+      const metadata = EspnExternalPhaseMetadataSchema.safeParse(
+        externalPhase.metadata,
+      );
+      if (!metadata.success) return false;
+      return espnSeasonType.type === metadata.data.type;
+    });
+    if (!phase) return { event: null, status: "skipped" };
+
+    const externalEvent =
+      await this.eventsQueryService.findExternalByDataSourceIdAndExternalId(
+        dataSourceId,
+        espnEvent.id,
+        tx,
+      );
+
+    let event;
+    let status: "created" | "updated" | "skipped" = "updated";
+    if (externalEvent) {
+      event = await this.eventsMutationService.update(
+        externalEvent.eventId,
+        {
+          startTime: new Date(espnEvent.competitions[0].date),
+          homeTeamId,
+          awayTeamId,
+        },
+        tx,
+      );
+
+      await this.eventsMutationService.updateExternal(
+        dataSourceId,
+        espnEvent.id,
+        {
+          metadata: {
+            oddsRef: espnEvent.competitions[0]?.odds?.$ref,
+            awayTeamScoreRef: espnAwayTeam.score?.$ref,
+            homeTeamScoreRef: espnHomeTeam.score?.$ref,
+            statusRef: espnEvent.competitions[0]?.status?.$ref,
+          },
+        },
+        tx,
+      );
+    } else {
+      status = "created";
+      const createdEvent = await this.eventsMutationService.create(
+        {
+          phaseId: phase.id,
+          startTime: new Date(espnEvent.competitions[0].date),
+          type: EVENT_TYPES.GAME,
+          homeTeamId,
+          awayTeamId,
+        },
+        tx,
+      );
+      await this.eventsMutationService.createExternal(
+        {
+          dataSourceId,
+          eventId: createdEvent.id,
+          externalId: espnEvent.id,
+          metadata: {
+            oddsRef: espnEvent.competitions[0]?.odds?.$ref,
+            awayTeamScoreRef: espnAwayTeam.score?.$ref,
+            homeTeamScoreRef: espnHomeTeam.score?.$ref,
+            statusRef: espnEvent.competitions[0]?.status?.$ref,
+          },
+        },
+        tx,
+      );
+      event = createdEvent;
+    }
+    return { event, status };
+  }
 
   async sync(): Promise<void> {
     console.log("Starting event synchronization...");
@@ -191,57 +488,18 @@ export class EventsService {
           tx,
         );
       const existingExternalEventIds = new Set(
-        existingExternalEvents.map((ee: DBExternalEvent) => ee.externalId),
+        existingExternalEvents.map((ee) => ee.externalId),
       );
       console.log(
         `Found ${existingExternalEvents.length} existing external events.`,
       );
 
-      const limit = pLimit(10);
-
-      console.log("Fetching ESPN events for future phases...");
-      const eventPromises = futureExternalPhases.map((futureExternalPhase) => {
-        const phase = futurePhases.find(
-          (p) => p.id === futureExternalPhase.phaseId,
-        );
-        if (!phase) return Promise.resolve([]);
-
-        const season = seasonsToProcess.find((s) => s.id === phase.seasonId);
-        if (!season) return Promise.resolve([]);
-
-        const externalSeasonId = seasonIdToExternalIdMap.get(season.id);
-        if (!externalSeasonId) return Promise.resolve([]);
-
-        const externalSportLeagueMetadata =
-          sportLeagueIdToExternalMetadataMap.get(season.sportLeagueId);
-        if (!externalSportLeagueMetadata) return Promise.resolve([]);
-
-        const parsedExternalPhaseMetadata =
-          EspnExternalPhaseMetadataSchema.safeParse(
-            futureExternalPhase.metadata,
-          );
-        if (!parsedExternalPhaseMetadata.success) {
-          console.warn(
-            `Invalid external phase metadata for phaseId: ${futureExternalPhase.phaseId}. Skipping.`,
-          );
-          return Promise.resolve([]);
-        }
-
-        return limit(() =>
-          this.espnService.getESPNEvents(
-            externalSportLeagueMetadata.sportSlug,
-            externalSportLeagueMetadata.leagueSlug,
-            externalSeasonId,
-            parsedExternalPhaseMetadata.data.type,
-            parsedExternalPhaseMetadata.data.number,
-          ),
-        );
-      });
-
-      const espnEventsByPhase = await Promise.all(eventPromises);
-      const allEspnEvents: ESPNEvent[] = espnEventsByPhase.flat();
-      console.log(
-        `Fetched a total of ${allEspnEvents.length} events from ESPN.`,
+      const allEspnEvents = await this._fetchEspnEvents(
+        futureExternalPhases,
+        futurePhases,
+        seasonsToProcess,
+        seasonIdToExternalIdMap,
+        sportLeagueIdToExternalMetadataMap,
       );
 
       const futureEspnEvents = allEspnEvents.filter(
@@ -252,6 +510,7 @@ export class EventsService {
       console.log(`Found ${futureEspnEvents.length} future events from ESPN.`);
 
       // Pre-fetch all unique season types in parallel to avoid serial requests in the loop.
+      const limit = pLimit(10);
       const uniqueSeasonTypeRefs = [
         ...new Set(futureEspnEvents.map((event) => event.seasonType.$ref)),
       ];
@@ -461,154 +720,29 @@ export class EventsService {
   async syncWithOdds(): Promise<void> {
     console.log("Starting event synchronization with odds...");
     return db.transaction(async (tx) => {
-      const dataSource = await this.dataSourcesQueryService.findByName(
-        DATA_SOURCE_NAMES.ESPN,
-        tx,
-      );
-      if (!dataSource) {
-        console.error("ESPN data source not found. Exiting sync.");
-        throw new NotFoundError("ESPN data source not found");
-      }
-      console.log("Data source found.");
+      const {
+        dataSource,
+        phasesToProcess,
+        externalPhases,
+        seasonsToProcess,
+        seasonIdToExternalIdMap,
+        sportLeagueIdToExternalMetadataMap,
+        externalTeamIdToTeamIdMap,
+      } = await this._prepareSyncData(tx);
 
-      const sportLeagues = await this.sportLeaguesQueryService.list(tx);
-      console.log(`Found ${sportLeagues.length} sport leagues to process.`);
-      if (sportLeagues.length === 0) {
-        console.log("No sport leagues found. Exiting sync.");
-        return;
-      }
-
-      const externalSportLeagues =
-        await this.sportLeaguesQueryService.listExternalBySourceAndSportLeagueIds(
-          dataSource.id,
-          sportLeagues.map((sl) => sl.id),
-          tx,
-        );
-
-      const sportLeagueIdToExternalMetadataMap = new Map(
-        externalSportLeagues.map((esl) => {
-          const parsedMetadata =
-            EspnExternalSportLeagueMetadataSchema.safeParse(esl.metadata);
-          return [
-            esl.sportLeagueId,
-            parsedMetadata.success ? parsedMetadata.data : null,
-          ];
-        }),
-      );
-
-      // Seasons
-      let seasonsToProcess =
-        await this.seasonsQueryService.findCurrentBySportLeagueIds(
-          sportLeagues.map((sl) => sl.id),
-          tx,
-        );
-      if (seasonsToProcess.length === 0) {
-        seasonsToProcess =
-          await this.seasonsQueryService.findLatestBySportLeagueIds(
-            sportLeagues.map((sl) => sl.id),
-            tx,
-          );
-        console.log(`Found ${seasonsToProcess.length} latest seasons.`);
-      }
-      if (seasonsToProcess.length === 0) {
-        console.log("No seasons to process. Exiting sync.");
-        return;
-      }
-
-      const externalSeasons =
-        await this.seasonsQueryService.listExternalBySeasonIds(
-          seasonsToProcess.map((s) => s.id),
-          tx,
-        );
-
-      const seasonIdToExternalIdMap = new Map(
-        externalSeasons.map((es) => [es.seasonId, es.externalId]),
-      );
-
-      // Phases
-      let phasesToProcess =
-        await this.phasesQueryService.findCurrentBySeasonIds(
-          seasonsToProcess.map((s) => s.id),
-          tx,
-        );
-      console.log(`Found ${phasesToProcess.length} current phases.`);
-      if (phasesToProcess.length === 0) {
-        console.log(
-          "No current phases found. Falling back to next future phases.",
-        );
-        phasesToProcess = await this.phasesQueryService.findNextBySeasonIds(
-          seasonsToProcess.map((s) => s.id),
-          tx,
-        );
-        console.log(`Found ${phasesToProcess.length} next future phases.`);
-      }
       if (phasesToProcess.length === 0) {
         console.log("No phases to process. Exiting sync.");
         return;
       }
 
-      const externalPhases =
-        await this.phasesQueryService.listExternalByPhaseIds(
-          phasesToProcess.map((p) => p.id),
-          tx,
-        );
-
-      // Teams
-      const teams = await this.teamsQueryService.listBySportLeagueIds(
-        sportLeagues.map((sl) => sl.id),
-        tx,
-      );
-      const externalTeams =
-        await this.teamsQueryService.listExternalByDataSourceIdAndTeamIds(
-          dataSource.id,
-          teams.map((t) => t.id),
-          tx,
-        );
-      const externalTeamIdToTeamIdMap = new Map(
-        externalTeams.map((et) => [et.externalId, et.teamId]),
+      const allEspnEvents = await this._fetchEspnEvents(
+        externalPhases,
+        phasesToProcess,
+        seasonsToProcess,
+        seasonIdToExternalIdMap,
+        sportLeagueIdToExternalMetadataMap,
       );
 
-      // Fetch Events from ESPN
-      const limit = pLimit(10);
-      const eventPromises = externalPhases.map((externalPhase) => {
-        const phase = phasesToProcess.find(
-          (p) => p.id === externalPhase.phaseId,
-        );
-        if (!phase) return Promise.resolve([]);
-
-        const season = seasonsToProcess.find((s) => s.id === phase.seasonId);
-        if (!season) return Promise.resolve([]);
-
-        const externalSeasonId = seasonIdToExternalIdMap.get(season.id);
-        if (!externalSeasonId) return Promise.resolve([]);
-
-        const externalSportLeagueMetadata =
-          sportLeagueIdToExternalMetadataMap.get(season.sportLeagueId);
-        if (!externalSportLeagueMetadata) return Promise.resolve([]);
-
-        const parsedMetadata = EspnExternalPhaseMetadataSchema.safeParse(
-          externalPhase.metadata,
-        );
-        if (!parsedMetadata.success) return Promise.resolve([]);
-
-        return limit(() =>
-          this.espnService.getESPNEvents(
-            externalSportLeagueMetadata.sportSlug,
-            externalSportLeagueMetadata.leagueSlug,
-            externalSeasonId,
-            parsedMetadata.data.type,
-            parsedMetadata.data.number,
-          ),
-        );
-      });
-
-      const espnEventsByPhase = await Promise.all(eventPromises);
-      const allEspnEvents: ESPNEvent[] = espnEventsByPhase.flat();
-      console.log(
-        `Fetched a total of ${allEspnEvents.length} events from ESPN.`,
-      );
-
-      // Process Events and Odds
       let createdEventsCount = 0;
       let updatedEventsCount = 0;
       let createdOddsCount = 0;
@@ -617,98 +751,18 @@ export class EventsService {
       let updatedExternalOddsCount = 0;
 
       for (const espnEvent of allEspnEvents) {
-        const espnHomeTeam = espnEvent.competitions[0].competitors.find(
-          (c) => c.homeAway === "home",
+        const { event, status } = await this._createOrUpdateEvent(
+          espnEvent,
+          dataSource.id,
+          phasesToProcess,
+          externalPhases,
+          externalTeamIdToTeamIdMap,
+          tx,
         );
-        const espnAwayTeam = espnEvent.competitions[0].competitors.find(
-          (c) => c.homeAway === "away",
-        );
-        if (!espnHomeTeam || !espnAwayTeam) continue;
 
-        const homeTeamId = externalTeamIdToTeamIdMap.get(espnHomeTeam.id);
-        const awayTeamId = externalTeamIdToTeamIdMap.get(espnAwayTeam.id);
-        if (!homeTeamId || !awayTeamId) continue;
-
-        const seasonTypeResponse = await axios.get<ESPNSeasonType>(
-          espnEvent.seasonType.$ref.replace("http://", "https://"),
-        );
-        const espnSeasonType = seasonTypeResponse.data;
-
-        const phase = phasesToProcess.find((p) => {
-          const externalPhase = externalPhases.find(
-            (ep) => ep.phaseId === p.id,
-          );
-          if (!externalPhase) return false;
-          const metadata = EspnExternalPhaseMetadataSchema.safeParse(
-            externalPhase.metadata,
-          );
-          if (!metadata.success) return false;
-          return espnSeasonType.type === metadata.data.type;
-        });
-        if (!phase) continue;
-
-        const externalEvent =
-          await this.eventsQueryService.findExternalByDataSourceIdAndExternalId(
-            dataSource.id,
-            espnEvent.id,
-            tx,
-          );
-
-        let event;
-        if (externalEvent) {
-          event = await this.eventsMutationService.update(
-            externalEvent.eventId,
-            {
-              startTime: new Date(espnEvent.competitions[0].date),
-              homeTeamId,
-              awayTeamId,
-            },
-            tx,
-          );
-
-          await this.eventsMutationService.updateExternal(
-            dataSource.id,
-            espnEvent.id,
-            {
-              metadata: {
-                oddsRef: espnEvent.competitions[0]?.odds?.$ref,
-                awayTeamScoreRef: espnAwayTeam.score?.$ref,
-                homeTeamScoreRef: espnHomeTeam.score?.$ref,
-                statusRef: espnEvent.competitions[0]?.status?.$ref,
-              },
-            },
-            tx,
-          );
-
-          updatedEventsCount++;
-        } else {
-          const createdEvent = await this.eventsMutationService.create(
-            {
-              phaseId: phase.id,
-              startTime: new Date(espnEvent.competitions[0].date),
-              type: EVENT_TYPES.GAME,
-              homeTeamId,
-              awayTeamId,
-            },
-            tx,
-          );
-          await this.eventsMutationService.createExternal(
-            {
-              dataSourceId: dataSource.id,
-              eventId: createdEvent.id,
-              externalId: espnEvent.id,
-              metadata: {
-                oddsRef: espnEvent.competitions[0]?.odds?.$ref,
-                awayTeamScoreRef: espnAwayTeam.score?.$ref,
-                homeTeamScoreRef: espnHomeTeam.score?.$ref,
-                statusRef: espnEvent.competitions[0]?.status?.$ref,
-              },
-            },
-            tx,
-          );
-          event = createdEvent;
-          createdEventsCount++;
-        }
+        if (status === "created") createdEventsCount++;
+        if (status === "updated") updatedEventsCount++;
+        if (!event) continue;
 
         const defaultSportsbook =
           await this.sportsbooksQueryService.findDefault(tx);
@@ -812,154 +866,29 @@ export class EventsService {
   async syncWithLiveScores(): Promise<void> {
     console.log("Starting live score synchronization...");
     return db.transaction(async (tx) => {
-      const dataSource = await this.dataSourcesQueryService.findByName(
-        DATA_SOURCE_NAMES.ESPN,
-        tx,
-      );
-      if (!dataSource) {
-        console.error("ESPN data source not found. Exiting sync.");
-        throw new NotFoundError("ESPN data source not found");
-      }
-      console.log("Data source found.");
+      const {
+        dataSource,
+        phasesToProcess,
+        externalPhases,
+        seasonsToProcess,
+        seasonIdToExternalIdMap,
+        sportLeagueIdToExternalMetadataMap,
+        externalTeamIdToTeamIdMap,
+      } = await this._prepareSyncData(tx);
 
-      const sportLeagues = await this.sportLeaguesQueryService.list(tx);
-      console.log(`Found ${sportLeagues.length} sport leagues to process.`);
-      if (sportLeagues.length === 0) {
-        console.log("No sport leagues found. Exiting sync.");
-        return;
-      }
-
-      const externalSportLeagues =
-        await this.sportLeaguesQueryService.listExternalBySourceAndSportLeagueIds(
-          dataSource.id,
-          sportLeagues.map((sl) => sl.id),
-          tx,
-        );
-
-      const sportLeagueIdToExternalMetadataMap = new Map(
-        externalSportLeagues.map((esl) => {
-          const parsedMetadata =
-            EspnExternalSportLeagueMetadataSchema.safeParse(esl.metadata);
-          return [
-            esl.sportLeagueId,
-            parsedMetadata.success ? parsedMetadata.data : null,
-          ];
-        }),
-      );
-
-      // Seasons
-      let seasonsToProcess =
-        await this.seasonsQueryService.findCurrentBySportLeagueIds(
-          sportLeagues.map((sl) => sl.id),
-          tx,
-        );
-      if (seasonsToProcess.length === 0) {
-        seasonsToProcess =
-          await this.seasonsQueryService.findLatestBySportLeagueIds(
-            sportLeagues.map((sl) => sl.id),
-            tx,
-          );
-        console.log(`Found ${seasonsToProcess.length} latest seasons.`);
-      }
-      if (seasonsToProcess.length === 0) {
-        console.log("No seasons to process. Exiting sync.");
-        return;
-      }
-
-      const externalSeasons =
-        await this.seasonsQueryService.listExternalBySeasonIds(
-          seasonsToProcess.map((s) => s.id),
-          tx,
-        );
-
-      const seasonIdToExternalIdMap = new Map(
-        externalSeasons.map((es) => [es.seasonId, es.externalId]),
-      );
-
-      // Phases
-      let phasesToProcess =
-        await this.phasesQueryService.findCurrentBySeasonIds(
-          seasonsToProcess.map((s) => s.id),
-          tx,
-        );
-      console.log(`Found ${phasesToProcess.length} current phases.`);
-      if (phasesToProcess.length === 0) {
-        console.log(
-          "No current phases found. Falling back to next future phases.",
-        );
-        phasesToProcess = await this.phasesQueryService.findNextBySeasonIds(
-          seasonsToProcess.map((s) => s.id),
-          tx,
-        );
-        console.log(`Found ${phasesToProcess.length} next future phases.`);
-      }
       if (phasesToProcess.length === 0) {
         console.log("No phases to process. Exiting sync.");
         return;
       }
 
-      const externalPhases =
-        await this.phasesQueryService.listExternalByPhaseIds(
-          phasesToProcess.map((p) => p.id),
-          tx,
-        );
-
-      // Teams
-      const teams = await this.teamsQueryService.listBySportLeagueIds(
-        sportLeagues.map((sl) => sl.id),
-        tx,
-      );
-      const externalTeams =
-        await this.teamsQueryService.listExternalByDataSourceIdAndTeamIds(
-          dataSource.id,
-          teams.map((t) => t.id),
-          tx,
-        );
-      const externalTeamIdToTeamIdMap = new Map(
-        externalTeams.map((et) => [et.externalId, et.teamId]),
+      const allEspnEvents = await this._fetchEspnEvents(
+        externalPhases,
+        phasesToProcess,
+        seasonsToProcess,
+        seasonIdToExternalIdMap,
+        sportLeagueIdToExternalMetadataMap,
       );
 
-      // Fetch Events from ESPN
-      const limit = pLimit(10);
-      const eventPromises = externalPhases.map((externalPhase) => {
-        const phase = phasesToProcess.find(
-          (p) => p.id === externalPhase.phaseId,
-        );
-        if (!phase) return Promise.resolve([]);
-
-        const season = seasonsToProcess.find((s) => s.id === phase.seasonId);
-        if (!season) return Promise.resolve([]);
-
-        const externalSeasonId = seasonIdToExternalIdMap.get(season.id);
-        if (!externalSeasonId) return Promise.resolve([]);
-
-        const externalSportLeagueMetadata =
-          sportLeagueIdToExternalMetadataMap.get(season.sportLeagueId);
-        if (!externalSportLeagueMetadata) return Promise.resolve([]);
-
-        const parsedMetadata = EspnExternalPhaseMetadataSchema.safeParse(
-          externalPhase.metadata,
-        );
-        if (!parsedMetadata.success) return Promise.resolve([]);
-
-        return limit(() =>
-          this.espnService.getESPNEvents(
-            externalSportLeagueMetadata.sportSlug,
-            externalSportLeagueMetadata.leagueSlug,
-            externalSeasonId,
-            parsedMetadata.data.type,
-            parsedMetadata.data.number,
-          ),
-        );
-      });
-
-      const espnEventsByPhase = await Promise.all(eventPromises);
-      const allEspnEvents: ESPNEvent[] = espnEventsByPhase.flat();
-      console.log(
-        `Fetched a total of ${allEspnEvents.length} events from ESPN.`,
-      );
-
-      // Process Events and Odds
       let createdEventsCount = 0;
       let updatedEventsCount = 0;
       let createdLiveScores = 0;
@@ -968,98 +897,18 @@ export class EventsService {
       let updatedOutcomes = 0;
 
       for (const espnEvent of allEspnEvents) {
-        const espnHomeTeam = espnEvent.competitions[0].competitors.find(
-          (c) => c.homeAway === "home",
+        const { event, status: eventStatus } = await this._createOrUpdateEvent(
+          espnEvent,
+          dataSource.id,
+          phasesToProcess,
+          externalPhases,
+          externalTeamIdToTeamIdMap,
+          tx,
         );
-        const espnAwayTeam = espnEvent.competitions[0].competitors.find(
-          (c) => c.homeAway === "away",
-        );
-        if (!espnHomeTeam || !espnAwayTeam) continue;
 
-        const homeTeamId = externalTeamIdToTeamIdMap.get(espnHomeTeam.id);
-        const awayTeamId = externalTeamIdToTeamIdMap.get(espnAwayTeam.id);
-        if (!homeTeamId || !awayTeamId) continue;
-
-        const seasonTypeResponse = await axios.get<ESPNSeasonType>(
-          espnEvent.seasonType.$ref.replace("http://", "https://"),
-        );
-        const espnSeasonType = seasonTypeResponse.data;
-
-        const phase = phasesToProcess.find((p) => {
-          const externalPhase = externalPhases.find(
-            (ep) => ep.phaseId === p.id,
-          );
-          if (!externalPhase) return false;
-          const metadata = EspnExternalPhaseMetadataSchema.safeParse(
-            externalPhase.metadata,
-          );
-          if (!metadata.success) return false;
-          return espnSeasonType.type === metadata.data.type;
-        });
-        if (!phase) continue;
-
-        const externalEvent =
-          await this.eventsQueryService.findExternalByDataSourceIdAndExternalId(
-            dataSource.id,
-            espnEvent.id,
-            tx,
-          );
-
-        let event;
-        if (externalEvent) {
-          event = await this.eventsMutationService.update(
-            externalEvent.eventId,
-            {
-              startTime: new Date(espnEvent.competitions[0].date),
-              homeTeamId,
-              awayTeamId,
-            },
-            tx,
-          );
-
-          await this.eventsMutationService.updateExternal(
-            dataSource.id,
-            espnEvent.id,
-            {
-              metadata: {
-                oddsRef: espnEvent.competitions[0]?.odds?.$ref,
-                awayTeamScoreRef: espnAwayTeam.score?.$ref,
-                homeTeamScoreRef: espnHomeTeam.score?.$ref,
-                statusRef: espnEvent.competitions[0]?.status?.$ref,
-              },
-            },
-            tx,
-          );
-
-          updatedEventsCount++;
-        } else {
-          const createdEvent = await this.eventsMutationService.create(
-            {
-              phaseId: phase.id,
-              startTime: new Date(espnEvent.competitions[0].date),
-              type: EVENT_TYPES.GAME,
-              homeTeamId,
-              awayTeamId,
-            },
-            tx,
-          );
-          await this.eventsMutationService.createExternal(
-            {
-              dataSourceId: dataSource.id,
-              eventId: createdEvent.id,
-              externalId: espnEvent.id,
-              metadata: {
-                oddsRef: espnEvent.competitions[0]?.odds?.$ref,
-                awayTeamScoreRef: espnAwayTeam.score?.$ref,
-                homeTeamScoreRef: espnHomeTeam.score?.$ref,
-                statusRef: espnEvent.competitions[0]?.status?.$ref,
-              },
-            },
-            tx,
-          );
-          event = createdEvent;
-          createdEventsCount++;
-        }
+        if (eventStatus === "created") createdEventsCount++;
+        if (eventStatus === "updated") updatedEventsCount++;
+        if (!event) continue;
 
         const updatedExternalEvent =
           await this.eventsQueryService.findExternalByDataSourceIdAndEventId(

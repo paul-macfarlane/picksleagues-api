@@ -110,7 +110,6 @@ curl http://localhost:3001/api/crons/events --header "x-cron-api-key: local"
 curl http://localhost:3001/api/crons/events/withOdds --header "x-cron-api-key: local"
 
 # You can sync live scores for the current or next phase by running the following command
-
 curl http://localhost:3001/api/crons/events/withLiveScores --header "x-cron-api-key: local"
 ```
 
