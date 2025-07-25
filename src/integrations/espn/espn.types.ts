@@ -322,6 +322,36 @@ export type ESPNCompetitor = {
   record: ESPNRef;
 };
 
+export type ESPNCompetitorScore = {
+  value: number;
+  displayValue: string;
+};
+
+export type ESPNScoreboard = {
+  $ref: string;
+  displayValue: string;
+  summary: string;
+  status: {
+    $ref: string;
+    id: string;
+    state: "pre" | "in" | "post";
+    detail: string;
+    shortDetail: string;
+  };
+  scores: {
+    home: ESPNCompetitorScore;
+    away: ESPNCompetitorScore;
+  };
+  competitors: {
+    home: ESPNRef;
+    away: ESPNRef;
+  };
+  period: number;
+  clock: {
+    displayValue: string;
+  };
+};
+
 export type ESPNOddsData = {
   $ref: string;
   provider: ESPNProvider;
@@ -391,4 +421,37 @@ export type ESPNOddsListResponse = {
   pageSize: number;
   pageCount: number;
   items: ESPNOddsData[];
+};
+
+export type ESPNScore = {
+  $ref: string;
+  value: number;
+  displayValue: string;
+  winner?: boolean;
+  source: {
+    id: string;
+    description: string;
+  };
+};
+
+export enum ESPN_SPORT_LEAGUE_GAME_STATUSES {
+  FINAL = "STATUS_FINAL",
+  SCHEDULED = "STATUS_SCHEDULED",
+  IN_PROGRESS = "STATUS_IN_PROGRESS",
+}
+
+export type ESPNEventStatus = {
+  $ref: string;
+  clock: number;
+  displayClock: string;
+  period: number;
+  type: {
+    id: string;
+    name: ESPN_SPORT_LEAGUE_GAME_STATUSES;
+    state: string;
+    completed: boolean;
+    description: string;
+    detail: string;
+    shortDetail: string;
+  };
 };

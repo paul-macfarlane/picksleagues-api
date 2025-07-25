@@ -10,14 +10,21 @@ const cronLabel = "Events cron";
 
 router.get("/", async (_req: Request, res: Response) => {
   console.time(cronLabel);
-  await eventsService.syncEvents();
+  await eventsService.sync();
   console.timeEnd(cronLabel);
   res.status(200).json({ message: "success" });
 });
 
 router.get("/withOdds", async (_req: Request, res: Response) => {
   console.time(cronLabel);
-  await eventsService.syncEventsWithOdds();
+  await eventsService.syncWithOdds();
+  console.timeEnd(cronLabel);
+  res.status(200).json({ message: "success" });
+});
+
+router.get("/withLiveScores", async (_req: Request, res: Response) => {
+  console.time(cronLabel);
+  await eventsService.syncWithLiveScores();
   console.timeEnd(cronLabel);
   res.status(200).json({ message: "success" });
 });

@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types";
 import { EventsRepository } from "./events.repository";
-import { DBExternalEvent } from "./events.types";
+import { DBEvent, DBExternalEvent } from "./events.types";
 import { DBOrTx } from "../../db";
 
 @injectable()
@@ -31,5 +31,24 @@ export class EventsQueryService {
       dataSourceId,
       dbOrTx,
     );
+  }
+
+  async findExternalByDataSourceIdAndEventId(
+    dataSourceId: string,
+    eventId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBExternalEvent | null> {
+    return this.eventsRepository.findExternalByDataSourceIdAndEventId(
+      dataSourceId,
+      eventId,
+      dbOrTx,
+    );
+  }
+
+  async listByPhaseIds(
+    phaseIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBEvent[]> {
+    return this.eventsRepository.listByPhaseIds(phaseIds, dbOrTx);
   }
 }

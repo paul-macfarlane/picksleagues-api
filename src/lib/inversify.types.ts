@@ -18,6 +18,8 @@ export const TYPES = {
   EventsRepository: Symbol.for("EventsRepository"),
   OddsRepository: Symbol.for("OddsRepository"),
   SportsbooksRepository: Symbol.for("SportsbooksRepository"),
+  LiveScoresRepository: Symbol.for("LiveScoresRepository"),
+  OutcomesRepository: Symbol.for("OutcomesRepository"),
 
   // Services
   ProfilesService: Symbol.for("ProfilesService"),
@@ -54,6 +56,8 @@ export const TYPES = {
   EventsQueryService: Symbol.for("EventsQueryService"),
   OddsQueryService: Symbol.for("OddsQueryService"),
   SportsbooksQueryService: Symbol.for("SportsbooksQueryService"),
+  LiveScoresQueryService: Symbol.for("LiveScoresQueryService"),
+  OutcomesQueryService: Symbol.for("OutcomesQueryService"),
 
   // Mutation Services
   AccountsMutationService: Symbol.for("AccountsMutationService"),
@@ -73,6 +77,8 @@ export const TYPES = {
   EventsMutationService: Symbol.for("EventsMutationService"),
   OddsMutationService: Symbol.for("OddsMutationService"),
   SportsbooksMutationService: Symbol.for("SportsbooksMutationService"),
+  LiveScoresMutationService: Symbol.for("LiveScoresMutationService"),
+  OutcomesMutationService: Symbol.for("OutcomesMutationService"),
 
   // External Services
   EspnService: Symbol.for("EspnService"),

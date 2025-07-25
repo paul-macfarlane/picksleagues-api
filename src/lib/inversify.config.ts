@@ -67,6 +67,12 @@ import { OddsMutationService } from "../features/odds/odds.mutation.service";
 import { SportsbooksRepository } from "../features/sportsbooks/sportsbooks.repository";
 import { SportsbooksQueryService } from "../features/sportsbooks/sportsbooks.query.service";
 import { SportsbooksMutationService } from "../features/sportsbooks/sportsbooks.mutation.service";
+import { LiveScoresRepository } from "../features/liveScores/liveScores.repository";
+import { LiveScoresQueryService } from "../features/liveScores/liveScores.query.service";
+import { LiveScoresMutationService } from "../features/liveScores/liveScores.mutation.service";
+import { OutcomesRepository } from "../features/outcomes/outcomes.repository";
+import { OutcomesQueryService } from "../features/outcomes/outcomes.query.service";
+import { OutcomesMutationService } from "../features/outcomes/outcomes.mutation.service";
 
 const container = new Container();
 
@@ -248,6 +254,18 @@ container
   .to(SportsbooksRepository)
   .inSingletonScope();
 
+// Live Scores Bindings
+container
+  .bind<LiveScoresRepository>(TYPES.LiveScoresRepository)
+  .to(LiveScoresRepository)
+  .inSingletonScope();
+
+// Outcomes Bindings
+container
+  .bind<OutcomesRepository>(TYPES.OutcomesRepository)
+  .to(OutcomesRepository)
+  .inSingletonScope();
+
 // Query Services
 container
   .bind<LeaguesQueryService>(TYPES.LeaguesQueryService)
@@ -308,6 +326,14 @@ container
 container
   .bind<SportsbooksQueryService>(TYPES.SportsbooksQueryService)
   .to(SportsbooksQueryService)
+  .inSingletonScope();
+container
+  .bind<LiveScoresQueryService>(TYPES.LiveScoresQueryService)
+  .to(LiveScoresQueryService)
+  .inSingletonScope();
+container
+  .bind<OutcomesQueryService>(TYPES.OutcomesQueryService)
+  .to(OutcomesQueryService)
   .inSingletonScope();
 
 // Util Services
@@ -376,6 +402,14 @@ container
 container
   .bind<SportsbooksMutationService>(TYPES.SportsbooksMutationService)
   .to(SportsbooksMutationService)
+  .inSingletonScope();
+container
+  .bind<LiveScoresMutationService>(TYPES.LiveScoresMutationService)
+  .to(LiveScoresMutationService)
+  .inSingletonScope();
+container
+  .bind<OutcomesMutationService>(TYPES.OutcomesMutationService)
+  .to(OutcomesMutationService)
   .inSingletonScope();
 
 // Add other feature bindings here as we migrate them

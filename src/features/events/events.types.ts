@@ -5,6 +5,7 @@ import {
   liveScoresTable,
   outcomesTable,
 } from "../../db/schema";
+import { ESPN_SPORT_LEAGUE_GAME_STATUSES } from "../../integrations/espn/espn.types";
 
 // constants
 export enum EVENT_TYPES {
@@ -18,6 +19,15 @@ export enum LIVE_SCORE_STATUSES {
   IN_PROGRESS = "in_progress",
   FINAL = "final",
 }
+
+export const espnStatusToLiveScoreStatus: Record<string, LIVE_SCORE_STATUSES> =
+  {
+    [ESPN_SPORT_LEAGUE_GAME_STATUSES.SCHEDULED]:
+      LIVE_SCORE_STATUSES.NOT_STARTED,
+    [ESPN_SPORT_LEAGUE_GAME_STATUSES.IN_PROGRESS]:
+      LIVE_SCORE_STATUSES.IN_PROGRESS,
+    [ESPN_SPORT_LEAGUE_GAME_STATUSES.FINAL]: LIVE_SCORE_STATUSES.FINAL,
+  };
 
 // database types
 export type DBEvent = typeof eventsTable.$inferSelect;
@@ -40,4 +50,7 @@ export type DBOutcomeUpdate = Partial<DBOutcomeInsert>;
 
 export const EspnExternalEventMetadataSchema = z.object({
   oddsRef: z.string().optional(),
+  awayTeamScoreRef: z.string().optional(),
+  homeTeamScoreRef: z.string().optional(),
+  statusRef: z.string().optional(),
 });

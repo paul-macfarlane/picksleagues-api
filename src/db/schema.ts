@@ -369,8 +369,8 @@ export const liveScoresTable = pgTable("live_scores", {
       LIVE_SCORE_STATUSES.FINAL,
     ],
   }).notNull(),
-  period: text("period"),
-  clock: text("clock"),
+  period: integer("period").notNull(),
+  clock: text("clock").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()

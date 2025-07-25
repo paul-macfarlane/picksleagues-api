@@ -9,7 +9,7 @@ import {
   DBExternalEventUpdate,
 } from "./events.types";
 import { eventsTable, externalEventsTable } from "../../db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 @injectable()
 export class EventsRepository {
@@ -39,6 +39,23 @@ export class EventsRepository {
       .select()
       .from(externalEventsTable)
       .where(eq(externalEventsTable.dataSourceId, dataSourceId));
+  }
+
+  async findExternalByDataSourceIdAndEventId(
+    dataSourceId: string,
+    eventId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalEvent | null> {
+    const externalEvents = await dbOrTx
+      .select()
+      .from(externalEventsTable)
+      .where(
+        and(
+          eq(externalEventsTable.dataSourceId, dataSourceId),
+          eq(externalEventsTable.eventId, eventId),
+        ),
+      );
+    return externalEvents[0] || null;
   }
 
   async createExternal(
@@ -108,5 +125,18 @@ export class EventsRepository {
       .returning();
 
     return updatedEvent[0];
+  }
+
+  async listByPhaseIds(
+    phaseIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBEvent[]> {
+    if (phaseIds.length === 0) {
+      return [];
+    }
+    return dbOrTx
+      .select()
+      .from(eventsTable)
+      .where(inArray(eventsTable.phaseId, phaseIds));
   }
 }

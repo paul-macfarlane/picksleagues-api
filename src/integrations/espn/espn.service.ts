@@ -13,6 +13,8 @@ import {
   ESPNEvent,
   ESPNOddsListResponse,
   ESPNOddsData,
+  ESPNScore,
+  ESPNEventStatus,
 } from "./espn.types";
 
 @injectable()
@@ -178,5 +180,17 @@ export class EspnService {
     const oddsRes = await axios.get<ESPNOddsListResponse>(refUrl);
 
     return oddsRes.data.items;
+  }
+
+  async getESPNEventScore(refUrl: string): Promise<ESPNScore> {
+    const response = await axios.get<ESPNScore>(refUrl);
+
+    return response.data;
+  }
+
+  async getESPNEventStatusFromRefUrl(refUrl: string): Promise<ESPNEventStatus> {
+    const statusRes = await axios.get<ESPNEventStatus>(refUrl);
+
+    return statusRes.data;
   }
 }
