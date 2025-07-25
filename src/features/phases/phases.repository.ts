@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql, asc } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
 import {
@@ -142,6 +142,54 @@ export class PhasesRepository {
       .select()
       .from(phasesTable)
       .where(inArray(phasesTable.seasonId, seasonIds));
+  }
+
+  async findCurrentBySeasonIds(
+    seasonIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase[]> {
+    if (seasonIds.length === 0) {
+      return [];
+    }
+    const now = new Date();
+    return dbOrTx
+      .select()
+      .from(phasesTable)
+      .where(
+        and(
+          inArray(phasesTable.seasonId, seasonIds),
+          lte(phasesTable.startDate, now),
+          gte(phasesTable.endDate, now),
+        ),
+      );
+  }
+
+  async findNextBySeasonIds(
+    seasonIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase[]> {
+    if (seasonIds.length === 0) {
+      return [];
+    }
+    const now = new Date();
+    const futurePhases = await dbOrTx
+      .select()
+      .from(phasesTable)
+      .where(
+        and(
+          inArray(phasesTable.seasonId, seasonIds),
+          gte(phasesTable.startDate, now),
+        ),
+      )
+      .orderBy(phasesTable.seasonId, asc(phasesTable.startDate));
+
+    const nextPhasesMap = new Map<string, DBPhase>();
+    for (const phase of futurePhases) {
+      if (!nextPhasesMap.has(phase.seasonId)) {
+        nextPhasesMap.set(phase.seasonId, phase);
+      }
+    }
+    return Array.from(nextPhasesMap.values());
   }
 
   async listExternalByPhaseIds(

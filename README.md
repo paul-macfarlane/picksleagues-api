@@ -105,6 +105,9 @@ curl http://localhost:3001/api/crons/phases --header "x-cron-api-key: local"
 
 # Then, sync the events for those phases
 curl http://localhost:3001/api/crons/events --header "x-cron-api-key: local"
+
+# You can sync odds for the current or next phase by running the following command
+curl http://localhost:3001/api/crons/events/withOdds --header "x-cron-api-key: local"
 ```
 
 ## Available Scripts

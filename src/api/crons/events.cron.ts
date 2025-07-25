@@ -15,4 +15,11 @@ router.get("/", async (_req: Request, res: Response) => {
   res.status(200).json({ message: "success" });
 });
 
+router.get("/withOdds", async (_req: Request, res: Response) => {
+  console.time(cronLabel);
+  await eventsService.syncEventsWithOdds();
+  console.timeEnd(cronLabel);
+  res.status(200).json({ message: "success" });
+});
+
 export default router;

@@ -321,3 +321,74 @@ export type ESPNCompetitor = {
   leaders: ESPNRef;
   record: ESPNRef;
 };
+
+export type ESPNOddsData = {
+  $ref: string;
+  provider: ESPNProvider;
+  details: string;
+  overUnder: number;
+  spread: number;
+  overOdds: number;
+  underOdds: number;
+  awayTeamOdds: ESPNTeamOdds;
+  homeTeamOdds: ESPNTeamOdds;
+  links: ESPNOddsLink[];
+};
+
+export type ESPNProvider = {
+  $ref: string;
+  id: string;
+  name: string;
+  priority: number;
+};
+
+export type ESPNTeamOdds = {
+  favorite: boolean;
+  underdog: boolean;
+  moneyLine: number;
+  spreadOdds: number;
+  open: ESPNOddsDetail;
+  close: ESPNOddsDetail;
+  current: ESPNOddsDetail;
+  team: ESPNOddsTeamRef;
+};
+
+export type ESPNOddsDetail = {
+  pointSpread: ESPNOddsValue;
+  spread: ESPNOddsValueWithMetrics;
+  moneyLine: ESPNOddsValueWithMetrics;
+};
+
+export type ESPNOddsValue = {
+  alternateDisplayValue: string;
+  american: string;
+};
+
+export type ESPNOddsValueWithMetrics = {
+  value: number;
+  displayValue: string;
+  decimal: number;
+  fraction: string;
+};
+
+export type ESPNOddsTeamRef = {
+  $ref: string;
+};
+
+export type ESPNOddsLink = {
+  language: string;
+  rel: string[];
+  href: string;
+  text: string;
+  shortText: string;
+  isExternal: boolean;
+  isPremium: boolean;
+};
+
+export type ESPNOddsListResponse = {
+  count: number;
+  pageIndex: number;
+  pageSize: number;
+  pageCount: number;
+  items: ESPNOddsData[];
+};

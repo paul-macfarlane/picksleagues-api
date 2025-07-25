@@ -11,6 +11,8 @@ import {
   ESPNWeek,
   ESPNTeam,
   ESPNEvent,
+  ESPNOddsListResponse,
+  ESPNOddsData,
 } from "./espn.types";
 
 @injectable()
@@ -170,5 +172,11 @@ export class EspnService {
     }
 
     return events;
+  }
+
+  async getESPNEventOdds(refUrl: string): Promise<ESPNOddsData[]> {
+    const oddsRes = await axios.get<ESPNOddsListResponse>(refUrl);
+
+    return oddsRes.data.items;
   }
 }

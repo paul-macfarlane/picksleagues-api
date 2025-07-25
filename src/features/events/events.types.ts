@@ -1,3 +1,4 @@
+import z from "zod";
 import {
   eventsTable,
   externalEventsTable,
@@ -36,3 +37,7 @@ export type DBOutcomeInsert = typeof outcomesTable.$inferInsert;
 export type DBOutcomeUpdate = Partial<DBOutcomeInsert>;
 
 // validation types
+
+export const EspnExternalEventMetadataSchema = z.object({
+  oddsRef: z.string().optional(),
+});
