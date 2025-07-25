@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
-import { externalSportLeaguesTable, sportsLeaguesTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { externalSportLeaguesTable, sportsLeaguesTable } from "../../db/schema.js";
 import {
   DBExternalSportLeague,
   DBExternalSportLeagueInsert,
@@ -9,7 +9,7 @@ import {
   DBSportLeague,
   DBSportLeagueInsert,
   DBSportLeagueUpdate,
-} from "./sportLeagues.types";
+} from "./sportLeagues.types.js";
 
 @injectable()
 export class SportLeaguesRepository {

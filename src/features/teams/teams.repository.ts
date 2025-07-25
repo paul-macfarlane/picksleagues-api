@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { DBOrTx, db } from "../../../src/db";
+import { DBOrTx, db } from "../../db/index.js";
 import {
   DBExternalTeam,
   DBExternalTeamInsert,
@@ -7,8 +7,8 @@ import {
   DBTeam,
   DBTeamInsert,
   DBTeamUpdate,
-} from "./teams.types";
-import { externalTeamsTable, teamsTable } from "../../db/schema";
+} from "./teams.types.js";
+import { externalTeamsTable, teamsTable } from "../../db/schema.js";
 import { and, eq, inArray } from "drizzle-orm";
 
 @injectable()

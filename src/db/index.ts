@@ -1,12 +1,13 @@
-import "dotenv/config";
-import { drizzle } from "drizzle-orm/node-postgres";
-import * as schema from "./schema";
+import "dotenv/config.js";
+import * as schema from "./schema.js";
+
+import { ExtractTablesWithRelations } from "drizzle-orm";
 import {
+  drizzle,
   NodePgDatabase,
   NodePgQueryResultHKT,
 } from "drizzle-orm/node-postgres";
 import { PgTransaction } from "drizzle-orm/pg-core";
-import { ExtractTablesWithRelations } from "drizzle-orm";
 
 export const db = drizzle(process.env.DATABASE_URL!, { schema });
 

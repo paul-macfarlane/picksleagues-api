@@ -1,16 +1,16 @@
 import { Request, Response, Router } from "express";
-import { auth } from "../../lib/auth";
+import { auth } from "../../lib/auth.js";
 import { fromNodeHeaders } from "better-auth/node";
 import {
   SearchProfilesSchema,
   UpdateProfileSchema,
   UserIdSchema,
-} from "./profiles.types";
-import { DBUser } from "../users/users.types";
-import { ProfilesService } from "./profiles.service";
-import { container } from "../../lib/inversify.config";
-import { TYPES } from "../../lib/inversify.types";
-import { requireAuth } from "../../lib/auth.middleware";
+} from "./profiles.types.js";
+import { DBUser } from "../users/users.types.js";
+import { ProfilesService } from "./profiles.service.js";
+import { container } from "../../lib/inversify.config.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { requireAuth } from "../../lib/auth.middleware.js";
 
 const router = Router();
 

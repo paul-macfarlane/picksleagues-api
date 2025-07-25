@@ -1,4 +1,4 @@
-import { externalTeamsTable, teamsTable } from "../../db/schema";
+import { externalTeamsTable, teamsTable } from "../../db/schema.js";
 
 export type DBTeam = typeof teamsTable.$inferSelect;
 export type DBTeamInsert = typeof teamsTable.$inferInsert;

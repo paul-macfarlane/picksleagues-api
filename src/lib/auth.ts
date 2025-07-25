@@ -1,12 +1,12 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "../db";
+import { db } from "../db/index.js";
 import {
   accountsTable,
   sessionsTable,
   usersTable,
   verificationTable,
-} from "../db/schema";
+} from "../db/schema.js";
 // import { expo } from "@better-auth/expo"; // uncomment (and re-install) when expo app is ready
 
 export const auth = betterAuth({

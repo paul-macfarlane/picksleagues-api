@@ -1,8 +1,8 @@
-import { db, DBOrTx } from "..";
-import { DATA_SOURCE_NAMES } from "../../features/dataSources/dataSources.types";
-import { DataSourcesQueryService } from "../../features/dataSources/dataSources.query.service";
-import { SportsbooksMutationService } from "../../features/sportsbooks/sportsbooks.mutation.service";
-import { SportsbooksQueryService } from "../../features/sportsbooks/sportsbooks.query.service";
+import { db, DBOrTx } from "../index.js";
+import { DATA_SOURCE_NAMES } from "../../features/dataSources/dataSources.types.js";
+import { DataSourcesQueryService } from "../../features/dataSources/dataSources.query.service.js";
+import { SportsbooksMutationService } from "../../features/sportsbooks/sportsbooks.mutation.service.js";
+import { SportsbooksQueryService } from "../../features/sportsbooks/sportsbooks.query.service.js";
 
 export async function seedSportsbooks(
   dataSourcesQueryService: DataSourcesQueryService,

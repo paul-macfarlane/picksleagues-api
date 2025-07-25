@@ -4,19 +4,19 @@ import {
   LeagueIdSchema,
   LeagueIncludeSchema,
   UpdateLeagueSchema,
-} from "./leagues.types";
-import { container } from "../../lib/inversify.config";
-import { TYPES } from "../../lib/inversify.types";
-import { LeaguesService } from "./leagues.service";
-import { requireAuth } from "../../lib/auth.middleware";
+} from "./leagues.types.js";
+import { container } from "../../lib/inversify.config.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { LeaguesService } from "./leagues.service.js";
+import { requireAuth } from "../../lib/auth.middleware.js";
 import {
   LeagueMemberIncludeSchema,
   UpdateLeagueMemberSchema,
-} from "../leagueMembers/leagueMembers.types";
-import { LeagueMembersService } from "../leagueMembers/leagueMembers.service";
-import { LeagueInviteIncludeSchema } from "../leagueInvites/leagueInvites.types";
-import { LeagueInvitesService } from "../leagueInvites/leagueInvites.service";
-import { UserIdSchema } from "../profiles/profiles.types";
+} from "../leagueMembers/leagueMembers.types.js";
+import { LeagueMembersService } from "../leagueMembers/leagueMembers.service.js";
+import { LeagueInviteIncludeSchema } from "../leagueInvites/leagueInvites.types.js";
+import { LeagueInvitesService } from "../leagueInvites/leagueInvites.service.js";
+import { UserIdSchema } from "../profiles/profiles.types.js";
 
 const router = Router();
 const leaguesService = container.get<LeaguesService>(TYPES.LeaguesService);

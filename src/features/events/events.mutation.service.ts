@@ -4,10 +4,10 @@ import {
   DBExternalEventInsert,
   DBEventUpdate,
   DBExternalEventUpdate,
-} from "./events.types";
-import { EventsRepository } from "./events.repository";
-import { DBOrTx } from "../../db";
-import { TYPES } from "../../lib/inversify.types";
+} from "./events.types.js";
+import { EventsRepository } from "./events.repository.js";
+import { DBOrTx } from "../../db/index.js";
+import { TYPES } from "../../lib/inversify.types.js";
 
 @injectable()
 export class EventsMutationService {

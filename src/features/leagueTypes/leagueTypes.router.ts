@@ -1,12 +1,12 @@
 import { Router, Request, Response } from "express";
-import { LeagueTypeIdOrSlugSchema } from "./leagueTypes.types";
-import { container } from "../../lib/inversify.config";
-import { TYPES } from "../../lib/inversify.types";
-import { LeaguesService } from "../leagues/leagues.service";
-import { PhaseTemplatesService } from "../phaseTemplates/phaseTemplates.service";
-import { LeagueTypesService } from "./leagueTypes.service";
-import { requireAuth } from "../../lib/auth.middleware";
-import { LeagueIncludeSchema } from "../leagues/leagues.types";
+import { LeagueTypeIdOrSlugSchema } from "./leagueTypes.types.js";
+import { container } from "../../lib/inversify.config.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { LeaguesService } from "../leagues/leagues.service.js";
+import { PhaseTemplatesService } from "../phaseTemplates/phaseTemplates.service.js";
+import { LeagueTypesService } from "./leagueTypes.service.js";
+import { requireAuth } from "../../lib/auth.middleware.js";
+import { LeagueIncludeSchema } from "../leagues/leagues.types.js";
 
 const router = Router();
 const leagueTypesService = container.get<LeagueTypesService>(

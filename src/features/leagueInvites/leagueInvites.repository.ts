@@ -1,14 +1,14 @@
 import { and, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
-import { leagueInvitesTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { leagueInvitesTable } from "../../db/schema.js";
 import {
   DBLeagueInvite,
   DBLeagueInviteInsert,
   DBLeagueInviteUpdate,
   LEAGUE_INVITE_STATUSES,
   LEAGUE_INVITE_TYPES,
-} from "./leagueInvites.types";
+} from "./leagueInvites.types.js";
 
 @injectable()
 export class LeagueInvitesRepository {

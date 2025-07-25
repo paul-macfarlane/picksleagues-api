@@ -1,6 +1,6 @@
-import { db, DBOrTx } from "../../db";
-import { profilesTable } from "../../db/schema";
-import { DBProfile, DBProfileInsert, DBProfileUpdate } from "./profiles.types";
+import { db, DBOrTx } from "../../db/index.js";
+import { profilesTable } from "../../db/schema.js";
+import { DBProfile, DBProfileInsert, DBProfileUpdate } from "./profiles.types.js";
 import { eq, or, like, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
 

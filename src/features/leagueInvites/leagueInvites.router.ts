@@ -1,15 +1,15 @@
 import { Request, Response, Router } from "express";
-import { container } from "../../lib/inversify.config";
-import { TYPES } from "../../lib/inversify.types";
-import { LeagueInvitesService } from "./leagueInvites.service";
+import { container } from "../../lib/inversify.config.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { LeagueInvitesService } from "./leagueInvites.service.js";
 import {
   CreateLeagueInviteSchema,
   LeagueInviteIdSchema,
   LeagueInviteIncludeSchema,
   LeagueInviteTokenSchema,
   RespondToLeagueInviteSchema,
-} from "./leagueInvites.types";
-import { requireAuth } from "../../lib/auth.middleware";
+} from "./leagueInvites.types.js";
+import { requireAuth } from "../../lib/auth.middleware.js";
 
 const leagueInvitesRouter = Router();
 const leagueInvitesService = container.get<LeagueInvitesService>(

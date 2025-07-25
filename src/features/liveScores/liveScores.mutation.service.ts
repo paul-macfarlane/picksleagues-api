@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { LiveScoresRepository } from "./liveScores.repository";
-import { DBOrTx } from "../../db";
-import { DBLiveScoreInsert, DBLiveScoreUpdate } from "./liveScores.types";
-import { TYPES } from "../../lib/inversify.types";
+import { LiveScoresRepository } from "./liveScores.repository.js";
+import { DBOrTx } from "../../db/index.js";
+import { DBLiveScoreInsert, DBLiveScoreUpdate } from "./liveScores.types.js";
+import { TYPES } from "../../lib/inversify.types.js";
 
 @injectable()
 export class LiveScoresMutationService {

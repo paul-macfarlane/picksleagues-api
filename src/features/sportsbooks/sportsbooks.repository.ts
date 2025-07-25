@@ -1,13 +1,13 @@
 import { injectable } from "inversify";
 import { eq, and } from "drizzle-orm";
-import { db, DBOrTx } from "../../db";
-import { sportsbooksTable, externalSportsbooksTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { sportsbooksTable, externalSportsbooksTable } from "../../db/schema.js";
 import {
   DBSportsbook,
   DBSportsbookInsert,
   DBExternalSportsbookInsert,
   DBExternalSportsbook,
-} from "./sportsbooks.types";
+} from "./sportsbooks.types.js";
 
 @injectable()
 export class SportsbooksRepository {

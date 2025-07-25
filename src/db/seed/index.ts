@@ -1,18 +1,18 @@
 import "reflect-metadata";
-import { db } from "..";
-import { seedDataSources } from "./dataSources";
-import { seedLeagueTypes } from "./leagueTypes";
-import { seedPhaseTemplates } from "./phaseTemplates";
-import { seedSportsbooks } from "./sportsbooks";
-import { container } from "../../lib/inversify.config";
-import { DataSourcesService } from "../../features/dataSources/dataSources.service";
-import { TYPES } from "../../lib/inversify.types";
-import { PhaseTemplatesService } from "../../features/phaseTemplates/phaseTemplates.service";
-import { LeagueTypesService } from "../../features/leagueTypes/leagueTypes.service";
-import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service";
-import { SportsbooksMutationService } from "../../features/sportsbooks/sportsbooks.mutation.service";
-import { DataSourcesQueryService } from "../../features/dataSources/dataSources.query.service";
-import { SportsbooksQueryService } from "../../features/sportsbooks/sportsbooks.query.service";
+import { db } from "../index.js";
+import { seedDataSources } from "./dataSources.js";
+import { seedLeagueTypes } from "./leagueTypes.js";
+import { seedPhaseTemplates } from "./phaseTemplates.js";
+import { seedSportsbooks } from "./sportsbooks.js";
+import { container } from "../../lib/inversify.config.js";
+import { DataSourcesService } from "../../features/dataSources/dataSources.service.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { PhaseTemplatesService } from "../../features/phaseTemplates/phaseTemplates.service.js";
+import { LeagueTypesService } from "../../features/leagueTypes/leagueTypes.service.js";
+import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service.js";
+import { SportsbooksMutationService } from "../../features/sportsbooks/sportsbooks.mutation.service.js";
+import { DataSourcesQueryService } from "../../features/dataSources/dataSources.query.service.js";
+import { SportsbooksQueryService } from "../../features/sportsbooks/sportsbooks.query.service.js";
 
 async function seed() {
   try {

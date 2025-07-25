@@ -1,5 +1,5 @@
-import { leagueMembersTable } from "../../db/schema";
-import { DBProfile } from "../profiles/profiles.types";
+import { leagueMembersTable } from "../../db/schema.js";
+import { DBProfile } from "../profiles/profiles.types.js";
 import { z } from "zod";
 
 // Constants

@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { TeamsRepository } from "./teams.repository";
-import { DBOrTx } from "../../db";
+import { TYPES } from "../../lib/inversify.types.js";
+import { TeamsRepository } from "./teams.repository.js";
+import { DBOrTx } from "../../db/index.js";
 import {
   DBExternalTeam,
   DBExternalTeamInsert,
@@ -9,7 +9,7 @@ import {
   DBTeam,
   DBTeamInsert,
   DBTeamUpdate,
-} from "./teams.types";
+} from "./teams.types.js";
 
 @injectable()
 export class TeamsMutationService {

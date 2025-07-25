@@ -1,24 +1,24 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { LeaguesMutationService } from "../leagues/leagues.mutation.service";
-import { LeaguesQueryService } from "../leagues/leagues.query.service";
-import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service";
-import { ValidationError } from "../../lib/errors";
-import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types";
-import { db } from "../../db";
-import { ProfilesMutationService } from "../profiles/profiles.mutation.service";
+import { TYPES } from "../../lib/inversify.types.js";
+import { LeaguesMutationService } from "../leagues/leagues.mutation.service.js";
+import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
+import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
+import { ValidationError } from "../../lib/errors.js";
+import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types.js";
+import { db } from "../../db/index.js";
+import { ProfilesMutationService } from "../profiles/profiles.mutation.service.js";
 import {
   ANONYMOUS_FIRST_NAME,
   ANONYMOUS_LAST_NAME,
   ANONYMOUS_USERNAME,
-} from "../profiles/profiles.types";
-import { UsersMutationService } from "./users.mutation.service";
-import { UsersQueryService } from "./users.query.service";
-import { AccountsMutationService } from "../accounts/accounts.mutation.service";
-import { SessionsMutationService } from "../sessions/sessions.mutation.service";
-import { VerificationsMutationService } from "../verifications/verifications.mutation.service";
-import { NotFoundError } from "../../lib/errors";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service";
+} from "../profiles/profiles.types.js";
+import { UsersMutationService } from "./users.mutation.service.js";
+import { UsersQueryService } from "./users.query.service.js";
+import { AccountsMutationService } from "../accounts/accounts.mutation.service.js";
+import { SessionsMutationService } from "../sessions/sessions.mutation.service.js";
+import { VerificationsMutationService } from "../verifications/verifications.mutation.service.js";
+import { NotFoundError } from "../../lib/errors.js";
+import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
 
 @injectable()
 export class UsersService {

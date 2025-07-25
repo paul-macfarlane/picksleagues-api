@@ -1,4 +1,4 @@
-import { db, DBOrTx } from "../../db";
+import { db, DBOrTx } from "../../db/index.js";
 import {
   CreateLeagueSchema,
   DBLeague,
@@ -6,29 +6,29 @@ import {
   LeagueIncludeSchema,
   LEAGUE_INCLUDES,
   UpdateLeagueSchema,
-} from "./leagues.types";
+} from "./leagues.types.js";
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
+import { TYPES } from "../../lib/inversify.types.js";
 import {
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../../lib/errors";
-import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
+} from "../../lib/errors.js";
+import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
 import { z } from "zod";
-import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service";
-import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types";
-import { LeaguesMutationService } from "./leagues.mutation.service";
-import { LeaguesQueryService } from "./leagues.query.service";
-import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service";
+import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
+import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
+import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types.js";
+import { LeaguesMutationService } from "./leagues.mutation.service.js";
+import { LeaguesQueryService } from "./leagues.query.service.js";
+import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service.js";
 import {
   DBLeagueType,
   LEAGUE_TYPE_SLUGS,
   LeagueTypeIdSchema,
-} from "../leagueTypes/leagueTypes.types";
-import { DBLeagueMember } from "../leagueMembers/leagueMembers.types";
-import { LeaguesUtilService } from "./leagues.util.service";
+} from "../leagueTypes/leagueTypes.types.js";
+import { DBLeagueMember } from "../leagueMembers/leagueMembers.types.js";
+import { LeaguesUtilService } from "./leagues.util.service.js";
 
 @injectable()
 export class LeaguesService {

@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { leaguesTable } from "../../db/schema";
+import { leaguesTable } from "../../db/schema.js";
 import {
   LEAGUE_TYPE_SLUGS,
   DBLeagueType,
-} from "../leagueTypes/leagueTypes.types";
-import { DBLeagueMember } from "../leagueMembers/leagueMembers.types";
+} from "../leagueTypes/leagueTypes.types.js";
+import { DBLeagueMember } from "../leagueMembers/leagueMembers.types.js";
 
 // Constants
 export enum PICK_EM_PICK_TYPES {

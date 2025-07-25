@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
+import { db, DBOrTx } from "../../db/index.js";
 import {
   DBEvent,
   DBEventInsert,
@@ -7,8 +7,8 @@ import {
   DBExternalEvent,
   DBExternalEventInsert,
   DBExternalEventUpdate,
-} from "./events.types";
-import { eventsTable, externalEventsTable } from "../../db/schema";
+} from "./events.types.js";
+import { eventsTable, externalEventsTable } from "../../db/schema.js";
 import { eq, and, inArray } from "drizzle-orm";
 
 @injectable()

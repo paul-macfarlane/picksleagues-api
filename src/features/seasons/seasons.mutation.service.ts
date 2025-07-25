@@ -1,14 +1,14 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx } from "../../db";
-import { TYPES } from "../../lib/inversify.types";
-import { SeasonsRepository } from "./seasons.repository";
+import { DBOrTx } from "../../db/index.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { SeasonsRepository } from "./seasons.repository.js";
 import {
   DBExternalSeason,
   DBExternalSeasonInsert,
   DBSeason,
   DBSeasonInsert,
   DBSeasonUpdate,
-} from "./seasons.types";
+} from "./seasons.types.js";
 
 @injectable()
 export class SeasonsMutationService {

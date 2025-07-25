@@ -1,4 +1,4 @@
-import { dataSourcesTable } from "../../db/schema";
+import { dataSourcesTable } from "../../db/schema.js";
 
 // Constants
 

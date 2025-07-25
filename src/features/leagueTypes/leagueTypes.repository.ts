@@ -1,12 +1,12 @@
 import { eq, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
-import { leagueTypesTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { leagueTypesTable } from "../../db/schema.js";
 import {
   LEAGUE_TYPE_SLUGS,
   DBLeagueType,
   DBLeagueTypeInsert,
-} from "./leagueTypes.types";
+} from "./leagueTypes.types.js";
 
 @injectable()
 export class LeagueTypesRepository {

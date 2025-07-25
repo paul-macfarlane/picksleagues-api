@@ -1,6 +1,6 @@
-import { DATA_SOURCE_NAMES } from "../../features/dataSources/dataSources.types";
-import { DataSourcesService } from "../../features/dataSources/dataSources.service";
-import { db, DBOrTx } from "..";
+import { DATA_SOURCE_NAMES } from "../../features/dataSources/dataSources.types.js";
+import { DataSourcesService } from "../../features/dataSources/dataSources.service.js";
+import { db, DBOrTx } from "../index.js";
 
 export async function seedDataSources(
   dataSourcesService: DataSourcesService,

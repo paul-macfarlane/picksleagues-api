@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, lte, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
-import { externalSeasonsTable, seasonsTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { externalSeasonsTable, seasonsTable } from "../../db/schema.js";
 import {
   DBExternalSeason,
   DBExternalSeasonInsert,
@@ -9,7 +9,7 @@ import {
   DBSeason,
   DBSeasonInsert,
   DBSeasonUpdate,
-} from "./seasons.types";
+} from "./seasons.types.js";
 
 @injectable()
 export class SeasonsRepository {

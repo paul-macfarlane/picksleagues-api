@@ -1,19 +1,19 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { mock, MockProxy } from "vitest-mock-extended";
-import { LeagueMembersService } from "./leagueMembers.service";
-import { LeagueMembersQueryService } from "./leagueMembers.query.service";
-import { ProfilesQueryService } from "../profiles/profiles.query.service";
-import { LeaguesQueryService } from "../leagues/leagues.query.service";
-import { LeagueMembersMutationService } from "./leagueMembers.mutation.service";
-import { DBLeagueMember, LEAGUE_MEMBER_ROLES } from "./leagueMembers.types";
+import { LeagueMembersService } from "./leagueMembers.service.js";
+import { LeagueMembersQueryService } from "./leagueMembers.query.service.js";
+import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
+import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
+import { LeagueMembersMutationService } from "./leagueMembers.mutation.service.js";
+import { DBLeagueMember, LEAGUE_MEMBER_ROLES } from "./leagueMembers.types.js";
 import {
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../../lib/errors";
-import { LeaguesUtilService } from "../leagues/leagues.util.service";
-import { DBLeague, LEAGUE_VISIBILITIES } from "../leagues/leagues.types";
-import { LeaguesMutationService } from "../leagues/leagues.mutation.service";
+} from "../../lib/errors.js";
+import { LeaguesUtilService } from "../leagues/leagues.util.service.js";
+import { DBLeague, LEAGUE_VISIBILITIES } from "../leagues/leagues.types.js";
+import { LeaguesMutationService } from "../leagues/leagues.mutation.service.js";
 
 describe("LeagueMembersService", () => {
   let leagueMembersService: LeagueMembersService;

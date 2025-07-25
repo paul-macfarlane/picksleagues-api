@@ -1,8 +1,8 @@
 import {
   ESPN_LEAGUE_SLUGS,
   ESPN_SPORT_SLUGS,
-} from "../../integrations/espn/espn.types";
-import { externalSportLeaguesTable, sportsLeaguesTable } from "../../db/schema";
+} from "../../integrations/espn/espn.types.js";
+import { externalSportLeaguesTable, sportsLeaguesTable } from "../../db/schema.js";
 import { z } from "zod";
 
 // Constants

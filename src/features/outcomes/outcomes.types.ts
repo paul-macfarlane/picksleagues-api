@@ -1,4 +1,4 @@
-import { outcomesTable } from "../../db/schema";
+import { outcomesTable } from "../../db/schema.js";
 
 export type DBOutcome = typeof outcomesTable.$inferSelect;
 export type DBOutcomeInsert = typeof outcomesTable.$inferInsert;

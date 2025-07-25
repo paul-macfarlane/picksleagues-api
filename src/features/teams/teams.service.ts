@@ -1,15 +1,15 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { TeamsMutationService } from "./teams.mutation.service";
-import { TeamsQueryService } from "./teams.query.service";
-import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
-import { NotFoundError } from "../../lib/errors";
-import { db } from "../../db";
-import { DataSourcesQueryService } from "../dataSources/dataSources.query.service";
-import { EspnService } from "../../integrations/espn/espn.service";
-import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service";
-import { SeasonsQueryService } from "../seasons/seasons.query.service";
-import { EspnExternalSportLeagueMetadataSchema } from "../sportLeagues/sportLeagues.types";
+import { TYPES } from "../../lib/inversify.types.js";
+import { TeamsMutationService } from "./teams.mutation.service.js";
+import { TeamsQueryService } from "./teams.query.service.js";
+import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types.js";
+import { NotFoundError } from "../../lib/errors.js";
+import { db } from "../../db/index.js";
+import { DataSourcesQueryService } from "../dataSources/dataSources.query.service.js";
+import { EspnService } from "../../integrations/espn/espn.service.js";
+import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service.js";
+import { SeasonsQueryService } from "../seasons/seasons.query.service.js";
+import { EspnExternalSportLeagueMetadataSchema } from "../sportLeagues/sportLeagues.types.js";
 
 @injectable()
 export class TeamsService {

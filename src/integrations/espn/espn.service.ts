@@ -15,7 +15,7 @@ import {
   ESPNOddsData,
   ESPNScore,
   ESPNEventStatus,
-} from "./espn.types";
+} from "./espn.types.js";
 
 @injectable()
 export class EspnService {

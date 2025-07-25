@@ -1,8 +1,8 @@
 import { inject, injectable } from "inversify";
-import { SeasonsQueryService } from "./seasons.query.service";
-import { TYPES } from "../../lib/inversify.types";
-import { DBSeason } from "./seasons.types";
-import { DBOrTx } from "../../db";
+import { SeasonsQueryService } from "./seasons.query.service.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { DBSeason } from "./seasons.types.js";
+import { DBOrTx } from "../../db/index.js";
 
 @injectable()
 export class SeasonsUtilService {

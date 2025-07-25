@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { EventsRepository } from "./events.repository";
-import { DBEvent, DBExternalEvent } from "./events.types";
-import { DBOrTx } from "../../db";
+import { TYPES } from "../../lib/inversify.types.js";
+import { EventsRepository } from "./events.repository.js";
+import { DBEvent, DBExternalEvent } from "./events.types.js";
+import { DBOrTx } from "../../db/index.js";
 
 @injectable()
 export class EventsQueryService {

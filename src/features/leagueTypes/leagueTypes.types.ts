@@ -1,4 +1,4 @@
-import { leagueTypesTable } from "../../db/schema";
+import { leagueTypesTable } from "../../db/schema.js";
 import { z } from "zod";
 
 // Constants

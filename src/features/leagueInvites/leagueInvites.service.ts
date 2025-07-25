@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
-import { db, DBOrTx, DBTx } from "../../db";
+import { db, DBOrTx, DBTx } from "../../db/index.js";
 import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../../lib/errors";
-import { TYPES } from "../../lib/inversify.types";
+} from "../../lib/errors.js";
+import { TYPES } from "../../lib/inversify.types.js";
 import {
   DBLeagueInvite,
   DBLeagueInviteInsert,
@@ -16,19 +16,19 @@ import {
   PopulatedDBLeagueInvite,
   LeagueInviteIncludeSchema,
   LEAGUE_INVITE_INCLUDES,
-} from "./leagueInvites.types";
-import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types";
+} from "./leagueInvites.types.js";
+import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types.js";
 import { z } from "zod";
-import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service";
-import { UsersQueryService } from "../users/users.query.service";
-import { LeagueInvitesMutationService } from "./leagueInvites.mutation.service";
-import { LeagueInvitesQueryService } from "./leagueInvites.query.service";
-import { LeaguesQueryService } from "../leagues/leagues.query.service";
-import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
-import { ProfilesQueryService } from "../profiles/profiles.query.service";
-import { PhasesQueryService } from "../phases/phases.query.service";
-import { LeaguesUtilService } from "../leagues/leagues.util.service";
+import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
+import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
+import { UsersQueryService } from "../users/users.query.service.js";
+import { LeagueInvitesMutationService } from "./leagueInvites.mutation.service.js";
+import { LeagueInvitesQueryService } from "./leagueInvites.query.service.js";
+import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
+import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
+import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
+import { PhasesQueryService } from "../phases/phases.query.service.js";
+import { LeaguesUtilService } from "../leagues/leagues.util.service.js";
 
 @injectable()
 export class LeagueInvitesService {

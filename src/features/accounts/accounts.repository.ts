@@ -1,6 +1,6 @@
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
-import { accountsTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { accountsTable } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
 
 @injectable()

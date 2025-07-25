@@ -1,8 +1,8 @@
-import { leagueInvitesTable } from "../../db/schema";
-import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types";
-import { PopulatedDBLeague } from "../leagues/leagues.types";
+import { leagueInvitesTable } from "../../db/schema.js";
+import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types.js";
+import { PopulatedDBLeague } from "../leagues/leagues.types.js";
 import { z } from "zod";
-import { DBProfile } from "../profiles/profiles.types";
+import { DBProfile } from "../profiles/profiles.types.js";
 
 // Constants
 

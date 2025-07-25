@@ -1,14 +1,14 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx } from "../../db";
-import { TYPES } from "../../lib/inversify.types";
-import { PhasesRepository } from "./phases.repository";
+import { DBOrTx } from "../../db/index.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { PhasesRepository } from "./phases.repository.js";
 import {
   DBExternalPhase,
   DBExternalPhaseInsert,
   DBPhase,
   DBPhaseInsert,
   DBPhaseUpdate,
-} from "./phases.types";
+} from "./phases.types.js";
 
 @injectable()
 export class PhasesMutationService {

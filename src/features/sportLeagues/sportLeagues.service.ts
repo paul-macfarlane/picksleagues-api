@@ -1,13 +1,13 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { db } from "../../db";
-import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
-import { ESPN_DESIRED_LEAGUES } from "../../integrations/espn/espn.types";
-import { NotFoundError } from "../../lib/errors";
-import { EspnService } from "../../integrations/espn/espn.service";
-import { SportLeaguesQueryService } from "./sportLeagues.query.service";
-import { SportLeaguesMutationService } from "./sportLeagues.mutation.service";
-import { DataSourcesQueryService } from "../dataSources/dataSources.query.service";
+import { TYPES } from "../../lib/inversify.types.js";
+import { db } from "../../db/index.js";
+import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types.js";
+import { ESPN_DESIRED_LEAGUES } from "../../integrations/espn/espn.types.js";
+import { NotFoundError } from "../../lib/errors.js";
+import { EspnService } from "../../integrations/espn/espn.service.js";
+import { SportLeaguesQueryService } from "./sportLeagues.query.service.js";
+import { SportLeaguesMutationService } from "./sportLeagues.mutation.service.js";
+import { DataSourcesQueryService } from "../dataSources/dataSources.query.service.js";
 
 @injectable()
 export class SportLeaguesService {

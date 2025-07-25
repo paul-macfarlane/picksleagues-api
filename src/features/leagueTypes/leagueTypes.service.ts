@@ -1,11 +1,11 @@
-import { LEAGUE_TYPE_SLUGS, DBLeagueType } from "./leagueTypes.types";
-import { NotFoundError } from "../../lib/errors";
-import { db, DBOrTx } from "../../db";
+import { LEAGUE_TYPE_SLUGS, DBLeagueType } from "./leagueTypes.types.js";
+import { NotFoundError } from "../../lib/errors.js";
+import { db, DBOrTx } from "../../db/index.js";
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { LeagueTypesRepository } from "./leagueTypes.repository";
+import { TYPES } from "../../lib/inversify.types.js";
+import { LeagueTypesRepository } from "./leagueTypes.repository.js";
 import { z } from "zod";
-import { DBLeagueTypeInsert } from "./leagueTypes.types";
+import { DBLeagueTypeInsert } from "./leagueTypes.types.js";
 
 @injectable()
 export class LeagueTypesService {

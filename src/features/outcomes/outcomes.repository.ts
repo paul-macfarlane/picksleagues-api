@@ -1,8 +1,8 @@
 import { injectable } from "inversify";
 import { eq } from "drizzle-orm";
-import { db, DBOrTx } from "../../db";
-import { outcomesTable } from "../../db/schema";
-import { DBOutcome, DBOutcomeInsert, DBOutcomeUpdate } from "./outcomes.types";
+import { db, DBOrTx } from "../../db/index.js";
+import { outcomesTable } from "../../db/schema.js";
+import { DBOutcome, DBOutcomeInsert, DBOutcomeUpdate } from "./outcomes.types.js";
 
 @injectable()
 export class OutcomesRepository {

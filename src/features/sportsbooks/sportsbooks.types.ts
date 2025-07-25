@@ -1,4 +1,4 @@
-import { sportsbooksTable, externalSportsbooksTable } from "../../db/schema";
+import { sportsbooksTable, externalSportsbooksTable } from "../../db/schema.js";
 
 export type DBSportsbook = typeof sportsbooksTable.$inferSelect;
 export type DBSportsbookInsert = typeof sportsbooksTable.$inferInsert;

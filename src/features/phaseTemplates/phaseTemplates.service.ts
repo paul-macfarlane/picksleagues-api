@@ -1,18 +1,18 @@
-import { DBPhaseTemplate } from "./phaseTemplates.types";
-import { NotFoundError } from "../../lib/errors";
-import { db, DBOrTx } from "../../db";
+import { DBPhaseTemplate } from "./phaseTemplates.types.js";
+import { NotFoundError } from "../../lib/errors.js";
+import { db, DBOrTx } from "../../db/index.js";
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { DBPhaseTemplateInsert } from "./phaseTemplates.types";
-import { PhaseTemplatesQueryService } from "./phaseTemplates.query.service";
-import { PhaseTemplatesMutationService } from "./phaseTemplates.mutation.service";
-import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service";
-import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
+import { TYPES } from "../../lib/inversify.types.js";
+import { DBPhaseTemplateInsert } from "./phaseTemplates.types.js";
+import { PhaseTemplatesQueryService } from "./phaseTemplates.query.service.js";
+import { PhaseTemplatesMutationService } from "./phaseTemplates.mutation.service.js";
+import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service.js";
+import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
 import {
   DBLeagueType,
   LEAGUE_TYPE_SLUGS,
   LeagueTypeIdSchema,
-} from "../leagueTypes/leagueTypes.types";
+} from "../leagueTypes/leagueTypes.types.js";
 
 @injectable()
 export class PhaseTemplatesService {

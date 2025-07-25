@@ -1,15 +1,19 @@
 import "reflect-metadata";
-import "dotenv/config";
+import "dotenv/config.js";
 
 import express, { Request, Response } from "express";
-import apiRouter from "./router";
-import staticRouter from "./static.router";
+import apiRouter from "./router.js";
+import staticRouter from "./static.router.js";
 import { toNodeHandler } from "better-auth/node";
-import { auth } from "../lib/auth";
+import { auth } from "../lib/auth.js";
 import cors from "cors";
 import path from "path";
+import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
-import { errorMiddleware } from "../lib/errors";
+import { errorMiddleware } from "../lib/errors.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.EXPRESS_PORT || 3001;

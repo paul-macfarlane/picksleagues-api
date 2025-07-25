@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
-import { container } from "../../lib/inversify.config";
-import { TYPES } from "../../lib/inversify.types";
-import { PhasesService } from "../../features/phases/phases.service";
+import { container } from "../../lib/inversify.config.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { PhasesService } from "../../features/phases/phases.service.js";
 
 const router = Router();
 const phasesService = container.get<PhasesService>(TYPES.PhasesService);

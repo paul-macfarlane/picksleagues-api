@@ -1,5 +1,5 @@
 import z from "zod";
-import { profilesTable } from "../../db/schema";
+import { profilesTable } from "../../db/schema.js";
 
 // Constants
 export const ANONYMOUS_USERNAME = "anonymous";

@@ -1,29 +1,29 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { mock, MockProxy } from "vitest-mock-extended";
-import { UsersService } from "./users.service";
-import { UsersMutationService } from "./users.mutation.service";
-import { LeaguesMutationService } from "../leagues/leagues.mutation.service";
-import { LeaguesQueryService } from "../leagues/leagues.query.service";
-import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service";
-import { ProfilesMutationService } from "../profiles/profiles.mutation.service";
-import { ValidationError } from "../../lib/errors";
+import { UsersService } from "./users.service.js";
+import { UsersMutationService } from "./users.mutation.service.js";
+import { LeaguesMutationService } from "../leagues/leagues.mutation.service.js";
+import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
+import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
+import { ProfilesMutationService } from "../profiles/profiles.mutation.service.js";
+import { ValidationError } from "../../lib/errors.js";
 import {
   LEAGUE_MEMBER_ROLES,
   DBLeagueMember,
-} from "../leagueMembers/leagueMembers.types";
+} from "../leagueMembers/leagueMembers.types.js";
 import {
   ANONYMOUS_LAST_NAME,
   ANONYMOUS_FIRST_NAME,
   ANONYMOUS_USERNAME,
-} from "../profiles/profiles.types";
-import { DBLeague, LEAGUE_VISIBILITIES } from "../leagues/leagues.types";
-import { AccountsMutationService } from "../accounts/accounts.mutation.service";
-import { SessionsMutationService } from "../sessions/sessions.mutation.service";
-import { VerificationsMutationService } from "../verifications/verifications.mutation.service";
-import { UsersQueryService } from "./users.query.service";
-import { DBUser } from "./users.types";
-import { NotFoundError } from "../../lib/errors";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service";
+} from "../profiles/profiles.types.js";
+import { DBLeague, LEAGUE_VISIBILITIES } from "../leagues/leagues.types.js";
+import { AccountsMutationService } from "../accounts/accounts.mutation.service.js";
+import { SessionsMutationService } from "../sessions/sessions.mutation.service.js";
+import { VerificationsMutationService } from "../verifications/verifications.mutation.service.js";
+import { UsersQueryService } from "./users.query.service.js";
+import { DBUser } from "./users.types.js";
+import { NotFoundError } from "../../lib/errors.js";
+import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
 
 vi.mock("../../db", () => ({
   db: {

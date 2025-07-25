@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { db, DBTx } from "../../db";
+import { db, DBTx } from "../../db/index.js";
 import {
   EVENT_TYPES,
   EspnExternalEventMetadataSchema,
@@ -8,37 +8,38 @@ import {
   DBEventUpdate,
   DBExternalEventUpdate,
   DBExternalEventInsert,
-} from "./events.types";
+} from "./events.types.js";
 import {
   ESPNEvent,
   ESPNSeasonType,
   ESPN_SPORT_LEAGUE_GAME_STATUSES,
   ESPN_SPORT_SLUGS,
   ESPN_LEAGUE_SLUGS,
-} from "../../integrations/espn/espn.types";
+} from "../../integrations/espn/espn.types.js";
 import axios from "axios";
-import { NotFoundError } from "../../lib/errors";
-import { DataSourcesQueryService } from "../dataSources/dataSources.query.service";
-import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
-import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service";
-import { SeasonsQueryService } from "../seasons/seasons.query.service";
-import { PhasesQueryService } from "../phases/phases.query.service";
-import { TeamsQueryService } from "../teams/teams.query.service";
-import { EspnService } from "../../integrations/espn/espn.service";
-import { SportsbooksQueryService } from "../sportsbooks/sportsbooks.query.service";
-import { EspnExternalPhaseMetadataSchema } from "../phases/phase.types";
-import { EspnExternalSportLeagueMetadataSchema } from "../sportLeagues/sportLeagues.types";
-import { OutcomesMutationService } from "../outcomes/outcomes.mutation.service";
-import { TYPES } from "../../lib/inversify.types";
-import { EventsQueryService } from "./events.query.service";
-import { EventsMutationService } from "./events.mutation.service";
-import { OddsQueryService } from "../odds/odds.query.service";
-import { OddsMutationService } from "../odds/odds.mutation.service";
-import { LiveScoresQueryService } from "../liveScores/liveScores.query.service";
-import { LiveScoresMutationService } from "../liveScores/liveScores.mutation.service";
-import { OutcomesQueryService } from "../outcomes/outcomes.query.service";
-import { DBPhase, DBExternalPhase } from "../phases/phase.types";
-import { DBSeason } from "../seasons/seasons.types";
+import { NotFoundError } from "../../lib/errors.js";
+import { DataSourcesQueryService } from "../dataSources/dataSources.query.service.js";
+import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types.js";
+import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service.js";
+import { SeasonsQueryService } from "../seasons/seasons.query.service.js";
+import { PhasesQueryService } from "../phases/phases.query.service.js";
+import { TeamsQueryService } from "../teams/teams.query.service.js";
+import { EspnService } from "../../integrations/espn/espn.service.js";
+import { SportsbooksQueryService } from "../sportsbooks/sportsbooks.query.service.js";
+import { EspnExternalPhaseMetadataSchema } from "../phases/phase.types.js";
+import { EspnExternalSportLeagueMetadataSchema } from "../sportLeagues/sportLeagues.types.js";
+import { OutcomesMutationService } from "../outcomes/outcomes.mutation.service.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { EventsQueryService } from "./events.query.service.js";
+import { EventsMutationService } from "./events.mutation.service.js";
+import { OddsQueryService } from "../odds/odds.query.service.js";
+import { OddsMutationService } from "../odds/odds.mutation.service.js";
+import { LiveScoresQueryService } from "../liveScores/liveScores.query.service.js";
+import { LiveScoresMutationService } from "../liveScores/liveScores.mutation.service.js";
+import { OutcomesQueryService } from "../outcomes/outcomes.query.service.js";
+import { DBPhase, DBExternalPhase } from "../phases/phase.types.js";
+import { DBSeason } from "../seasons/seasons.types.js";
+import pLimit from "p-limit";
 
 @injectable()
 export class EventsService {
@@ -231,7 +232,6 @@ export class EventsService {
       { sportSlug: string; leagueSlug: string } | null
     >,
   ) {
-    const pLimit = (await new Function('return import("p-limit")')()).default;
     const limit = pLimit(10);
     const eventPromises = externalPhases.map((externalPhase) => {
       const phase = phasesToProcess.find((p) => p.id === externalPhase.phaseId);
@@ -510,7 +510,6 @@ export class EventsService {
       console.log(`Found ${futureEspnEvents.length} future events from ESPN.`);
 
       // Pre-fetch all unique season types in parallel to avoid serial requests in the loop.
-      const pLimit = (await new Function('return import("p-limit")')()).default;
       const limit = pLimit(10);
       const uniqueSeasonTypeRefs = [
         ...new Set(futureEspnEvents.map((event) => event.seasonType.$ref)),

@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
 import { eq, and } from "drizzle-orm";
-import { db, DBOrTx } from "../../db";
-import { oddsTable, externalOddsTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { oddsTable, externalOddsTable } from "../../db/schema.js";
 import {
   DBOdds,
   DBOddsInsert,
@@ -9,7 +9,7 @@ import {
   DBExternalOdds,
   DBExternalOddsInsert,
   DBExternalOddsUpdate,
-} from "./odds.types";
+} from "./odds.types.js";
 
 @injectable()
 export class OddsRepository {

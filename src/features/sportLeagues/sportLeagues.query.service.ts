@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { db, DBOrTx } from "../../db";
-import { DBSportLeague, DBExternalSportLeague } from "./sportLeagues.types";
-import { TYPES } from "../../lib/inversify.types";
-import { SportLeaguesRepository } from "./sportLeagues.repository";
+import { db, DBOrTx } from "../../db/index.js";
+import { DBSportLeague, DBExternalSportLeague } from "./sportLeagues.types.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { SportLeaguesRepository } from "./sportLeagues.repository.js";
 
 @injectable()
 export class SportLeaguesQueryService {

@@ -1,12 +1,12 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
-import { leagueMembersTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { leagueMembersTable } from "../../db/schema.js";
 import {
   DBLeagueMember,
   DBLeagueMemberInsert,
   DBLeagueMemberUpdate,
-} from "./leagueMembers.types";
+} from "./leagueMembers.types.js";
 
 @injectable()
 export class LeagueMembersRepository {

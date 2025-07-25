@@ -4,8 +4,8 @@ import {
   externalEventsTable,
   liveScoresTable,
   outcomesTable,
-} from "../../db/schema";
-import { ESPN_SPORT_LEAGUE_GAME_STATUSES } from "../../integrations/espn/espn.types";
+} from "../../db/schema.js";
+import { ESPN_SPORT_LEAGUE_GAME_STATUSES } from "../../integrations/espn/espn.types.js";
 
 // constants
 export enum EVENT_TYPES {
