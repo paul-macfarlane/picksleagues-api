@@ -42,10 +42,6 @@ import { DBSeason } from "../seasons/seasons.types";
 
 @injectable()
 export class EventsService {
-  private limit: (
-    concurrency: number,
-  ) => <T>(fn: () => Promise<T>) => Promise<T>;
-
   constructor(
     @inject(TYPES.EventsQueryService)
     private eventsQueryService: EventsQueryService,
@@ -77,12 +73,7 @@ export class EventsService {
     private outcomesQueryService: OutcomesQueryService,
     @inject(TYPES.OutcomesMutationService)
     private outcomesMutationService: OutcomesMutationService,
-  ) {
-    this.limit = () => (fn) => fn();
-    import("p-limit").then((pLimit) => {
-      this.limit = pLimit.default;
-    });
-  }
+  ) {}
 
   private async _prepareSyncData(tx: DBTx) {
     const dataSource = await this.dataSourcesQueryService.findByName(
@@ -240,7 +231,8 @@ export class EventsService {
       { sportSlug: string; leagueSlug: string } | null
     >,
   ) {
-    const limit = this.limit(10);
+    const pLimit = (await import("p-limit")).default;
+    const limit = pLimit(10);
     const eventPromises = externalPhases.map((externalPhase) => {
       const phase = phasesToProcess.find((p) => p.id === externalPhase.phaseId);
       if (!phase) return Promise.resolve([]);
@@ -518,6 +510,8 @@ export class EventsService {
       console.log(`Found ${futureEspnEvents.length} future events from ESPN.`);
 
       // Pre-fetch all unique season types in parallel to avoid serial requests in the loop.
+      const pLimit = (await import("p-limit")).default;
+      const limit = pLimit(10);
       const uniqueSeasonTypeRefs = [
         ...new Set(futureEspnEvents.map((event) => event.seasonType.$ref)),
       ];
@@ -525,7 +519,6 @@ export class EventsService {
         `Found ${uniqueSeasonTypeRefs.length} unique season type refs to fetch.`,
       );
 
-      const limit = this.limit(10);
       const seasonTypePromises = uniqueSeasonTypeRefs.map((ref) =>
         limit(() =>
           axios
