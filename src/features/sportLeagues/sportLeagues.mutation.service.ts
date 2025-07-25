@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx } from "../../db";
-import { TYPES } from "../../lib/inversify.types";
-import { SportLeaguesRepository } from "./sportLeagues.repository";
+import { DBOrTx } from "../../db/index.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { SportLeaguesRepository } from "./sportLeagues.repository.js";
 import {
   DBExternalSportLeague,
   DBExternalSportLeagueInsert,
@@ -9,7 +9,7 @@ import {
   DBSportLeague,
   DBSportLeagueInsert,
   DBSportLeagueUpdate,
-} from "./sportLeagues.types";
+} from "./sportLeagues.types.js";
 
 @injectable()
 export class SportLeaguesMutationService {

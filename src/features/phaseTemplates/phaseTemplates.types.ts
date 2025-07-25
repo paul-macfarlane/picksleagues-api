@@ -1,4 +1,4 @@
-import { phaseTemplatesTable } from "../../db/schema";
+import { phaseTemplatesTable } from "../../db/schema.js";
 import { z } from "zod";
 
 // Constants

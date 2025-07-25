@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
-import { phaseTemplatesTable } from "../../db/schema";
-import { DBPhaseTemplate, DBPhaseTemplateInsert } from "./phaseTemplates.types";
+import { db, DBOrTx } from "../../db/index.js";
+import { phaseTemplatesTable } from "../../db/schema.js";
+import { DBPhaseTemplate, DBPhaseTemplateInsert } from "./phaseTemplates.types.js";
 
 @injectable()
 export class PhaseTemplatesRepository {

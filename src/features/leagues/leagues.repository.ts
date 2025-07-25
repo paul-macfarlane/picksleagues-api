@@ -1,13 +1,13 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
+import { db, DBOrTx } from "../../db/index.js";
 import {
   leagueMembersTable,
   leaguesTable,
   leagueTypesTable,
-} from "../../db/schema";
-import { DBLeague, DBLeagueInsert, DBLeagueUpdate } from "./leagues.types";
-import { LEAGUE_TYPE_SLUGS } from "../leagueTypes/leagueTypes.types";
+} from "../../db/schema.js";
+import { DBLeague, DBLeagueInsert, DBLeagueUpdate } from "./leagues.types.js";
+import { LEAGUE_TYPE_SLUGS } from "../leagueTypes/leagueTypes.types.js";
 
 @injectable()
 export class LeaguesRepository {

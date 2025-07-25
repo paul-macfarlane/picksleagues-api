@@ -9,22 +9,22 @@ import {
   integer,
   decimal,
 } from "drizzle-orm/pg-core";
-import { LEAGUE_VISIBILITIES } from "../features/leagues/leagues.types";
+import { LEAGUE_VISIBILITIES } from "../features/leagues/leagues.types.js";
 import {
   LEAGUE_TYPE_NAMES,
   LEAGUE_TYPE_SLUGS,
-} from "../features/leagueTypes/leagueTypes.types";
-import { DATA_SOURCE_NAMES } from "../features/dataSources/dataSources.types";
+} from "../features/leagueTypes/leagueTypes.types.js";
+import { DATA_SOURCE_NAMES } from "../features/dataSources/dataSources.types.js";
 import {
   LEAGUE_INVITE_STATUSES,
   LEAGUE_INVITE_TYPES,
-} from "../features/leagueInvites/leagueInvites.types";
-import { LEAGUE_MEMBER_ROLES } from "../features/leagueMembers/leagueMembers.types";
-import { PHASE_TEMPLATE_TYPES } from "../features/phaseTemplates/phaseTemplates.types";
+} from "../features/leagueInvites/leagueInvites.types.js";
+import { LEAGUE_MEMBER_ROLES } from "../features/leagueMembers/leagueMembers.types.js";
+import { PHASE_TEMPLATE_TYPES } from "../features/phaseTemplates/phaseTemplates.types.js";
 import {
   EVENT_TYPES,
   LIVE_SCORE_STATUSES,
-} from "../features/events/events.types";
+} from "../features/events/events.types.js";
 
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),

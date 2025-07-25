@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
-import { container } from "../../lib/inversify.config";
-import { TYPES } from "../../lib/inversify.types";
-import { TeamsService } from "../../features/teams/teams.service";
+import { container } from "../../lib/inversify.config.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { TeamsService } from "../../features/teams/teams.service.js";
 
 const router = Router();
 const teamsService = container.get<TeamsService>(TYPES.TeamsService);

@@ -1,9 +1,9 @@
 import { injectable, inject } from "inversify";
 import { z } from "zod";
-import { DBOrTx } from "../../db";
-import { TYPES } from "../../lib/inversify.types";
-import { ProfilesRepository } from "./profiles.repository";
-import { DBProfile, SearchProfilesSchema } from "./profiles.types";
+import { DBOrTx } from "../../db/index.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { ProfilesRepository } from "./profiles.repository.js";
+import { DBProfile, SearchProfilesSchema } from "./profiles.types.js";
 
 @injectable()
 export class ProfilesQueryService {

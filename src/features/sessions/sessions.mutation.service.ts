@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx } from "../../db";
-import { TYPES } from "../../lib/inversify.types";
-import { SessionsRepository } from "./sessions.repository";
+import { DBOrTx } from "../../db/index.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { SessionsRepository } from "./sessions.repository.js";
 
 @injectable()
 export class SessionsMutationService {

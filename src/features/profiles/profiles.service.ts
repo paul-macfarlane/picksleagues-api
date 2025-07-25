@@ -1,23 +1,23 @@
-import { db, DBOrTx } from "../../db";
+import { db, DBOrTx } from "../../db/index.js";
 import {
   ANONYMOUS_USERNAME,
   DBProfile,
   DBProfileUpdate,
   MAX_USERNAME_LENGTH,
   SearchProfilesSchema,
-} from "./profiles.types";
+} from "./profiles.types.js";
 import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../../lib/errors";
+} from "../../lib/errors.js";
 import { generateFromEmail } from "unique-username-generator";
-import { DBUser } from "../users/users.types";
+import { DBUser } from "../users/users.types.js";
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { ProfilesQueryService } from "./profiles.query.service";
-import { ProfilesMutationService } from "./profiles.mutation.service";
+import { TYPES } from "../../lib/inversify.types.js";
+import { ProfilesQueryService } from "./profiles.query.service.js";
+import { ProfilesMutationService } from "./profiles.mutation.service.js";
 import { z } from "zod";
 
 @injectable()

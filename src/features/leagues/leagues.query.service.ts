@@ -1,9 +1,9 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx } from "../../db";
-import { TYPES } from "../../lib/inversify.types";
-import { LeaguesRepository } from "./leagues.repository";
-import { DBLeague } from "./leagues.types";
-import { LEAGUE_TYPE_SLUGS } from "../leagueTypes/leagueTypes.types";
+import { DBOrTx } from "../../db/index.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { LeaguesRepository } from "./leagues.repository.js";
+import { DBLeague } from "./leagues.types.js";
+import { LEAGUE_TYPE_SLUGS } from "../leagueTypes/leagueTypes.types.js";
 
 @injectable()
 export class LeaguesQueryService {

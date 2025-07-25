@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { LeaguesRepository } from "./leagues.repository";
-import { DBOrTx, db } from "../../db";
-import { DBLeague, DBLeagueInsert, DBLeagueUpdate } from "./leagues.types";
+import { TYPES } from "../../lib/inversify.types.js";
+import { LeaguesRepository } from "./leagues.repository.js";
+import { DBOrTx, db } from "../../db/index.js";
+import { DBLeague, DBLeagueInsert, DBLeagueUpdate } from "./leagues.types.js";
 
 @injectable()
 export class LeaguesMutationService {

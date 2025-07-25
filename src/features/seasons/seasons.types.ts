@@ -1,4 +1,4 @@
-import { externalSeasonsTable, seasonsTable } from "../../db/schema";
+import { externalSeasonsTable, seasonsTable } from "../../db/schema.js";
 import { z } from "zod";
 
 export type DBSeason = typeof seasonsTable.$inferSelect;

@@ -1,8 +1,8 @@
-import { PhaseTemplatesService } from "../../features/phaseTemplates/phaseTemplates.service";
-import { SPORT_LEAGUE_NAMES } from "../../features/sportLeagues/sportLeagues.types";
-import { db, DBOrTx } from "..";
-import { PHASE_TEMPLATE_TYPES } from "../../features/phaseTemplates/phaseTemplates.types";
-import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service";
+import { PhaseTemplatesService } from "../../features/phaseTemplates/phaseTemplates.service.js";
+import { SPORT_LEAGUE_NAMES } from "../../features/sportLeagues/sportLeagues.types.js";
+import { db, DBOrTx } from "../index.js";
+import { PHASE_TEMPLATE_TYPES } from "../../features/phaseTemplates/phaseTemplates.types.js";
+import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service.js";
 
 const NFL_WEEK_PHASE_LABELS = [
   "Week 1",

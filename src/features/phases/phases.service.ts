@@ -1,19 +1,19 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { db } from "../../db";
-import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types";
-import { ESPN_SEASON_TYPES } from "../../integrations/espn/espn.types";
-import { PhasesQueryService } from "./phases.query.service";
-import { PhasesMutationService } from "./phases.mutation.service";
-import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service";
-import { EspnService } from "../../integrations/espn/espn.service";
-import { DataSourcesQueryService } from "../dataSources/dataSources.query.service";
-import { NotFoundError } from "../../lib/errors";
-import { SeasonsQueryService } from "../seasons/seasons.query.service";
-import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service";
-import { EspnExternalSportLeagueMetadataSchema } from "../sportLeagues/sportLeagues.types";
-import { SeasonsUtilService } from "../seasons/seasons.util.service";
-import { EspnExternalSeasonMetadataSchema } from "../seasons/seasons.types";
+import { TYPES } from "../../lib/inversify.types.js";
+import { db } from "../../db/index.js";
+import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types.js";
+import { ESPN_SEASON_TYPES } from "../../integrations/espn/espn.types.js";
+import { PhasesQueryService } from "./phases.query.service.js";
+import { PhasesMutationService } from "./phases.mutation.service.js";
+import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service.js";
+import { EspnService } from "../../integrations/espn/espn.service.js";
+import { DataSourcesQueryService } from "../dataSources/dataSources.query.service.js";
+import { NotFoundError } from "../../lib/errors.js";
+import { SeasonsQueryService } from "../seasons/seasons.query.service.js";
+import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service.js";
+import { EspnExternalSportLeagueMetadataSchema } from "../sportLeagues/sportLeagues.types.js";
+import { SeasonsUtilService } from "../seasons/seasons.util.service.js";
+import { EspnExternalSeasonMetadataSchema } from "../seasons/seasons.types.js";
 
 @injectable()
 export class PhasesService {

@@ -2,20 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/api/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "node_modules/p-limit/**",
-          "node_modules/yocto-queue/**"
-        ]
-      }
+      "src": "dist/api/index.js",
+      "use": "@vercel/node"
     }
   ],
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/src/api/index.ts"
+      "destination": "/dist/api/index.js"
     }
   ],
   "git": {

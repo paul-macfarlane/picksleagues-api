@@ -1,13 +1,13 @@
 import { injectable, inject } from "inversify";
-import { OddsRepository } from "./odds.repository";
-import { DBOrTx } from "../../db";
+import { OddsRepository } from "./odds.repository.js";
+import { DBOrTx } from "../../db/index.js";
 import {
   DBOddsInsert,
   DBOddsUpdate,
   DBExternalOddsInsert,
   DBExternalOddsUpdate,
-} from "./odds.types";
-import { TYPES } from "../../lib/inversify.types";
+} from "./odds.types.js";
+import { TYPES } from "../../lib/inversify.types.js";
 
 @injectable()
 export class OddsMutationService {

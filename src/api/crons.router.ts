@@ -1,9 +1,9 @@
 import { Router } from "express";
-import sportLeaguesRouter from "./crons/sport-leagues.cron";
-import seasonsRouter from "./crons/seasons.cron";
-import phasesRouter from "./crons/phases.cron";
-import teamsRouter from "./crons/teams.cron";
-import eventsRouter from "./crons/events.cron";
+import sportLeaguesRouter from "./crons/sport-leagues.cron.js";
+import seasonsRouter from "./crons/seasons.cron.js";
+import phasesRouter from "./crons/phases.cron.js";
+import teamsRouter from "./crons/teams.cron.js";
+import eventsRouter from "./crons/events.cron.js";
 
 const router = Router();
 

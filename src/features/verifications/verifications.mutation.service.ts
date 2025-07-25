@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx } from "../../db";
-import { TYPES } from "../../lib/inversify.types";
-import { VerificationsRepository } from "./verifications.repository";
+import { DBOrTx } from "../../db/index.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { VerificationsRepository } from "./verifications.repository.js";
 
 @injectable()
 export class VerificationsMutationService {

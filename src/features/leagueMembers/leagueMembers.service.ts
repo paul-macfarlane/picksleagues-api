@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify";
 import { z } from "zod";
-import { TYPES } from "../../lib/inversify.types";
+import { TYPES } from "../../lib/inversify.types.js";
 import {
   DBLeagueMember,
   DBLeagueMemberWithProfile,
@@ -8,18 +8,18 @@ import {
   LeagueMemberIncludeSchema,
   PopulatedDBLeagueMember,
   UpdateLeagueMemberSchema,
-} from "./leagueMembers.types";
-import { LeagueMembersMutationService } from "./leagueMembers.mutation.service";
-import { LeagueMembersQueryService } from "./leagueMembers.query.service";
-import { LeaguesUtilService } from "../leagues/leagues.util.service";
+} from "./leagueMembers.types.js";
+import { LeagueMembersMutationService } from "./leagueMembers.mutation.service.js";
+import { LeagueMembersQueryService } from "./leagueMembers.query.service.js";
+import { LeaguesUtilService } from "../leagues/leagues.util.service.js";
 import {
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../../lib/errors";
-import { LeaguesQueryService } from "../leagues/leagues.query.service";
-import { LeaguesMutationService } from "../leagues/leagues.mutation.service";
-import { ProfilesQueryService } from "../profiles/profiles.query.service";
+} from "../../lib/errors.js";
+import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
+import { LeaguesMutationService } from "../leagues/leagues.mutation.service.js";
+import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
 
 @injectable()
 export class LeagueMembersService {

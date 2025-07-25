@@ -1,29 +1,29 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { mock, MockProxy } from "vitest-mock-extended";
-import { LeaguesService } from "./leagues.service";
-import { LeaguesQueryService } from "./leagues.query.service";
-import { LeaguesMutationService } from "./leagues.mutation.service";
-import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service";
-import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
-import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service";
+import { LeaguesService } from "./leagues.service.js";
+import { LeaguesQueryService } from "./leagues.query.service.js";
+import { LeaguesMutationService } from "./leagues.mutation.service.js";
+import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
+import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
+import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
+import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service.js";
 import {
   DBLeague,
   LEAGUE_INCLUDES,
   LEAGUE_VISIBILITIES,
   PICK_EM_PICK_TYPES,
-} from "./leagues.types";
+} from "./leagues.types.js";
 import {
   DBLeagueMember,
   LEAGUE_MEMBER_ROLES,
-} from "../leagueMembers/leagueMembers.types";
+} from "../leagueMembers/leagueMembers.types.js";
 import {
   DBLeagueType,
   LEAGUE_TYPE_NAMES,
   LEAGUE_TYPE_SLUGS,
-} from "../leagueTypes/leagueTypes.types";
-import { LeaguesUtilService } from "./leagues.util.service";
-import { ForbiddenError } from "../../lib/errors";
+} from "../leagueTypes/leagueTypes.types.js";
+import { LeaguesUtilService } from "./leagues.util.service.js";
+import { ForbiddenError } from "../../lib/errors.js";
 import { vi } from "vitest";
 
 vi.mock("../../db", () => ({

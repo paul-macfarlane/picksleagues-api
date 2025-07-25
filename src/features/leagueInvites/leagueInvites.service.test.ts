@@ -5,32 +5,32 @@ import {
   LEAGUE_INVITE_STATUSES,
   LEAGUE_INVITE_TYPES,
   CreateLeagueInviteSchema,
-} from "./leagueInvites.types";
-import { DBLeague, LEAGUE_VISIBILITIES } from "../leagues/leagues.types";
+} from "./leagueInvites.types.js";
+import { DBLeague, LEAGUE_VISIBILITIES } from "../leagues/leagues.types.js";
 import {
   DBLeagueMember,
   LEAGUE_MEMBER_ROLES,
-} from "../leagueMembers/leagueMembers.types";
-import { DBPhase } from "../phases/phases.types";
+} from "../leagueMembers/leagueMembers.types.js";
+import { DBPhase } from "../phases/phases.types.js";
 import { z } from "zod";
-import { DBUser } from "../users/users.types";
-import { LeagueInvitesService } from "./leagueInvites.service";
-import { LeagueInvitesQueryService } from "./leagueInvites.query.service";
-import { LeagueInvitesMutationService } from "./leagueInvites.mutation.service";
-import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service";
-import { UsersQueryService } from "../users/users.query.service";
-import { LeaguesQueryService } from "../leagues/leagues.query.service";
-import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service";
-import { ProfilesQueryService } from "../profiles/profiles.query.service";
-import { PhasesQueryService } from "../phases/phases.query.service";
+import { DBUser } from "../users/users.types.js";
+import { LeagueInvitesService } from "./leagueInvites.service.js";
+import { LeagueInvitesQueryService } from "./leagueInvites.query.service.js";
+import { LeagueInvitesMutationService } from "./leagueInvites.mutation.service.js";
+import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
+import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
+import { UsersQueryService } from "../users/users.query.service.js";
+import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
+import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
+import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
+import { PhasesQueryService } from "../phases/phases.query.service.js";
 import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../../lib/errors";
-import { LeaguesUtilService } from "../leagues/leagues.util.service";
+} from "../../lib/errors.js";
+import { LeaguesUtilService } from "../leagues/leagues.util.service.js";
 
 vi.mock("../../db", () => ({
   db: {

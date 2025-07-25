@@ -1,11 +1,11 @@
 import {
   LEAGUE_TYPE_NAMES,
   LEAGUE_TYPE_SLUGS,
-} from "../../features/leagueTypes/leagueTypes.types";
-import { SPORT_LEAGUE_NAMES } from "../../features/sportLeagues/sportLeagues.types";
-import { LeagueTypesService } from "../../features/leagueTypes/leagueTypes.service";
-import { db, DBOrTx } from "..";
-import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service";
+} from "../../features/leagueTypes/leagueTypes.types.js";
+import { SPORT_LEAGUE_NAMES } from "../../features/sportLeagues/sportLeagues.types.js";
+import { LeagueTypesService } from "../../features/leagueTypes/leagueTypes.service.js";
+import { db, DBOrTx } from "../index.js";
+import { SportLeaguesQueryService } from "../../features/sportLeagues/sportLeagues.query.service.js";
 
 export const seedLeagueTypes = async (
   leagueTypesService: LeagueTypesService,

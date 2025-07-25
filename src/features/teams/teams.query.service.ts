@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { TeamsRepository } from "./teams.repository";
-import { DBExternalTeam, DBTeam } from "./teams.types";
-import { DBOrTx } from "../../db";
+import { TYPES } from "../../lib/inversify.types.js";
+import { TeamsRepository } from "./teams.repository.js";
+import { DBExternalTeam, DBTeam } from "./teams.types.js";
+import { DBOrTx } from "../../db/index.js";
 
 @injectable()
 export class TeamsQueryService {

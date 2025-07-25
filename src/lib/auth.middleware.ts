@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "./auth";
-import { UnauthorizedError } from "./errors";
-import { DBUser } from "../features/users/users.types";
+import { auth } from "./auth.js";
+import { UnauthorizedError } from "./errors.js";
+import { DBUser } from "../features/users/users.types.js";
 
 export const requireAuth = async (
   req: Request,

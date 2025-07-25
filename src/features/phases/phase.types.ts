@@ -1,5 +1,5 @@
-import { ESPN_SEASON_TYPES } from "../../integrations/espn/espn.types";
-import { externalPhasesTable, phasesTable } from "../../db/schema";
+import { ESPN_SEASON_TYPES } from "../../integrations/espn/espn.types.js";
+import { externalPhasesTable, phasesTable } from "../../db/schema.js";
 import { z } from "zod";
 
 // Constants

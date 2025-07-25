@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx, db } from "../../db";
-import { TYPES } from "../../lib/inversify.types";
-import { DataSourcesRepository } from "./dataSources.repository";
-import { DBDataSource, DBDataSourceInsert } from "./dataSources.types";
+import { DBOrTx, db } from "../../db/index.js";
+import { TYPES } from "../../lib/inversify.types.js";
+import { DataSourcesRepository } from "./dataSources.repository.js";
+import { DBDataSource, DBDataSourceInsert } from "./dataSources.types.js";
 
 @injectable()
 export class DataSourcesMutationService {

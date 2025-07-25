@@ -1,4 +1,4 @@
-import { DBUser } from "../features/users/users.types";
+import { DBUser } from "../features/users/users.types.js";
 
 declare global {
   namespace Express {

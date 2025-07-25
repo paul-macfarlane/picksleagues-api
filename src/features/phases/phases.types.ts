@@ -1,4 +1,4 @@
-import { externalPhasesTable, phasesTable } from "../../db/schema";
+import { externalPhasesTable, phasesTable } from "../../db/schema.js";
 
 export type DBPhase = typeof phasesTable.$inferSelect;
 export type DBPhaseInsert = typeof phasesTable.$inferInsert;

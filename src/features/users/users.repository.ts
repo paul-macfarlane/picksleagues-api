@@ -1,8 +1,8 @@
 import { injectable } from "inversify";
 import { eq } from "drizzle-orm";
-import { db, DBOrTx } from "../../db";
-import { usersTable } from "../../db/schema";
-import { DBUser, DBUserUpdate } from "./users.types";
+import { db, DBOrTx } from "../../db/index.js";
+import { usersTable } from "../../db/schema.js";
+import { DBUser, DBUserUpdate } from "./users.types.js";
 
 @injectable()
 export class UsersRepository {

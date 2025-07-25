@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../lib/inversify.types";
-import { UsersRepository } from "./users.repository";
-import { db, DBOrTx } from "../../db";
-import { DBUserUpdate } from "./users.types";
+import { TYPES } from "../../lib/inversify.types.js";
+import { UsersRepository } from "./users.repository.js";
+import { db, DBOrTx } from "../../db/index.js";
+import { DBUserUpdate } from "./users.types.js";
 
 @injectable()
 export class UsersMutationService {

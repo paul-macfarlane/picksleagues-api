@@ -1,12 +1,12 @@
 import { injectable } from "inversify";
 import { eq } from "drizzle-orm";
-import { db, DBOrTx } from "../../db";
-import { liveScoresTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { liveScoresTable } from "../../db/schema.js";
 import {
   DBLiveScore,
   DBLiveScoreInsert,
   DBLiveScoreUpdate,
-} from "./liveScores.types";
+} from "./liveScores.types.js";
 
 @injectable()
 export class LiveScoresRepository {

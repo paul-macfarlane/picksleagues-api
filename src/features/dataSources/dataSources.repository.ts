@@ -1,12 +1,12 @@
 import { eq } from "drizzle-orm";
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
-import { dataSourcesTable } from "../../db/schema";
+import { db, DBOrTx } from "../../db/index.js";
+import { dataSourcesTable } from "../../db/schema.js";
 import {
   DATA_SOURCE_NAMES,
   DBDataSource,
   DBDataSourceInsert,
-} from "./dataSources.types";
+} from "./dataSources.types.js";
 
 @injectable()
 export class DataSourcesRepository {

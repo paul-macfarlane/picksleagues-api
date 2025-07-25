@@ -1,4 +1,4 @@
-import { oddsTable, externalOddsTable } from "../../db/schema";
+import { oddsTable, externalOddsTable } from "../../db/schema.js";
 
 export type DBOdds = typeof oddsTable.$inferSelect;
 export type DBOddsInsert = typeof oddsTable.$inferInsert;

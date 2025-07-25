@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { leagueInvitesRouter } from "../features/leagueInvites/leagueInvites.router";
-import leagueTypesRouter from "../features/leagueTypes/leagueTypes.router";
-import leaguesRouter from "../features/leagues/leagues.router";
-import profilesRouter from "../features/profiles/profiles.router";
-import usersRouter from "../features/users/users.router";
+import { leagueInvitesRouter } from "../features/leagueInvites/leagueInvites.router.js";
+import leagueTypesRouter from "../features/leagueTypes/leagueTypes.router.js";
+import leaguesRouter from "../features/leagues/leagues.router.js";
+import profilesRouter from "../features/profiles/profiles.router.js";
+import usersRouter from "../features/users/users.router.js";
 
 const router = Router();
 

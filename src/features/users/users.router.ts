@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { container } from "../../lib/inversify.config";
-import { UsersService } from "./users.service";
-import { requireAuth } from "../../lib/auth.middleware";
-import { LeaguesService } from "../leagues/leagues.service";
-import { LeagueIncludeSchema } from "../leagues/leagues.types";
-import { TYPES } from "../../lib/inversify.types";
+import { container } from "../../lib/inversify.config.js";
+import { UsersService } from "./users.service.js";
+import { requireAuth } from "../../lib/auth.middleware.js";
+import { LeaguesService } from "../leagues/leagues.service.js";
+import { LeagueIncludeSchema } from "../leagues/leagues.types.js";
+import { TYPES } from "../../lib/inversify.types.js";
 
 const usersRouter = Router();
 

@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { OutcomesRepository } from "./outcomes.repository";
-import { DBOrTx } from "../../db";
-import { DBOutcomeInsert, DBOutcomeUpdate } from "./outcomes.types";
-import { TYPES } from "../../lib/inversify.types";
+import { OutcomesRepository } from "./outcomes.repository.js";
+import { DBOrTx } from "../../db/index.js";
+import { DBOutcomeInsert, DBOutcomeUpdate } from "./outcomes.types.js";
+import { TYPES } from "../../lib/inversify.types.js";
 
 @injectable()
 export class OutcomesMutationService {

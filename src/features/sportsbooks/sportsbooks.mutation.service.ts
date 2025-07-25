@@ -1,11 +1,11 @@
 import { injectable, inject } from "inversify";
-import { SportsbooksRepository } from "./sportsbooks.repository";
-import { DBOrTx } from "../../db";
+import { SportsbooksRepository } from "./sportsbooks.repository.js";
+import { DBOrTx } from "../../db/index.js";
 import {
   DBSportsbookInsert,
   DBExternalSportsbookInsert,
-} from "./sportsbooks.types";
-import { TYPES } from "../../lib/inversify.types";
+} from "./sportsbooks.types.js";
+import { TYPES } from "../../lib/inversify.types.js";
 
 @injectable()
 export class SportsbooksMutationService {

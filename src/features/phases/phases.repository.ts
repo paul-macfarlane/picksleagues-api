@@ -1,11 +1,11 @@
 import { and, eq, gte, inArray, lte, sql, asc } from "drizzle-orm";
 import { injectable } from "inversify";
-import { db, DBOrTx } from "../../db";
+import { db, DBOrTx } from "../../db/index.js";
 import {
   externalPhasesTable,
   phasesTable,
   phaseTemplatesTable,
-} from "../../db/schema";
+} from "../../db/schema.js";
 import {
   DBExternalPhase,
   DBExternalPhaseInsert,
@@ -13,7 +13,7 @@ import {
   DBPhase,
   DBPhaseInsert,
   DBPhaseUpdate,
-} from "./phases.types";
+} from "./phases.types.js";
 
 @injectable()
 export class PhasesRepository {

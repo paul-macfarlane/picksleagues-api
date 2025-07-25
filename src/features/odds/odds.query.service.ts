@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { OddsRepository } from "./odds.repository";
-import { DBOrTx } from "../../db";
-import { DBOdds, DBExternalOdds } from "./odds.types";
-import { TYPES } from "../../lib/inversify.types";
+import { OddsRepository } from "./odds.repository.js";
+import { DBOrTx } from "../../db/index.js";
+import { DBOdds, DBExternalOdds } from "./odds.types.js";
+import { TYPES } from "../../lib/inversify.types.js";
 
 @injectable()
 export class OddsQueryService {
