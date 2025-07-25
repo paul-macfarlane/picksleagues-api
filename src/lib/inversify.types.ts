@@ -15,6 +15,11 @@ export const TYPES = {
   SeasonsRepository: Symbol.for("SeasonsRepository"),
   UsersRepository: Symbol.for("UsersRepository"),
   TeamsRepository: Symbol.for("TeamsRepository"),
+  EventsRepository: Symbol.for("EventsRepository"),
+  OddsRepository: Symbol.for("OddsRepository"),
+  SportsbooksRepository: Symbol.for("SportsbooksRepository"),
+  LiveScoresRepository: Symbol.for("LiveScoresRepository"),
+  OutcomesRepository: Symbol.for("OutcomesRepository"),
 
   // Services
   ProfilesService: Symbol.for("ProfilesService"),
@@ -29,9 +34,11 @@ export const TYPES = {
   SportLeaguesService: Symbol.for("SportLeaguesService"),
   SeasonsService: Symbol.for("SeasonsService"),
   TeamsService: Symbol.for("TeamsService"),
+  EventsService: Symbol.for("EventsService"),
 
   // Util Services
   LeaguesUtilService: Symbol.for("LeaguesUtilService"),
+  SeasonsUtilService: Symbol.for("SeasonsUtilService"),
 
   // Query Services
   LeaguesQueryService: Symbol.for("LeaguesQueryService"),
@@ -46,6 +53,11 @@ export const TYPES = {
   DataSourcesQueryService: Symbol.for("DataSourcesQueryService"),
   SportLeaguesQueryService: Symbol.for("SportLeaguesQueryService"),
   TeamsQueryService: Symbol.for("TeamsQueryService"),
+  EventsQueryService: Symbol.for("EventsQueryService"),
+  OddsQueryService: Symbol.for("OddsQueryService"),
+  SportsbooksQueryService: Symbol.for("SportsbooksQueryService"),
+  LiveScoresQueryService: Symbol.for("LiveScoresQueryService"),
+  OutcomesQueryService: Symbol.for("OutcomesQueryService"),
 
   // Mutation Services
   AccountsMutationService: Symbol.for("AccountsMutationService"),
@@ -62,6 +74,11 @@ export const TYPES = {
   DataSourcesMutationService: Symbol.for("DataSourcesMutationService"),
   SportLeaguesMutationService: Symbol.for("SportLeaguesMutationService"),
   TeamsMutationService: Symbol.for("TeamsMutationService"),
+  EventsMutationService: Symbol.for("EventsMutationService"),
+  OddsMutationService: Symbol.for("OddsMutationService"),
+  SportsbooksMutationService: Symbol.for("SportsbooksMutationService"),
+  LiveScoresMutationService: Symbol.for("LiveScoresMutationService"),
+  OutcomesMutationService: Symbol.for("OutcomesMutationService"),
 
   // External Services
   EspnService: Symbol.for("EspnService"),

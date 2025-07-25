@@ -10,6 +10,11 @@ import {
   ESPN_SEASON_TYPES,
   ESPNWeek,
   ESPNTeam,
+  ESPNEvent,
+  ESPNOddsListResponse,
+  ESPNOddsData,
+  ESPNScore,
+  ESPNEventStatus,
 } from "./espn.types";
 
 @injectable()
@@ -150,5 +155,42 @@ export class EspnService {
     }
 
     return teams;
+  }
+
+  async getESPNEvents(
+    sportSlug: ESPN_SPORT_SLUGS,
+    leagueSlug: ESPN_LEAGUE_SLUGS,
+    seasonId: string,
+    type: ESPN_SEASON_TYPES,
+    weekNumber: number,
+  ): Promise<ESPNEvent[]> {
+    const events: ESPNEvent[] = [];
+    const espnEventRefs = await this.getAllRefUrlsFromESPNListUrl(
+      `https://sports.core.api.espn.com/v2/sports/${sportSlug}/leagues/${leagueSlug}/seasons/${seasonId}/types/${type}/weeks/${weekNumber}/events?lang=en&region=us`,
+    );
+    for (const espnEventRef of espnEventRefs) {
+      const eventRes = await axios.get<ESPNEvent>(espnEventRef);
+      events.push(eventRes.data);
+    }
+
+    return events;
+  }
+
+  async getESPNEventOdds(refUrl: string): Promise<ESPNOddsData[]> {
+    const oddsRes = await axios.get<ESPNOddsListResponse>(refUrl);
+
+    return oddsRes.data.items;
+  }
+
+  async getESPNEventScore(refUrl: string): Promise<ESPNScore> {
+    const response = await axios.get<ESPNScore>(refUrl);
+
+    return response.data;
+  }
+
+  async getESPNEventStatusFromRefUrl(refUrl: string): Promise<ESPNEventStatus> {
+    const statusRes = await axios.get<ESPNEventStatus>(refUrl);
+
+    return statusRes.data;
   }
 }

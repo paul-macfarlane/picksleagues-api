@@ -2,21 +2,17 @@ import { Router, Request, Response } from "express";
 import { container } from "../../lib/inversify.config";
 import { TYPES } from "../../lib/inversify.types";
 import { SeasonsService } from "../../features/seasons/seasons.service";
-import { handleApiError } from "../../lib/errors";
 
 const router = Router();
 const seasonsService = container.get<SeasonsService>(TYPES.SeasonsService);
 
-router.get("/", async (_req: Request, res: Response) => {
-  console.log("Starting seasons cron");
+const cronLabel = "Seasons cron";
 
-  try {
-    await seasonsService.syncSeasons();
-    console.log("Seasons cron completed");
-    res.status(200).json({ message: "success" });
-  } catch (err) {
-    handleApiError(err, res);
-  }
+router.get("/", async (_req: Request, res: Response) => {
+  console.time(cronLabel);
+  await seasonsService.syncSeasons();
+  console.timeEnd(cronLabel);
+  res.status(200).json({ message: "success" });
 });
 
 export default router;

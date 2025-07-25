@@ -11,12 +11,12 @@ export class PhasesQueryService {
     private phasesRepository: PhasesRepository,
   ) {}
 
-  async findExternalBySourceAndId(
+  async findExternalBySourceAndExternalId(
     dataSourceId: string,
     externalId: string,
     dbOrTx?: DBOrTx,
   ): Promise<DBExternalPhase | null> {
-    return this.phasesRepository.findExternalBySourceAndId(
+    return this.phasesRepository.findExternalBySourceAndExternalId(
       dataSourceId,
       externalId,
       dbOrTx,
@@ -35,5 +35,33 @@ export class PhasesQueryService {
       currentDate,
       dbOrTx,
     );
+  }
+
+  async listBySeasonIds(
+    seasonIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPhase[]> {
+    return this.phasesRepository.listBySeasonIds(seasonIds, dbOrTx);
+  }
+
+  async findCurrentBySeasonIds(
+    seasonIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPhase[]> {
+    return this.phasesRepository.findCurrentBySeasonIds(seasonIds, dbOrTx);
+  }
+
+  async findNextBySeasonIds(
+    seasonIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPhase[]> {
+    return this.phasesRepository.findNextBySeasonIds(seasonIds, dbOrTx);
+  }
+
+  async listExternalByPhaseIds(
+    phaseIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBExternalPhase[]> {
+    return this.phasesRepository.listExternalByPhaseIds(phaseIds, dbOrTx);
   }
 }

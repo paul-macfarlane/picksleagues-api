@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { injectable } from "inversify";
 import { db, DBOrTx } from "../../db";
 import { externalSportLeaguesTable, sportsLeaguesTable } from "../../db/schema";
@@ -61,24 +61,30 @@ export class SportLeaguesRepository {
     return sportLeague ?? null;
   }
 
-  async findExternalBySourceAndMetadata(
+  async list(dbOrTx: DBOrTx = db): Promise<DBSportLeague[]> {
+    return dbOrTx.select().from(sportsLeaguesTable);
+  }
+
+  async listExternalBySourceAndSportLeagueIds(
     dataSourceId: string,
-    metadata: Record<string, string>,
+    sportLeagueIds: string[],
     dbOrTx: DBOrTx = db,
-  ): Promise<DBExternalSportLeague | null> {
-    const [externalSportLeague] = await dbOrTx
+  ): Promise<DBExternalSportLeague[]> {
+    if (sportLeagueIds.length === 0) {
+      return [];
+    }
+    return dbOrTx
       .select()
       .from(externalSportLeaguesTable)
       .where(
         and(
           eq(externalSportLeaguesTable.dataSourceId, dataSourceId),
-          eq(externalSportLeaguesTable.metadata, metadata),
+          inArray(externalSportLeaguesTable.sportLeagueId, sportLeagueIds),
         ),
       );
-    return externalSportLeague ?? null;
   }
 
-  async findExternalBySourceAndId(
+  async findExternalBySourceAndExternalId(
     sourceId: string,
     externalId: string,
     dbOrTx: DBOrTx = db,
@@ -90,6 +96,24 @@ export class SportLeaguesRepository {
         and(
           eq(externalSportLeaguesTable.dataSourceId, sourceId),
           eq(externalSportLeaguesTable.externalId, externalId),
+        ),
+      )
+      .limit(1);
+    return externalSportLeague;
+  }
+
+  async findExternalBySourceAndSportLeagueId(
+    sourceId: string,
+    sportLeagueId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalSportLeague | null> {
+    const [externalSportLeague] = await dbOrTx
+      .select()
+      .from(externalSportLeaguesTable)
+      .where(
+        and(
+          eq(externalSportLeaguesTable.dataSourceId, sourceId),
+          eq(externalSportLeaguesTable.sportLeagueId, sportLeagueId),
         ),
       )
       .limit(1);

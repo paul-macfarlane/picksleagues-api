@@ -9,7 +9,7 @@ import {
   DBTeamUpdate,
 } from "./teams.types";
 import { externalTeamsTable, teamsTable } from "../../db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 @injectable()
 export class TeamsRepository {
@@ -29,6 +29,30 @@ export class TeamsRepository {
       .where(eq(teamsTable.id, id))
       .returning();
     return updatedTeam;
+  }
+
+  async listBySportLeagueId(
+    sportLeagueId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBTeam[]> {
+    const teams = await dbOrTx
+      .select()
+      .from(teamsTable)
+      .where(eq(teamsTable.sportLeagueId, sportLeagueId));
+    return teams;
+  }
+
+  async listBySportLeagueIds(
+    sportLeagueIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBTeam[]> {
+    if (sportLeagueIds.length === 0) {
+      return [];
+    }
+    return dbOrTx
+      .select()
+      .from(teamsTable)
+      .where(inArray(teamsTable.sportLeagueId, sportLeagueIds));
   }
 
   async createExternal(
@@ -77,5 +101,22 @@ export class TeamsRepository {
         ),
       );
     return externalTeam[0] || null;
+  }
+
+  async listExternalByDataSourceIdAndTeamIds(
+    dataSourceId: string,
+    teamIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBExternalTeam[]> {
+    const externalTeams = await dbOrTx
+      .select()
+      .from(externalTeamsTable)
+      .where(
+        and(
+          eq(externalTeamsTable.dataSourceId, dataSourceId),
+          inArray(externalTeamsTable.teamId, teamIds),
+        ),
+      );
+    return externalTeams;
   }
 }

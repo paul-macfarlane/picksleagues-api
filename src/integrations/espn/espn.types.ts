@@ -105,7 +105,7 @@ export const ESPN_DESIRED_SEASON_TYPES = [
   ESPN_SEASON_TYPES.POST_SEASON,
 ];
 
-type ESPNSeasonWeek = {
+export type ESPNSeasonWeek = {
   $ref: string;
   number: number;
   startDate: string;
@@ -116,7 +116,7 @@ type ESPNSeasonWeek = {
   talentpicks: ESPNRef;
 };
 
-type ESPNSeasonType = {
+export type ESPNSeasonType = {
   $ref: string;
   id: string;
   type: number;
@@ -140,7 +140,7 @@ type ESPNSeasonTypeItem = ESPNSeasonType & {
   week?: ESPNSeasonWeek;
 };
 
-type ESPNSeasonTypes = {
+export type ESPNSeasonTypes = {
   $ref: string;
   count: number;
   pageIndex: number;
@@ -225,4 +225,233 @@ export type ESPNVenue = {
   grass: boolean;
   indoor: boolean;
   images?: ESPNLogo[];
+};
+
+export type ESPNEvent = {
+  $ref: string;
+  id: string;
+  uid: string;
+  date: string;
+  name: string;
+  shortName: string;
+  season: ESPNRef;
+  seasonType: ESPNRef;
+  week: ESPNRef;
+  timeValid: boolean;
+  competitions: ESPNCompetition[];
+};
+
+export type ESPNCompetition = {
+  $ref: string;
+  id: string;
+  guid: string;
+  uid: string;
+  date: string;
+  attendance: number;
+  type: CompetitionType;
+  timeValid: boolean;
+  dateValid: boolean;
+  neutralSite: boolean;
+  divisionCompetition: boolean;
+  conferenceCompetition: boolean;
+  previewAvailable: boolean;
+  recapAvailable: boolean;
+  boxscoreAvailable: boolean;
+  lineupAvailable: boolean;
+  gamecastAvailable: boolean;
+  playByPlayAvailable: boolean;
+  conversationAvailable: boolean;
+  commentaryAvailable: boolean;
+  pickcenterAvailable: boolean;
+  summaryAvailable: boolean;
+  liveAvailable: boolean;
+  ticketsAvailable: boolean;
+  shotChartAvailable: boolean;
+  timeoutsAvailable: boolean;
+  possessionArrowAvailable: boolean;
+  onWatchESPN: boolean;
+  recent: boolean;
+  bracketAvailable: boolean;
+  wallclockAvailable: boolean;
+  gameSource: Source;
+  boxscoreSource: Source;
+  playByPlaySource: Source;
+  linescoreSource: Source;
+  statsSource: Source;
+  venue: ESPNVenue;
+  competitors: ESPNCompetitor[];
+  notes: unknown[]; // Define if needed
+  situation: ESPNRef;
+  status: ESPNRef;
+  odds: ESPNRef;
+  broadcasts: ESPNRef;
+  officials: ESPNRef;
+  details: ESPNRef;
+  leaders: ESPNRef;
+  links: ESPNLink[];
+};
+
+export type CompetitionType = {
+  id: string;
+  text: string;
+  abbreviation: string;
+  slug: string;
+  type: string;
+};
+
+export type Source = {
+  id: string;
+  description: string;
+  state: string;
+};
+
+export type ESPNCompetitor = {
+  $ref: string;
+  id: string;
+  uid: string;
+  type: string;
+  order: number;
+  homeAway: string;
+  winner: boolean;
+  team: ESPNRef;
+  score: ESPNRef;
+  linescores: ESPNRef;
+  roster: ESPNRef;
+  statistics: ESPNRef;
+  leaders: ESPNRef;
+  record: ESPNRef;
+};
+
+export type ESPNCompetitorScore = {
+  value: number;
+  displayValue: string;
+};
+
+export type ESPNScoreboard = {
+  $ref: string;
+  displayValue: string;
+  summary: string;
+  status: {
+    $ref: string;
+    id: string;
+    state: "pre" | "in" | "post";
+    detail: string;
+    shortDetail: string;
+  };
+  scores: {
+    home: ESPNCompetitorScore;
+    away: ESPNCompetitorScore;
+  };
+  competitors: {
+    home: ESPNRef;
+    away: ESPNRef;
+  };
+  period: number;
+  clock: {
+    displayValue: string;
+  };
+};
+
+export type ESPNOddsData = {
+  $ref: string;
+  provider: ESPNProvider;
+  details: string;
+  overUnder: number;
+  spread: number;
+  overOdds: number;
+  underOdds: number;
+  awayTeamOdds: ESPNTeamOdds;
+  homeTeamOdds: ESPNTeamOdds;
+  links: ESPNOddsLink[];
+};
+
+export type ESPNProvider = {
+  $ref: string;
+  id: string;
+  name: string;
+  priority: number;
+};
+
+export type ESPNTeamOdds = {
+  favorite: boolean;
+  underdog: boolean;
+  moneyLine: number;
+  spreadOdds: number;
+  open: ESPNOddsDetail;
+  close: ESPNOddsDetail;
+  current: ESPNOddsDetail;
+  team: ESPNOddsTeamRef;
+};
+
+export type ESPNOddsDetail = {
+  pointSpread: ESPNOddsValue;
+  spread: ESPNOddsValueWithMetrics;
+  moneyLine: ESPNOddsValueWithMetrics;
+};
+
+export type ESPNOddsValue = {
+  alternateDisplayValue: string;
+  american: string;
+};
+
+export type ESPNOddsValueWithMetrics = {
+  value: number;
+  displayValue: string;
+  decimal: number;
+  fraction: string;
+};
+
+export type ESPNOddsTeamRef = {
+  $ref: string;
+};
+
+export type ESPNOddsLink = {
+  language: string;
+  rel: string[];
+  href: string;
+  text: string;
+  shortText: string;
+  isExternal: boolean;
+  isPremium: boolean;
+};
+
+export type ESPNOddsListResponse = {
+  count: number;
+  pageIndex: number;
+  pageSize: number;
+  pageCount: number;
+  items: ESPNOddsData[];
+};
+
+export type ESPNScore = {
+  $ref: string;
+  value: number;
+  displayValue: string;
+  winner?: boolean;
+  source: {
+    id: string;
+    description: string;
+  };
+};
+
+export enum ESPN_SPORT_LEAGUE_GAME_STATUSES {
+  FINAL = "STATUS_FINAL",
+  SCHEDULED = "STATUS_SCHEDULED",
+  IN_PROGRESS = "STATUS_IN_PROGRESS",
+}
+
+export type ESPNEventStatus = {
+  $ref: string;
+  clock: number;
+  displayClock: string;
+  period: number;
+  type: {
+    id: string;
+    name: ESPN_SPORT_LEAGUE_GAME_STATUSES;
+    state: string;
+    completed: boolean;
+    description: string;
+    detail: string;
+    shortDetail: string;
+  };
 };

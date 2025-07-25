@@ -22,26 +22,42 @@ export class SportLeaguesQueryService {
     return this.sportLeaguesRepository.findByName(name, dbOrTx);
   }
 
-  async findExternalBySourceAndId(
+  async findExternalBySourceAndExternalId(
     dataSourceId: string,
     externalId: string,
     dbOrTx?: DBOrTx,
   ): Promise<DBExternalSportLeague | null> {
-    return this.sportLeaguesRepository.findExternalBySourceAndId(
+    return this.sportLeaguesRepository.findExternalBySourceAndExternalId(
       dataSourceId,
       externalId,
       dbOrTx,
     );
   }
 
-  async findExternalBySourceAndMetadata(
+  async findExternalBySourceAndSportLeagueId(
     dataSourceId: string,
-    metadata: Record<string, string>,
+    sportLeagueId: string,
     dbOrTx?: DBOrTx,
   ): Promise<DBExternalSportLeague | null> {
-    return this.sportLeaguesRepository.findExternalBySourceAndMetadata(
+    return this.sportLeaguesRepository.findExternalBySourceAndSportLeagueId(
       dataSourceId,
-      metadata,
+      sportLeagueId,
+      dbOrTx,
+    );
+  }
+
+  async list(dbOrTx?: DBOrTx): Promise<DBSportLeague[]> {
+    return this.sportLeaguesRepository.list(dbOrTx);
+  }
+
+  async listExternalBySourceAndSportLeagueIds(
+    dataSourceId: string,
+    sportLeagueIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBExternalSportLeague[]> {
+    return this.sportLeaguesRepository.listExternalBySourceAndSportLeagueIds(
+      dataSourceId,
+      sportLeagueIds,
       dbOrTx,
     );
   }
