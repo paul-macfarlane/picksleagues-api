@@ -2,12 +2,14 @@ import { externalPhasesTable, phasesTable } from "../../db/schema.js";
 import { z } from "zod";
 import { PopulatedEvent } from "../events/events.types.js";
 import { ESPN_SEASON_TYPES } from "../../integrations/espn/espn.types.js";
+import { DBPhaseTemplate } from "../phaseTemplates/phaseTemplates.types.js";
 
 // Constants
 
 export enum PHASE_INCLUDES {
   PREVIOUS_PHASE = "previousPhase",
   NEXT_PHASE = "nextPhase",
+  PHASE_TEMPLATE = "phaseTemplate",
   EVENTS = "events",
   EVENTS_LIVE_SCORES = "events.liveScores",
   EVENTS_OUTCOMES = "events.outcomes",
@@ -29,6 +31,7 @@ export type DBExternalPhaseUpdate = Partial<DBExternalPhaseInsert>;
 export type PopulatedPhase = DBPhase & {
   previousPhase?: DBPhase;
   nextPhase?: DBPhase;
+  phaseTemplate?: DBPhaseTemplate;
   events?: PopulatedEvent[];
 };
 

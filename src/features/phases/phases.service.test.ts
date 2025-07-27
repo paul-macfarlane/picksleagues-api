@@ -10,6 +10,7 @@ import { OutcomesQueryService } from "../outcomes/outcomes.query.service.js";
 import { OddsQueryService } from "../odds/odds.query.service.js";
 import { SportsbooksQueryService } from "../sportsbooks/sportsbooks.query.service.js";
 import { TeamsQueryService } from "../teams/teams.query.service.js";
+import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service.js";
 import { NotFoundError, ForbiddenError } from "../../lib/errors.js";
 import { DBPhase } from "./phases.types.js";
 import { DBLeague } from "../leagues/leagues.types.js";
@@ -17,11 +18,13 @@ import {
   DBLeagueMember,
   LEAGUE_MEMBER_ROLES,
 } from "../leagueMembers/leagueMembers.types.js";
+import { DBPhaseTemplate } from "../phaseTemplates/phaseTemplates.types.js";
+import { PHASE_TEMPLATE_TYPES } from "../phaseTemplates/phaseTemplates.types.js";
 
 // Mock the database transaction
 vi.mock("../../db", () => ({
   db: {
-    transaction: vi.fn((callback) => callback()),
+    transaction: vi.fn((callback) => callback({} as unknown)),
   },
 }));
 
@@ -35,6 +38,7 @@ describe("PhasesService", () => {
   const oddsQueryService = mock<OddsQueryService>();
   const sportsbooksQueryService = mock<SportsbooksQueryService>();
   const teamsQueryService = mock<TeamsQueryService>();
+  const phaseTemplatesQueryService = mock<PhaseTemplatesQueryService>();
 
   let phasesService: PhasesService;
 
@@ -42,7 +46,7 @@ describe("PhasesService", () => {
     phasesService = new PhasesService(
       phasesQueryService,
       mock(), // PhasesMutationService
-      mock(), // PhaseTemplatesQueryService
+      phaseTemplatesQueryService,
       mock(), // EspnService
       mock(), // DataSourcesQueryService
       mock(), // SeasonsQueryService
@@ -267,6 +271,46 @@ describe("PhasesService", () => {
       expect(result).toEqual(mockPhase);
     });
 
+    it("should return phase when user is member of different league", async () => {
+      const mockPhase: DBPhase = {
+        id: "phase-1",
+        seasonId: "season-1",
+        phaseTemplateId: "template-1",
+        sequence: 1,
+        startDate: new Date("2024-01-01"),
+        endDate: new Date("2024-01-07"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockLeague: Partial<DBLeague> = {
+        id: "league-1",
+        startPhaseTemplateId: "start-template-1",
+        endPhaseTemplateId: "end-template-1",
+      };
+
+      const mockMember: Partial<DBLeagueMember> = {
+        leagueId: "league-1",
+        userId: "user-1",
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+      };
+
+      phasesQueryService.findById.mockResolvedValue(mockPhase);
+      leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember as DBLeagueMember,
+      );
+
+      const result = await phasesService.getPhaseByIdAndLeagueId(
+        "user-1",
+        "phase-1",
+        "league-1",
+        [],
+      );
+
+      expect(result).toEqual(mockPhase);
+    });
+
     it("should throw NotFoundError when phase not found", async () => {
       phasesQueryService.findById.mockResolvedValue(null);
 
@@ -327,22 +371,89 @@ describe("PhasesService", () => {
       };
 
       const mockLeague: Partial<DBLeague> = {
+        id: "league-2",
+        startPhaseTemplateId: "start-template-1",
+        endPhaseTemplateId: "end-template-1",
+      };
+
+      const mockMember: Partial<DBLeagueMember> = {
+        leagueId: "league-2",
+        userId: "user-1",
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+      };
+
+      phasesQueryService.findById.mockResolvedValue(mockPhase);
+      leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember as DBLeagueMember,
+      );
+
+      const result = await phasesService.getPhaseByIdAndLeagueId(
+        "user-1",
+        "phase-1",
+        "league-2",
+        [],
+      );
+
+      expect(result).toEqual(mockPhase);
+    });
+
+    it("should include phase template when requested", async () => {
+      const mockPhase: DBPhase = {
+        id: "phase-1",
+        seasonId: "season-1",
+        phaseTemplateId: "template-1",
+        sequence: 1,
+        startDate: new Date("2024-01-01"),
+        endDate: new Date("2024-01-07"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockLeague: Partial<DBLeague> = {
         id: "league-1",
         startPhaseTemplateId: "start-template-1",
         endPhaseTemplateId: "end-template-1",
       };
 
+      const mockPhaseTemplate: DBPhaseTemplate = {
+        id: "template-1",
+        sportLeagueId: "sport-league-1",
+        label: "Week 1",
+        sequence: 1,
+        type: PHASE_TEMPLATE_TYPES.WEEK,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockMember: Partial<DBLeagueMember> = {
+        leagueId: "league-1",
+        userId: "user-1",
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+      };
+
       phasesQueryService.findById.mockResolvedValue(mockPhase);
       leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember as DBLeagueMember,
+      );
+      phaseTemplatesQueryService.findById.mockResolvedValue(mockPhaseTemplate);
 
-      await expect(
-        phasesService.getPhaseByIdAndLeagueId(
-          "user-1",
-          "phase-1",
-          "league-2",
-          [],
-        ),
-      ).rejects.toThrow(new NotFoundError("Phase not found in this league"));
+      const result = await phasesService.getPhaseByIdAndLeagueId(
+        "user-1",
+        "phase-1",
+        "league-1",
+        ["phaseTemplate"],
+      );
+
+      expect(result).toEqual({
+        ...mockPhase,
+        phaseTemplate: mockPhaseTemplate,
+      });
+      expect(phaseTemplatesQueryService.findById).toHaveBeenCalledWith(
+        "template-1",
+        expect.anything(),
+      );
     });
   });
 });

@@ -638,10 +638,6 @@ export class EventsService {
             const spreadHome = homeTeamIsFavorite ? spreadValue : -spreadValue;
             const spreadAway = homeTeamIsFavorite ? -spreadValue : spreadValue;
 
-            console.log(
-              `Event ${event.id}: Spread ${spreadValue}, Home favorite: ${homeTeamIsFavorite}, Home spread: ${spreadHome}, Away spread: ${spreadAway}`,
-            );
-
             const oddsData = {
               eventId: event.id,
               sportsbookId: defaultSportsbook.id,

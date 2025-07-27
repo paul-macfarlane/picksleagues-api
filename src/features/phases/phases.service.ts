@@ -352,6 +352,15 @@ export class PhasesService {
       endPhaseTemplateId: string;
     },
   ): Promise<void> {
+    // Phase template
+    if (includes.includes(PHASE_INCLUDES.PHASE_TEMPLATE)) {
+      const phaseTemplate = await this.phaseTemplatesQueryService.findById(
+        phase.phaseTemplateId,
+        tx,
+      );
+      phase.phaseTemplate = phaseTemplate ?? undefined;
+    }
+
     if (
       leagueContext &&
       (includes.includes(PHASE_INCLUDES.PREVIOUS_PHASE) ||
