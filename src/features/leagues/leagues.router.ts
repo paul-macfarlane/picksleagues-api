@@ -17,6 +17,10 @@ import { LeagueMembersService } from "../leagueMembers/leagueMembers.service.js"
 import { LeagueInviteIncludeSchema } from "../leagueInvites/leagueInvites.types.js";
 import { LeagueInvitesService } from "../leagueInvites/leagueInvites.service.js";
 import { UserIdSchema } from "../profiles/profiles.types.js";
+import { PhasesService } from "../phases/phases.service.js";
+import { PhaseIncludesSchema, PhaseIdSchema } from "../phases/phases.types.js";
+import { PicksService } from "../picks/picks.service.js";
+import { PickIncludesSchema, SubmitPicksSchema } from "../picks/picks.types.js";
 
 const router = Router();
 const leaguesService = container.get<LeaguesService>(TYPES.LeaguesService);
@@ -26,6 +30,8 @@ const leagueMembersService = container.get<LeagueMembersService>(
 const leagueInvitesService = container.get<LeagueInvitesService>(
   TYPES.LeagueInvitesService,
 );
+const phasesService = container.get<PhasesService>(TYPES.PhasesService);
+const picksService = container.get<PicksService>(TYPES.PicksService);
 
 router.use(requireAuth);
 
@@ -141,6 +147,125 @@ router.delete(
       leagueId,
       targetUserId,
     );
+
+    res.status(204).send();
+  },
+);
+
+router.get(
+  "/:leagueId/current-phase",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const query = PhaseIncludesSchema.parse(req.query);
+
+    const currentPhase = await phasesService.getCurrentPhaseForLeague(
+      req.user!.id,
+      leagueId,
+      query?.include,
+    );
+
+    res.status(200).json(currentPhase);
+  },
+);
+
+router.get(
+  "/:leagueId/phases/:phaseId",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const phaseId = PhaseIdSchema.parse(req.params.phaseId);
+    const query = PhaseIncludesSchema.parse(req.query);
+
+    const phase = await phasesService.getPhaseByIdAndLeagueId(
+      req.user!.id,
+      phaseId,
+      leagueId,
+      query?.include,
+    );
+
+    res.status(200).json(phase);
+  },
+);
+
+// Get current user's picks for a specific phase in a league
+router.get(
+  "/:leagueId/phases/:phaseId/my-picks",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const phaseId = PhaseIdSchema.parse(req.params.phaseId);
+    const query = PickIncludesSchema.parse(req.query);
+
+    const picks = await picksService.getPicksForUserInPhase(
+      req.user!.id,
+      leagueId,
+      phaseId,
+      query?.include,
+    );
+
+    res.status(200).json(picks);
+  },
+);
+
+// Get all picks for a league and phase (for all users)
+router.get(
+  "/:leagueId/phases/:phaseId/picks",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const phaseId = PhaseIdSchema.parse(req.params.phaseId);
+    const query = PickIncludesSchema.parse(req.query);
+
+    const picks = await picksService.getAllPicksForLeagueAndPhase(
+      req.user!.id,
+      leagueId,
+      phaseId,
+      query?.include,
+    );
+
+    res.status(200).json(picks);
+  },
+);
+
+// Get current user's picks for the current phase in a league
+router.get(
+  "/:leagueId/current-phase/my-picks",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const query = PickIncludesSchema.parse(req.query);
+
+    const picks = await picksService.getPicksForUserInCurrentPhase(
+      req.user!.id,
+      leagueId,
+      query?.include,
+    );
+
+    res.status(200).json(picks);
+  },
+);
+
+// Get all picks for the current phase in a league (for all users)
+router.get(
+  "/:leagueId/current-phase/picks",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const query = PickIncludesSchema.parse(req.query);
+
+    const picks = await picksService.getAllPicksForCurrentPhase(
+      req.user!.id,
+      leagueId,
+      query?.include,
+    );
+
+    res.status(200).json(picks);
+  },
+);
+
+// Submit picks for the current phase in a league
+router.post(
+  "/:leagueId/current-phase/picks",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const pickData = SubmitPicksSchema.parse(req.body);
+
+    await picksService.submitPicks(req.user!.id, leagueId, pickData);
 
     res.status(204).send();
   },

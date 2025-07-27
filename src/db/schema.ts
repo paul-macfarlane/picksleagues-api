@@ -226,6 +226,7 @@ export const phasesTable = pgTable("phases", {
   sequence: integer("sequence").notNull(),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
+  pickLockTime: timestamp("pick_lock_time").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()
@@ -602,4 +603,36 @@ export const leagueInvitesTable = pgTable("league_invites", {
 
   // Link invites
   token: text("token").unique(),
+});
+
+export const picksTable = pgTable("picks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  leagueId: uuid("league_id")
+    .references(() => leaguesTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  userId: text("user_id")
+    .references(() => usersTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  eventId: uuid("event_id")
+    .references(() => eventsTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  // this can be non-nullable as long as the picks are only related to teams
+  teamId: uuid("team_id")
+    .references(() => teamsTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  // optional, because picks could be ats, but could just be straight up
+  spread: decimal("spread", { precision: 10, scale: 2 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });

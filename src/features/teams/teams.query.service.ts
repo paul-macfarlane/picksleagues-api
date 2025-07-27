@@ -25,6 +25,10 @@ export class TeamsQueryService {
     return this.teamsRepository.listBySportLeagueIds(sportLeagueIds, dbOrTx);
   }
 
+  async findById(id: string, dbOrTx?: DBOrTx): Promise<DBTeam | null> {
+    return this.teamsRepository.findById(id, dbOrTx);
+  }
+
   async findExternalByDataSourceIdAndExternalId(
     dataSourceId: string,
     externalId: string,

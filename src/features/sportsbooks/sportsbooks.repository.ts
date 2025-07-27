@@ -60,4 +60,15 @@ export class SportsbooksRepository {
       );
     return externalSportsbook || null;
   }
+
+  async findById(
+    id: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBSportsbook | null> {
+    const [sportsbook] = await dbOrTx
+      .select()
+      .from(sportsbooksTable)
+      .where(eq(sportsbooksTable.id, id));
+    return sportsbook || null;
+  }
 }

@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx } from "../../db/index.js";
+import { DBOrTx, db } from "../../db/index.js";
 import { TYPES } from "../../lib/inversify.types.js";
 import { PhasesRepository } from "./phases.repository.js";
 import { DBExternalPhase, DBPhase } from "./phases.types.js";
@@ -27,9 +27,23 @@ export class PhasesQueryService {
     startPhaseTemplateId: string,
     endPhaseTemplateId: string,
     currentDate: Date,
-    dbOrTx?: DBOrTx,
+    dbOrTx: DBOrTx = db,
   ): Promise<DBPhase[]> {
     return this.phasesRepository.findCurrentPhases(
+      startPhaseTemplateId,
+      endPhaseTemplateId,
+      currentDate,
+      dbOrTx,
+    );
+  }
+
+  async findNextPhases(
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    currentDate: Date,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase[]> {
+    return this.phasesRepository.findNextPhases(
       startPhaseTemplateId,
       endPhaseTemplateId,
       currentDate,
@@ -63,5 +77,37 @@ export class PhasesQueryService {
     dbOrTx?: DBOrTx,
   ): Promise<DBExternalPhase[]> {
     return this.phasesRepository.listExternalByPhaseIds(phaseIds, dbOrTx);
+  }
+
+  async findPreviousPhase(
+    currentPhaseId: string,
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPhase | null> {
+    return this.phasesRepository.findPreviousPhase(
+      currentPhaseId,
+      startPhaseTemplateId,
+      endPhaseTemplateId,
+      dbOrTx,
+    );
+  }
+
+  async findNextPhase(
+    currentPhaseId: string,
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPhase | null> {
+    return this.phasesRepository.findNextPhase(
+      currentPhaseId,
+      startPhaseTemplateId,
+      endPhaseTemplateId,
+      dbOrTx,
+    );
+  }
+
+  async findById(id: string, dbOrTx?: DBOrTx): Promise<DBPhase | null> {
+    return this.phasesRepository.findById(id, dbOrTx);
   }
 }

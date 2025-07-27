@@ -55,6 +55,14 @@ export class TeamsRepository {
       .where(inArray(teamsTable.sportLeagueId, sportLeagueIds));
   }
 
+  async findById(id: string, dbOrTx: DBOrTx = db): Promise<DBTeam | null> {
+    const [team] = await dbOrTx
+      .select()
+      .from(teamsTable)
+      .where(eq(teamsTable.id, id));
+    return team || null;
+  }
+
   async createExternal(
     externalTeam: DBExternalTeamInsert,
     dbOrTx: DBOrTx = db,
