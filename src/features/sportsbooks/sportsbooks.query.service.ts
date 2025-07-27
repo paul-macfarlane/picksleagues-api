@@ -26,4 +26,8 @@ export class SportsbooksQueryService {
       dbOrTx,
     );
   }
+
+  async findById(id: string, dbOrTx?: DBOrTx): Promise<DBSportsbook | null> {
+    return this.sportsbooksRepository.findById(id, dbOrTx);
+  }
 }

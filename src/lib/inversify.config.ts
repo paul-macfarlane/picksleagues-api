@@ -73,6 +73,10 @@ import { LiveScoresMutationService } from "../features/liveScores/liveScores.mut
 import { OutcomesRepository } from "../features/outcomes/outcomes.repository.js";
 import { OutcomesQueryService } from "../features/outcomes/outcomes.query.service.js";
 import { OutcomesMutationService } from "../features/outcomes/outcomes.mutation.service.js";
+import { PicksRepository } from "../features/picks/picks.repository.js";
+import { PicksQueryService } from "../features/picks/picks.query.service.js";
+import { PicksService } from "../features/picks/picks.service.js";
+import { PhasesUtilService } from "../features/phases/phases.util.service.js";
 
 const container = new Container();
 
@@ -266,6 +270,20 @@ container
   .to(OutcomesRepository)
   .inSingletonScope();
 
+// Picks Bindings
+container
+  .bind<PicksRepository>(TYPES.PicksRepository)
+  .to(PicksRepository)
+  .inSingletonScope();
+container
+  .bind<PicksQueryService>(TYPES.PicksQueryService)
+  .to(PicksQueryService)
+  .inSingletonScope();
+container
+  .bind<PicksService>(TYPES.PicksService)
+  .to(PicksService)
+  .inSingletonScope();
+
 // Query Services
 container
   .bind<LeaguesQueryService>(TYPES.LeaguesQueryService)
@@ -344,6 +362,10 @@ container
 container
   .bind<SeasonsUtilService>(TYPES.SeasonsUtilService)
   .to(SeasonsUtilService)
+  .inSingletonScope();
+container
+  .bind<PhasesUtilService>(TYPES.PhasesUtilService)
+  .to(PhasesUtilService)
   .inSingletonScope();
 
 // Mutation Services

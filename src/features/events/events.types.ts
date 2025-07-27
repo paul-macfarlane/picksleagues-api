@@ -6,6 +6,17 @@ import {
   outcomesTable,
 } from "../../db/schema.js";
 import { ESPN_SPORT_LEAGUE_GAME_STATUSES } from "../../integrations/espn/espn.types.js";
+import { PopulatedDBOdds } from "../odds/odds.types.js";
+import { DBTeam } from "../teams/teams.types.js";
+
+export enum EVENT_INCLUDES {
+  LIVE_SCORES = "liveScores",
+  OUTCOMES = "outcomes",
+  ODDS = "odds",
+  ODDS_SPORTSBOOK = "odds.sportsbook",
+  HOME_TEAM = "homeTeam",
+  AWAY_TEAM = "awayTeam",
+}
 
 // constants
 export enum EVENT_TYPES {
@@ -28,6 +39,14 @@ export const espnStatusToLiveScoreStatus: Record<string, LIVE_SCORE_STATUSES> =
       LIVE_SCORE_STATUSES.IN_PROGRESS,
     [ESPN_SPORT_LEAGUE_GAME_STATUSES.FINAL]: LIVE_SCORE_STATUSES.FINAL,
   };
+
+export interface PopulatedEvent extends DBEvent {
+  liveScore?: DBLiveScore;
+  outcome?: DBOutcome;
+  odds?: PopulatedDBOdds;
+  homeTeam?: DBTeam;
+  awayTeam?: DBTeam;
+}
 
 // database types
 export type DBEvent = typeof eventsTable.$inferSelect;

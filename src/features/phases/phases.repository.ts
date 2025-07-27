@@ -202,4 +202,132 @@ export class PhasesRepository {
       .where(inArray(externalPhasesTable.phaseId, phaseIds));
     return externalPhases;
   }
+
+  async findPreviousPhase(
+    currentPhaseId: string,
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase | null> {
+    // Get the current phase to find its sequence
+    const [currentPhase] = await dbOrTx
+      .select({
+        phase: phasesTable,
+        phaseTemplate: phaseTemplatesTable,
+      })
+      .from(phasesTable)
+      .innerJoin(
+        phaseTemplatesTable,
+        eq(phasesTable.phaseTemplateId, phaseTemplatesTable.id),
+      )
+      .where(eq(phasesTable.id, currentPhaseId));
+
+    if (!currentPhase) {
+      return null;
+    }
+
+    // Find the previous phase with a lower sequence within the league's range
+    const [previousPhase] = await dbOrTx
+      .select({
+        phase: phasesTable,
+      })
+      .from(phasesTable)
+      .innerJoin(
+        phaseTemplatesTable,
+        eq(phasesTable.phaseTemplateId, phaseTemplatesTable.id),
+      )
+      .where(
+        and(
+          // Phase template is between start and end templates (inclusive)
+          gte(
+            phaseTemplatesTable.sequence,
+            sql`(
+            SELECT sequence FROM ${phaseTemplatesTable}
+            WHERE id = ${startPhaseTemplateId}
+          )`,
+          ),
+          lte(
+            phaseTemplatesTable.sequence,
+            sql`(
+            SELECT sequence FROM ${phaseTemplatesTable}
+            WHERE id = ${endPhaseTemplateId}
+          )`,
+          ),
+          // Sequence is less than current phase's sequence
+          sql`${phaseTemplatesTable.sequence} < ${currentPhase.phaseTemplate.sequence}`,
+        ),
+      )
+      .orderBy(sql`${phaseTemplatesTable.sequence} DESC`)
+      .limit(1);
+
+    return previousPhase?.phase || null;
+  }
+
+  async findNextPhase(
+    currentPhaseId: string,
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase | null> {
+    // Get the current phase to find its sequence
+    const [currentPhase] = await dbOrTx
+      .select({
+        phase: phasesTable,
+        phaseTemplate: phaseTemplatesTable,
+      })
+      .from(phasesTable)
+      .innerJoin(
+        phaseTemplatesTable,
+        eq(phasesTable.phaseTemplateId, phaseTemplatesTable.id),
+      )
+      .where(eq(phasesTable.id, currentPhaseId));
+
+    if (!currentPhase) {
+      return null;
+    }
+
+    // Find the next phase with a higher sequence within the league's range
+    const [nextPhase] = await dbOrTx
+      .select({
+        phase: phasesTable,
+      })
+      .from(phasesTable)
+      .innerJoin(
+        phaseTemplatesTable,
+        eq(phasesTable.phaseTemplateId, phaseTemplatesTable.id),
+      )
+      .where(
+        and(
+          // Phase template is between start and end templates (inclusive)
+          gte(
+            phaseTemplatesTable.sequence,
+            sql`(
+            SELECT sequence FROM ${phaseTemplatesTable}
+            WHERE id = ${startPhaseTemplateId}
+          )`,
+          ),
+          lte(
+            phaseTemplatesTable.sequence,
+            sql`(
+            SELECT sequence FROM ${phaseTemplatesTable}
+            WHERE id = ${endPhaseTemplateId}
+          )`,
+          ),
+          // Sequence is greater than current phase's sequence
+          sql`${phaseTemplatesTable.sequence} > ${currentPhase.phaseTemplate.sequence}`,
+        ),
+      )
+      .orderBy(sql`${phaseTemplatesTable.sequence} ASC`)
+      .limit(1);
+
+    return nextPhase?.phase || null;
+  }
+
+  async findById(id: string, dbOrTx: DBOrTx = db): Promise<DBPhase | null> {
+    const [phase] = await dbOrTx
+      .select()
+      .from(phasesTable)
+      .where(eq(phasesTable.id, id));
+    return phase || null;
+  }
 }

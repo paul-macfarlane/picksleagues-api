@@ -26,7 +26,6 @@ import { PhasesQueryService } from "../phases/phases.query.service.js";
 import { TeamsQueryService } from "../teams/teams.query.service.js";
 import { EspnService } from "../../integrations/espn/espn.service.js";
 import { SportsbooksQueryService } from "../sportsbooks/sportsbooks.query.service.js";
-import { EspnExternalPhaseMetadataSchema } from "../phases/phase.types.js";
 import { EspnExternalSportLeagueMetadataSchema } from "../sportLeagues/sportLeagues.types.js";
 import { OutcomesMutationService } from "../outcomes/outcomes.mutation.service.js";
 import { TYPES } from "../../lib/inversify.types.js";
@@ -37,7 +36,11 @@ import { OddsMutationService } from "../odds/odds.mutation.service.js";
 import { LiveScoresQueryService } from "../liveScores/liveScores.query.service.js";
 import { LiveScoresMutationService } from "../liveScores/liveScores.mutation.service.js";
 import { OutcomesQueryService } from "../outcomes/outcomes.query.service.js";
-import { DBPhase, DBExternalPhase } from "../phases/phase.types.js";
+import {
+  DBPhase,
+  DBExternalPhase,
+  EspnExternalPhaseMetadataSchema,
+} from "../phases/phases.types.js";
 import { DBSeason } from "../seasons/seasons.types.js";
 import pLimit from "p-limit";
 

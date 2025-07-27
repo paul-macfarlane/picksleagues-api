@@ -139,4 +139,12 @@ export class EventsRepository {
       .from(eventsTable)
       .where(inArray(eventsTable.phaseId, phaseIds));
   }
+
+  async findById(id: string, dbOrTx: DBOrTx = db): Promise<DBEvent | null> {
+    const [event] = await dbOrTx
+      .select()
+      .from(eventsTable)
+      .where(eq(eventsTable.id, id));
+    return event || null;
+  }
 }

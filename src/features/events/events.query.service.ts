@@ -51,4 +51,8 @@ export class EventsQueryService {
   ): Promise<DBEvent[]> {
     return this.eventsRepository.listByPhaseIds(phaseIds, dbOrTx);
   }
+
+  async findById(id: string, dbOrTx?: DBOrTx): Promise<DBEvent | null> {
+    return this.eventsRepository.findById(id, dbOrTx);
+  }
 }

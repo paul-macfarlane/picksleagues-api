@@ -64,4 +64,36 @@ export class PhasesQueryService {
   ): Promise<DBExternalPhase[]> {
     return this.phasesRepository.listExternalByPhaseIds(phaseIds, dbOrTx);
   }
+
+  async findPreviousPhase(
+    currentPhaseId: string,
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPhase | null> {
+    return this.phasesRepository.findPreviousPhase(
+      currentPhaseId,
+      startPhaseTemplateId,
+      endPhaseTemplateId,
+      dbOrTx,
+    );
+  }
+
+  async findNextPhase(
+    currentPhaseId: string,
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPhase | null> {
+    return this.phasesRepository.findNextPhase(
+      currentPhaseId,
+      startPhaseTemplateId,
+      endPhaseTemplateId,
+      dbOrTx,
+    );
+  }
+
+  async findById(id: string, dbOrTx?: DBOrTx): Promise<DBPhase | null> {
+    return this.phasesRepository.findById(id, dbOrTx);
+  }
 }
