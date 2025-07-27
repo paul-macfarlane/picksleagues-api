@@ -21,7 +21,8 @@
     "backlog:create": "backlog task create",
     "backlog:edit": "backlog task edit",
     "backlog:ui": "backlog browser",
-    "test": "vitest"
+    "test": "vitest",
+    "favicons": "node scripts/generate-favicons.js"
   },
   "dependencies": {
     "@better-auth/expo": "^1.2.9",
@@ -41,6 +42,7 @@
     "p-limit": "^6.2.0",
     "pg": "^8.16.2",
     "reflect-metadata": "^0.2.2",
+    "sharp": "^0.34.3",
     "unique-username-generator": "^1.4.0",
     "zod": "^3.25.67"
   },
