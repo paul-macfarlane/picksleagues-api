@@ -1,0 +1,1 @@
+ALTER TABLE "phases" ADD COLUMN "pick_lock_time" timestamp DEFAULT now() NOT NULL;

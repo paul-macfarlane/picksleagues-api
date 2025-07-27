@@ -81,6 +81,7 @@ describe("PhasesService", () => {
         sequence: 1,
         startDate: new Date("2024-01-01"),
         endDate: new Date("2024-01-07"),
+        pickLockTime: new Date("2024-01-07T18:00:00Z"), // Sunday 1PM ET
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -112,6 +113,7 @@ describe("PhasesService", () => {
         sequence: 1,
         startDate: mockCurrentPhase.startDate,
         endDate: mockCurrentPhase.endDate,
+        pickLockTime: mockCurrentPhase.pickLockTime,
         createdAt: mockCurrentPhase.createdAt,
         updatedAt: mockCurrentPhase.updatedAt,
       });
@@ -165,6 +167,7 @@ describe("PhasesService", () => {
         sequence: 2,
         startDate: new Date("2024-01-08"),
         endDate: new Date("2024-01-14"),
+        pickLockTime: new Date("2024-01-14T18:00:00Z"), // Sunday 1PM ET
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -176,6 +179,7 @@ describe("PhasesService", () => {
         sequence: 1,
         startDate: new Date("2024-01-01"),
         endDate: new Date("2024-01-07"),
+        pickLockTime: new Date("2024-01-07T18:00:00Z"), // Sunday 1PM ET
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -187,6 +191,7 @@ describe("PhasesService", () => {
         sequence: 3,
         startDate: new Date("2024-01-15"),
         endDate: new Date("2024-01-21"),
+        pickLockTime: new Date("2024-01-21T18:00:00Z"), // Sunday 1PM ET
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -226,6 +231,7 @@ describe("PhasesService", () => {
         sequence: 1,
         startDate: new Date("2024-01-01"),
         endDate: new Date("2024-01-07"),
+        pickLockTime: new Date("2024-01-07T18:00:00Z"), // Sunday 1PM ET
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -266,6 +272,7 @@ describe("PhasesService", () => {
         sequence: 1,
         startDate: new Date("2024-01-01"),
         endDate: new Date("2024-01-07"),
+        pickLockTime: new Date("2024-01-07T18:00:00Z"), // Sunday 1PM ET
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -319,6 +326,7 @@ describe("PhasesService", () => {
         sequence: 1,
         startDate: new Date("2024-01-01"),
         endDate: new Date("2024-01-07"),
+        pickLockTime: new Date("2024-01-07T18:00:00Z"), // Sunday 1PM ET
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -353,6 +361,7 @@ describe("PhasesService", () => {
         sequence: 1,
         startDate: new Date("2024-01-01"),
         endDate: new Date("2024-01-07"),
+        pickLockTime: new Date("2024-01-07T18:00:00Z"), // Sunday 1PM ET
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -393,6 +402,7 @@ describe("PhasesService", () => {
         sequence: 1,
         startDate: new Date("2024-01-01"),
         endDate: new Date("2024-01-07"),
+        pickLockTime: new Date("2024-01-07T18:00:00Z"), // Sunday 1PM ET
         createdAt: new Date(),
         updatedAt: new Date(),
       };

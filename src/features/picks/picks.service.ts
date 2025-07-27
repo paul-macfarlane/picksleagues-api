@@ -24,6 +24,7 @@ import {
 } from "./picks.types.js";
 import { DBOrTx } from "../../db/index.js";
 import { PICK_EM_PICK_TYPES } from "../leagues/leagues.types.js";
+import { PhasesQueryService } from "../phases/phases.query.service.js";
 
 @injectable()
 export class PicksService {
@@ -52,6 +53,8 @@ export class PicksService {
     private leaguesQueryService: LeaguesQueryService,
     @inject(TYPES.PhasesUtilService)
     private phasesUtilService: PhasesUtilService,
+    @inject(TYPES.PhasesQueryService)
+    private phasesQueryService: PhasesQueryService,
   ) {}
 
   async getPicksForUserInPhase(
@@ -120,6 +123,12 @@ export class PicksService {
         throw new ForbiddenError("You are not a member of this league");
       }
 
+      // Get the phase to check pick lock time
+      const phase = await this.phasesQueryService.findById(phaseId, tx);
+      if (!phase) {
+        throw new NotFoundError("Phase not found");
+      }
+
       // Get events for the phase
       const events = await this.eventsQueryService.listByPhaseIds(
         [phaseId],
@@ -137,10 +146,25 @@ export class PicksService {
         tx,
       );
 
+      // Filter picks based on pick lock time
+      const currentTime = new Date();
+      const isBeforeLockTime = currentTime < phase.pickLockTime;
+
+      let filteredPicks: DBPick[];
+      if (isBeforeLockTime) {
+        // Before lock time: only return picks made by the requesting user
+        filteredPicks = allPicks.filter((pick) => pick.userId === userId);
+      } else {
+        // After lock time: return all picks
+        filteredPicks = allPicks;
+      }
+
       // Populate includes
-      const populatedPicks: PopulatedPick[] = allPicks.map((pick: DBPick) => ({
-        ...pick,
-      }));
+      const populatedPicks: PopulatedPick[] = filteredPicks.map(
+        (pick: DBPick) => ({
+          ...pick,
+        }),
+      );
 
       if (includes) {
         await this._populatePickIncludes(populatedPicks, includes, tx);
@@ -155,9 +179,9 @@ export class PicksService {
     leagueId: string,
     includes?: string[],
   ): Promise<PopulatedPick[]> {
-    // Get the current phase for the league
+    // Get the current or next phase for the league
     const { id: phaseId } =
-      await this.phasesUtilService.getCurrentPhaseOnlyForLeague(
+      await this.phasesUtilService.getCurrentOrNextPhaseForLeague(
         userId,
         leagueId,
       );
@@ -170,9 +194,9 @@ export class PicksService {
     leagueId: string,
     includes?: string[],
   ): Promise<PopulatedPick[]> {
-    // Get the current phase for the league
+    // Get the current or next phase for the league
     const { id: phaseId } =
-      await this.phasesUtilService.getCurrentPhaseOnlyForLeague(
+      await this.phasesUtilService.getCurrentOrNextPhaseForLeague(
         userId,
         leagueId,
       );
@@ -214,14 +238,28 @@ export class PicksService {
           leagueId,
         );
 
+      // Get the phase details to check pick lock time
+      const phase = await this.phasesQueryService.findById(phaseId, tx);
+      if (!phase) {
+        throw new NotFoundError("Phase not found");
+      }
+
+      // Check if picks are locked (current time is past pick lock time)
+      if (phase.pickLockTime <= new Date()) {
+        throw new ForbiddenError("Picks are locked for this phase");
+      }
+
       // Get events in the current phase
-      const phaseEvents = await this.eventsQueryService.listByPhaseIds(
+      const allPhaseEvents = await this.eventsQueryService.listByPhaseIds(
         [phaseId],
         tx,
       );
-      if (phaseEvents.length === 0) {
+      if (allPhaseEvents.length === 0) {
         throw new NotFoundError("No events found for the current phase");
       }
+      const futurePhaseEvents = allPhaseEvents.filter(
+        (e) => e.startTime > new Date(),
+      );
 
       // Parse league settings
       const settings = league.settings as {
@@ -230,7 +268,7 @@ export class PicksService {
       };
       const requiredPicks = Math.min(
         settings.picksPerPhase,
-        phaseEvents.length,
+        futurePhaseEvents.length,
       );
 
       // Validate the number of picks submitted
@@ -245,7 +283,7 @@ export class PicksService {
         await this.picksQueryService.findByUserIdAndLeagueIdAndEventIds(
           userId,
           leagueId,
-          phaseEvents.map((e) => e.id),
+          allPhaseEvents.map((e) => e.id),
           tx,
         );
 
@@ -261,7 +299,7 @@ export class PicksService {
       }
 
       // Validate all events are in the current phase and haven't started
-      const eventMap = new Map(phaseEvents.map((e) => [e.id, e]));
+      const eventMap = new Map(futurePhaseEvents.map((e) => [e.id, e]));
       for (const pick of data.picks) {
         const event = eventMap.get(pick.eventId);
         if (!event) {

@@ -25,6 +25,7 @@ import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.
 import { TeamsQueryService } from "../teams/teams.query.service.js";
 import { PopulatedPhase, PHASE_INCLUDES } from "./phases.types.js";
 import { DBOrTx } from "../../db/index.js";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 @injectable()
 export class PhasesService {
@@ -64,6 +65,51 @@ export class PhasesService {
     @inject(TYPES.TeamsQueryService)
     private teamsQueryService: TeamsQueryService,
   ) {}
+
+  /**
+   * Calculate pick lock time for a phase based on its type
+   * Regular season phases: Sunday at 1PM ET
+   * Postseason phases: Saturday at 1PM ET
+   */
+  private calculatePickLockTime(
+    startDate: Date,
+    phaseType: ESPN_SEASON_TYPES,
+  ): Date {
+    const startDateObj = new Date(startDate);
+
+    // For regular season, set to Sunday at 1PM ET
+    if (phaseType === ESPN_SEASON_TYPES.REGULAR_SEASON) {
+      // Find the next Sunday after the start date
+      const daysUntilSunday = (7 - startDateObj.getDay()) % 7;
+      const sundayDate = new Date(startDateObj);
+      sundayDate.setDate(startDateObj.getDate() + daysUntilSunday);
+
+      // Set to 1PM Eastern Time using timezone library
+      const easternTime = toZonedTime(sundayDate, "America/New_York");
+      easternTime.setHours(13, 0, 0, 0); // 1PM ET
+
+      // Convert back to UTC for storage
+      return fromZonedTime(easternTime, "America/New_York");
+    }
+
+    // For postseason, set to Saturday at 1PM ET
+    if (phaseType === ESPN_SEASON_TYPES.POST_SEASON) {
+      // Find the next Saturday after the start date
+      const daysUntilSaturday = (6 - startDateObj.getDay() + 7) % 7;
+      const saturdayDate = new Date(startDateObj);
+      saturdayDate.setDate(startDateObj.getDate() + daysUntilSaturday);
+
+      // Set to 1PM Eastern Time using timezone library
+      const easternTime = toZonedTime(saturdayDate, "America/New_York");
+      easternTime.setHours(13, 0, 0, 0); // 1PM ET
+
+      // Convert back to UTC for storage
+      return fromZonedTime(easternTime, "America/New_York");
+    }
+
+    // Default fallback
+    return startDateObj;
+  }
 
   async syncPhases() {
     return db.transaction(async (tx) => {
@@ -177,12 +223,18 @@ export class PhasesService {
               `${espnWeek.$ref} already exists for season ${externalSeason.seasonId}`,
             );
 
+            const pickLockTime = this.calculatePickLockTime(
+              new Date(espnWeek.startDate),
+              espnWeek.type,
+            );
+
             const updatedPhase = await this.phasesMutationService.update(
               existingExternalPhase.phaseId,
               {
                 sequence: index + 1,
                 startDate: new Date(espnWeek.startDate),
                 endDate: new Date(espnWeek.endDate),
+                pickLockTime,
               },
               tx,
             );
@@ -219,6 +271,11 @@ export class PhasesService {
               continue;
             }
 
+            const pickLockTime = this.calculatePickLockTime(
+              new Date(espnWeek.startDate),
+              espnWeek.type,
+            );
+
             const insertedPhase = await this.phasesMutationService.create(
               {
                 seasonId: externalSeason.seasonId,
@@ -226,6 +283,7 @@ export class PhasesService {
                 sequence: index + 1,
                 startDate: new Date(espnWeek.startDate),
                 endDate: new Date(espnWeek.endDate),
+                pickLockTime,
               },
               tx,
             );

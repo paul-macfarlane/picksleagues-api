@@ -226,6 +226,7 @@ export const phasesTable = pgTable("phases", {
   sequence: integer("sequence").notNull(),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
+  pickLockTime: timestamp("pick_lock_time").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()
