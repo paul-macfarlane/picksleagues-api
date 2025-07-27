@@ -20,7 +20,7 @@ import { UserIdSchema } from "../profiles/profiles.types.js";
 import { PhasesService } from "../phases/phases.service.js";
 import { PhaseIncludesSchema, PhaseIdSchema } from "../phases/phases.types.js";
 import { PicksService } from "../picks/picks.service.js";
-import { PickIncludesSchema } from "../picks/picks.types.js";
+import { PickIncludesSchema, SubmitPicksSchema } from "../picks/picks.types.js";
 
 const router = Router();
 const leaguesService = container.get<LeaguesService>(TYPES.LeaguesService);
@@ -255,6 +255,19 @@ router.get(
     );
 
     res.status(200).json(picks);
+  },
+);
+
+// Submit picks for the current phase in a league
+router.post(
+  "/:leagueId/current-phase/picks",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const pickData = SubmitPicksSchema.parse(req.body);
+
+    await picksService.submitPicks(req.user!.id, leagueId, pickData);
+
+    res.status(204).send();
   },
 );
 

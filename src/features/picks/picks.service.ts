@@ -1,6 +1,8 @@
 import { injectable, inject } from "inversify";
+import { z } from "zod";
 import { TYPES } from "../../lib/inversify.types.js";
 import { PicksQueryService } from "./picks.query.service.js";
+import { PicksMutationService } from "./picks.mutation.service.js";
 import { EventsQueryService } from "../events/events.query.service.js";
 import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
 import { TeamsQueryService } from "../teams/teams.query.service.js";
@@ -9,17 +11,27 @@ import { OutcomesQueryService } from "../outcomes/outcomes.query.service.js";
 import { OddsQueryService } from "../odds/odds.query.service.js";
 import { SportsbooksQueryService } from "../sportsbooks/sportsbooks.query.service.js";
 import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
+import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
 import { PhasesUtilService } from "../phases/phases.util.service.js";
-import { ForbiddenError } from "../../lib/errors.js";
+import { ForbiddenError, NotFoundError } from "../../lib/errors.js";
 import { db } from "../../db/index.js";
-import { PopulatedPick, PICK_INCLUDES, DBPick } from "./picks.types.js";
+import {
+  PopulatedPick,
+  PICK_INCLUDES,
+  DBPick,
+  SubmitPicksSchema,
+  DBPickInsert,
+} from "./picks.types.js";
 import { DBOrTx } from "../../db/index.js";
+import { PICK_EM_PICK_TYPES } from "../leagues/leagues.types.js";
 
 @injectable()
 export class PicksService {
   constructor(
     @inject(TYPES.PicksQueryService)
     private picksQueryService: PicksQueryService,
+    @inject(TYPES.PicksMutationService)
+    private picksMutationService: PicksMutationService,
     @inject(TYPES.EventsQueryService)
     private eventsQueryService: EventsQueryService,
     @inject(TYPES.ProfilesQueryService)
@@ -36,6 +48,8 @@ export class PicksService {
     private sportsbooksQueryService: SportsbooksQueryService,
     @inject(TYPES.LeagueMembersQueryService)
     private leagueMembersQueryService: LeagueMembersQueryService,
+    @inject(TYPES.LeaguesQueryService)
+    private leaguesQueryService: LeaguesQueryService,
     @inject(TYPES.PhasesUtilService)
     private phasesUtilService: PhasesUtilService,
   ) {}
@@ -142,18 +156,13 @@ export class PicksService {
     includes?: string[],
   ): Promise<PopulatedPick[]> {
     // Get the current phase for the league
-    const currentPhase = await this.phasesUtilService.getCurrentPhaseForLeague(
-      userId,
-      leagueId,
-    );
+    const { id: phaseId } =
+      await this.phasesUtilService.getCurrentPhaseOnlyForLeague(
+        userId,
+        leagueId,
+      );
 
-    // Get picks for the user in the current phase
-    return this.getPicksForUserInPhase(
-      userId,
-      leagueId,
-      currentPhase.id,
-      includes,
-    );
+    return this.getPicksForUserInPhase(userId, leagueId, phaseId, includes);
   }
 
   async getAllPicksForCurrentPhase(
@@ -162,18 +171,154 @@ export class PicksService {
     includes?: string[],
   ): Promise<PopulatedPick[]> {
     // Get the current phase for the league
-    const currentPhase = await this.phasesUtilService.getCurrentPhaseForLeague(
-      userId,
-      leagueId,
-    );
+    const { id: phaseId } =
+      await this.phasesUtilService.getCurrentPhaseOnlyForLeague(
+        userId,
+        leagueId,
+      );
 
-    // Get all picks for the current phase
     return this.getAllPicksForLeagueAndPhase(
       userId,
       leagueId,
-      currentPhase.id,
+      phaseId,
       includes,
     );
+  }
+
+  async submitPicks(
+    userId: string,
+    leagueId: string,
+    data: z.infer<typeof SubmitPicksSchema>,
+  ): Promise<void> {
+    return db.transaction(async (tx) => {
+      // Verify user is a member of the league
+      const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
+        leagueId,
+        userId,
+        tx,
+      );
+      if (!member) {
+        throw new ForbiddenError("You are not a member of this league");
+      }
+
+      // Get the league and its settings
+      const league = await this.leaguesQueryService.findById(leagueId, tx);
+      if (!league) {
+        throw new NotFoundError("League not found");
+      }
+
+      // Get the current phase for the league (not next phase)
+      const { id: phaseId } =
+        await this.phasesUtilService.getCurrentPhaseOnlyForLeague(
+          userId,
+          leagueId,
+        );
+
+      // Get events in the current phase
+      const phaseEvents = await this.eventsQueryService.listByPhaseIds(
+        [phaseId],
+        tx,
+      );
+      if (phaseEvents.length === 0) {
+        throw new NotFoundError("No events found for the current phase");
+      }
+
+      // Parse league settings
+      const settings = league.settings as {
+        picksPerPhase: number;
+        pickType: string;
+      };
+      const requiredPicks = Math.min(
+        settings.picksPerPhase,
+        phaseEvents.length,
+      );
+
+      // Validate the number of picks submitted
+      if (data.picks.length !== requiredPicks) {
+        throw new ForbiddenError(
+          `You must submit exactly ${requiredPicks} picks for this phase (${data.picks.length} submitted)`,
+        );
+      }
+
+      // Get existing picks for this user in this phase
+      const existingPicks =
+        await this.picksQueryService.findByUserIdAndLeagueIdAndEventIds(
+          userId,
+          leagueId,
+          phaseEvents.map((e) => e.id),
+          tx,
+        );
+
+      // Check if user has already made picks for this phase
+      if (existingPicks.length > 0) {
+        throw new ForbiddenError("You have already made picks for this phase");
+      }
+
+      // Validate each pick
+      const eventIds = new Set(data.picks.map((p) => p.eventId));
+      if (eventIds.size !== data.picks.length) {
+        throw new ForbiddenError("Duplicate events are not allowed");
+      }
+
+      // Validate all events are in the current phase and haven't started
+      const eventMap = new Map(phaseEvents.map((e) => [e.id, e]));
+      for (const pick of data.picks) {
+        const event = eventMap.get(pick.eventId);
+        if (!event) {
+          throw new ForbiddenError(
+            `Event ${pick.eventId} is not in the current phase`,
+          );
+        }
+
+        if (event.startTime <= new Date()) {
+          throw new ForbiddenError(
+            `Cannot make picks for events that have already started`,
+          );
+        }
+
+        if (
+          event.homeTeamId !== pick.teamId &&
+          event.awayTeamId !== pick.teamId
+        ) {
+          throw new ForbiddenError(
+            `Team ${pick.teamId} is not part of event ${pick.eventId}`,
+          );
+        }
+      }
+
+      // Create all picks
+      for (const pickData of data.picks) {
+        const event = eventMap.get(pickData.eventId)!;
+
+        // Prepare pick data
+        const pickInsert: DBPickInsert = {
+          leagueId,
+          userId,
+          eventId: pickData.eventId,
+          teamId: pickData.teamId,
+          spread: null, // Will be set below if needed
+        };
+
+        // If it's a pick'em league with spread picks, get the current spread
+        if (settings.pickType === PICK_EM_PICK_TYPES.SPREAD) {
+          const odds = await this.oddsQueryService.findByEventId(
+            pickData.eventId,
+            tx,
+          );
+          if (odds) {
+            // Determine which spread to use based on the picked team
+            if (pickData.teamId === event.homeTeamId) {
+              pickInsert.spread = odds.spreadHome;
+            } else {
+              pickInsert.spread = odds.spreadAway;
+            }
+          }
+        }
+
+        // Create the pick
+        await this.picksMutationService.create(pickInsert, tx);
+      }
+    });
   }
 
   private async _populatePickIncludes(

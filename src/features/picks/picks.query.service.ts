@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
+import { DBOrTx, db } from "../../db/index.js";
 import { TYPES } from "../../lib/inversify.types.js";
 import { PicksRepository } from "./picks.repository.js";
 import { DBPick } from "./picks.types.js";
-import { DBOrTx } from "../../db/index.js";
 
 @injectable()
 export class PicksQueryService {
@@ -55,12 +55,26 @@ export class PicksQueryService {
     userId: string,
     leagueId: string,
     eventIds: string[],
-    dbOrTx?: DBOrTx,
+    dbOrTx: DBOrTx = db,
   ): Promise<DBPick[]> {
     return this.picksRepository.findByUserIdAndLeagueIdAndEventIds(
       userId,
       leagueId,
       eventIds,
+      dbOrTx,
+    );
+  }
+
+  async findByUserIdAndLeagueIdAndEventId(
+    userId: string,
+    leagueId: string,
+    eventId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPick | null> {
+    return this.picksRepository.findByUserIdAndLeagueIdAndEventId(
+      userId,
+      leagueId,
+      eventId,
       dbOrTx,
     );
   }

@@ -91,7 +91,7 @@ describe("PhasesService", () => {
         role: LEAGUE_MEMBER_ROLES.MEMBER,
       };
 
-      phasesUtilService.getCurrentPhaseForLeague.mockResolvedValue({
+      phasesUtilService.getCurrentOrNextPhaseForLeague.mockResolvedValue({
         id: "phase-1",
       });
       phasesQueryService.findById.mockResolvedValue(mockCurrentPhase);
@@ -118,7 +118,7 @@ describe("PhasesService", () => {
     });
 
     it("should throw NotFoundError when league not found", async () => {
-      phasesUtilService.getCurrentPhaseForLeague.mockRejectedValue(
+      phasesUtilService.getCurrentOrNextPhaseForLeague.mockRejectedValue(
         new NotFoundError("League not found"),
       );
 
@@ -128,7 +128,7 @@ describe("PhasesService", () => {
     });
 
     it("should throw ForbiddenError when user is not a member of the league", async () => {
-      phasesUtilService.getCurrentPhaseForLeague.mockRejectedValue(
+      phasesUtilService.getCurrentOrNextPhaseForLeague.mockRejectedValue(
         new ForbiddenError("You are not a member of this league"),
       );
 
@@ -140,7 +140,7 @@ describe("PhasesService", () => {
     });
 
     it("should throw NotFoundError when no current phase found", async () => {
-      phasesUtilService.getCurrentPhaseForLeague.mockRejectedValue(
+      phasesUtilService.getCurrentOrNextPhaseForLeague.mockRejectedValue(
         new NotFoundError("No current or next phase found for this league"),
       );
 
@@ -197,7 +197,7 @@ describe("PhasesService", () => {
         role: LEAGUE_MEMBER_ROLES.MEMBER,
       };
 
-      phasesUtilService.getCurrentPhaseForLeague.mockResolvedValue({
+      phasesUtilService.getCurrentOrNextPhaseForLeague.mockResolvedValue({
         id: "phase-2",
       });
       phasesQueryService.findById.mockResolvedValue(mockCurrentPhase);

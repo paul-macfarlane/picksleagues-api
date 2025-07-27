@@ -33,6 +33,15 @@ export type PopulatedPick = DBPick & {
 
 export const PickIdSchema = z.string().uuid();
 
+export const SubmitPickSchema = z.object({
+  eventId: z.string().uuid(),
+  teamId: z.string().uuid(),
+});
+
+export const SubmitPicksSchema = z.object({
+  picks: z.array(SubmitPickSchema).min(1, "At least one pick is required"),
+});
+
 export const PickIncludesSchema = z
   .object({
     include: z

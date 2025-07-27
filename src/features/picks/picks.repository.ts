@@ -103,4 +103,23 @@ export class PicksRepository {
         ),
       );
   }
+
+  async findByUserIdAndLeagueIdAndEventId(
+    userId: string,
+    leagueId: string,
+    eventId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPick | null> {
+    const [pick] = await dbOrTx
+      .select()
+      .from(picksTable)
+      .where(
+        and(
+          eq(picksTable.userId, userId),
+          eq(picksTable.leagueId, leagueId),
+          eq(picksTable.eventId, eventId),
+        ),
+      );
+    return pick || null;
+  }
 }

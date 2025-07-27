@@ -76,6 +76,7 @@ import { OutcomesMutationService } from "../features/outcomes/outcomes.mutation.
 import { PicksRepository } from "../features/picks/picks.repository.js";
 import { PicksQueryService } from "../features/picks/picks.query.service.js";
 import { PicksService } from "../features/picks/picks.service.js";
+import { PicksMutationService } from "../features/picks/picks.mutation.service.js";
 import { PhasesUtilService } from "../features/phases/phases.util.service.js";
 
 const container = new Container();
@@ -282,6 +283,10 @@ container
 container
   .bind<PicksService>(TYPES.PicksService)
   .to(PicksService)
+  .inSingletonScope();
+container
+  .bind<PicksMutationService>(TYPES.PicksMutationService)
+  .to(PicksMutationService)
   .inSingletonScope();
 
 // Query Services
