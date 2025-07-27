@@ -46,12 +46,25 @@ export class PhasesUtilService {
         tx,
       );
 
-      if (currentPhases.length === 0) {
-        throw new NotFoundError("No current phase found for this league");
+      if (currentPhases.length > 0) {
+        // Return the first current phase (assuming one current phase per league)
+        return { id: currentPhases[0].id };
       }
 
-      // Return the first current phase (assuming one current phase per league)
-      return { id: currentPhases[0].id };
+      // If no current phase, find the next phase
+      const nextPhases = await this.phasesQueryService.findNextPhases(
+        league.startPhaseTemplateId,
+        league.endPhaseTemplateId,
+        new Date(),
+        tx,
+      );
+
+      if (nextPhases.length > 0) {
+        // Return the first next phase
+        return { id: nextPhases[0].id };
+      }
+
+      throw new NotFoundError("No current or next phase found for this league");
     });
   }
 }

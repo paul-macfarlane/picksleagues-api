@@ -124,9 +124,53 @@ export class PhasesRepository {
           // Current date is between phase start and end dates
           lte(phasesTable.startDate, currentDate),
           gte(phasesTable.endDate, currentDate),
-          // so today is september 23 2025, and the phase is september 20 2025 to october 20 2025, then it should be included
         ),
-      );
+      )
+      .orderBy(phaseTemplatesTable.sequence);
+
+    return phases.map((p) => p.phase);
+  }
+
+  async findNextPhases(
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    currentDate: Date,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase[]> {
+    // Get all phases that:
+    // 1. Are between the start and end phase templates (inclusive)
+    // 2. Start after the current date
+    const phases = await dbOrTx
+      .select({
+        phase: phasesTable,
+      })
+      .from(phasesTable)
+      .innerJoin(
+        phaseTemplatesTable,
+        eq(phasesTable.phaseTemplateId, phaseTemplatesTable.id),
+      )
+      .where(
+        and(
+          // Phase template is between start and end templates (inclusive)
+          gte(
+            phaseTemplatesTable.sequence,
+            sql`(
+            SELECT sequence FROM ${phaseTemplatesTable}
+            WHERE id = ${startPhaseTemplateId}
+          )`,
+          ),
+          lte(
+            phaseTemplatesTable.sequence,
+            sql`(
+            SELECT sequence FROM ${phaseTemplatesTable}
+            WHERE id = ${endPhaseTemplateId}
+          )`,
+          ),
+          // Phase starts after current date
+          gte(phasesTable.startDate, currentDate),
+        ),
+      )
+      .orderBy(phaseTemplatesTable.sequence);
 
     return phases.map((p) => p.phase);
   }

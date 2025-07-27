@@ -11,6 +11,7 @@ import { OddsQueryService } from "../odds/odds.query.service.js";
 import { SportsbooksQueryService } from "../sportsbooks/sportsbooks.query.service.js";
 import { TeamsQueryService } from "../teams/teams.query.service.js";
 import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service.js";
+import { PhasesUtilService } from "./phases.util.service.js";
 import { NotFoundError, ForbiddenError } from "../../lib/errors.js";
 import { DBPhase } from "./phases.types.js";
 import { DBLeague } from "../leagues/leagues.types.js";
@@ -39,6 +40,7 @@ describe("PhasesService", () => {
   const sportsbooksQueryService = mock<SportsbooksQueryService>();
   const teamsQueryService = mock<TeamsQueryService>();
   const phaseTemplatesQueryService = mock<PhaseTemplatesQueryService>();
+  const phasesUtilService = mock<PhasesUtilService>();
 
   let phasesService: PhasesService;
 
@@ -47,6 +49,7 @@ describe("PhasesService", () => {
       phasesQueryService,
       mock(), // PhasesMutationService
       phaseTemplatesQueryService,
+      phasesUtilService,
       mock(), // EspnService
       mock(), // DataSourcesQueryService
       mock(), // SeasonsQueryService
@@ -88,13 +91,14 @@ describe("PhasesService", () => {
         role: LEAGUE_MEMBER_ROLES.MEMBER,
       };
 
+      phasesUtilService.getCurrentPhaseForLeague.mockResolvedValue({
+        id: "phase-1",
+      });
+      phasesQueryService.findById.mockResolvedValue(mockCurrentPhase);
       leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
         mockMember as DBLeagueMember,
       );
-      phasesQueryService.findCurrentPhases.mockResolvedValue([
-        mockCurrentPhase,
-      ]);
 
       const result = await phasesService.getCurrentPhaseForLeague(
         "user-1",
@@ -114,7 +118,9 @@ describe("PhasesService", () => {
     });
 
     it("should throw NotFoundError when league not found", async () => {
-      leaguesQueryService.findById.mockResolvedValue(null);
+      phasesUtilService.getCurrentPhaseForLeague.mockRejectedValue(
+        new NotFoundError("League not found"),
+      );
 
       await expect(
         phasesService.getCurrentPhaseForLeague("user-1", "non-existent-league"),
@@ -122,14 +128,9 @@ describe("PhasesService", () => {
     });
 
     it("should throw ForbiddenError when user is not a member of the league", async () => {
-      const mockLeague: Partial<DBLeague> = {
-        id: "league-1",
-        startPhaseTemplateId: "start-template-1",
-        endPhaseTemplateId: "end-template-1",
-      };
-
-      leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
-      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(null);
+      phasesUtilService.getCurrentPhaseForLeague.mockRejectedValue(
+        new ForbiddenError("You are not a member of this league"),
+      );
 
       await expect(
         phasesService.getCurrentPhaseForLeague("user-1", "league-1"),
@@ -139,28 +140,14 @@ describe("PhasesService", () => {
     });
 
     it("should throw NotFoundError when no current phase found", async () => {
-      const mockLeague: Partial<DBLeague> = {
-        id: "league-1",
-        startPhaseTemplateId: "start-template-1",
-        endPhaseTemplateId: "end-template-1",
-      };
-
-      const mockMember: Partial<DBLeagueMember> = {
-        leagueId: "league-1",
-        userId: "user-1",
-        role: LEAGUE_MEMBER_ROLES.MEMBER,
-      };
-
-      leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
-      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
-        mockMember as DBLeagueMember,
+      phasesUtilService.getCurrentPhaseForLeague.mockRejectedValue(
+        new NotFoundError("No current or next phase found for this league"),
       );
-      phasesQueryService.findCurrentPhases.mockResolvedValue([]);
 
       await expect(
         phasesService.getCurrentPhaseForLeague("user-1", "league-1"),
       ).rejects.toThrow(
-        new NotFoundError("No current phase found for this league"),
+        new NotFoundError("No current or next phase found for this league"),
       );
     });
 
@@ -210,13 +197,14 @@ describe("PhasesService", () => {
         role: LEAGUE_MEMBER_ROLES.MEMBER,
       };
 
+      phasesUtilService.getCurrentPhaseForLeague.mockResolvedValue({
+        id: "phase-2",
+      });
+      phasesQueryService.findById.mockResolvedValue(mockCurrentPhase);
       leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
         mockMember as DBLeagueMember,
       );
-      phasesQueryService.findCurrentPhases.mockResolvedValue([
-        mockCurrentPhase,
-      ]);
       phasesQueryService.findPreviousPhase.mockResolvedValue(mockPreviousPhase);
       phasesQueryService.findNextPhase.mockResolvedValue(mockNextPhase);
 
@@ -227,7 +215,6 @@ describe("PhasesService", () => {
       );
 
       expect(result.previousPhase).toEqual(mockPreviousPhase);
-
       expect(result.nextPhase).toEqual(mockNextPhase);
     });
 

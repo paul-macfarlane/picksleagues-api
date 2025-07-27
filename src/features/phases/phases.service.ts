@@ -6,6 +6,7 @@ import { ESPN_SEASON_TYPES } from "../../integrations/espn/espn.types.js";
 import { PhasesQueryService } from "./phases.query.service.js";
 import { PhasesMutationService } from "./phases.mutation.service.js";
 import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service.js";
+import { PhasesUtilService } from "./phases.util.service.js";
 import { EspnService } from "../../integrations/espn/espn.service.js";
 import { DataSourcesQueryService } from "../dataSources/dataSources.query.service.js";
 import { NotFoundError, ForbiddenError } from "../../lib/errors.js";
@@ -34,6 +35,8 @@ export class PhasesService {
     private phasesMutationService: PhasesMutationService,
     @inject(TYPES.PhaseTemplatesQueryService)
     private phaseTemplatesQueryService: PhaseTemplatesQueryService,
+    @inject(TYPES.PhasesUtilService)
+    private phasesUtilService: PhasesUtilService,
     @inject(TYPES.EspnService)
     private espnService: EspnService,
     @inject(TYPES.DataSourcesQueryService)
@@ -255,38 +258,23 @@ export class PhasesService {
     includes?: string[],
   ): Promise<PopulatedPhase> {
     return db.transaction(async (tx) => {
-      // Get the league to find its phase template range
+      // Use the util service to get the current phase ID
+      const { id: phaseId } =
+        await this.phasesUtilService.getCurrentPhaseForLeague(userId, leagueId);
+
+      // Get the full phase data
+      const phase = await this.phasesQueryService.findById(phaseId, tx);
+      if (!phase) {
+        throw new NotFoundError("Phase not found");
+      }
+
+      const result: PopulatedPhase = phase;
+
+      // Get the league for context (needed for previous/next phase includes)
       const league = await this.leaguesQueryService.findById(leagueId, tx);
       if (!league) {
         throw new NotFoundError("League not found");
       }
-
-      // Verify user is a member of the league
-      const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
-        leagueId,
-        userId,
-        tx,
-      );
-      if (!member) {
-        throw new ForbiddenError("You are not a member of this league");
-      }
-
-      // Find current phases for the league
-      const currentPhases = await this.phasesQueryService.findCurrentPhases(
-        league.startPhaseTemplateId,
-        league.endPhaseTemplateId,
-        new Date(),
-        tx,
-      );
-
-      if (currentPhases.length === 0) {
-        throw new NotFoundError("No current phase found for this league");
-      }
-
-      // For now, we'll return the first current phase (assuming one league has one current phase)
-      const currentPhase = currentPhases[0];
-
-      const result: PopulatedPhase = currentPhase;
 
       // Handle includes
       if (includes) {

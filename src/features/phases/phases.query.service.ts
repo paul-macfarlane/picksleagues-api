@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx } from "../../db/index.js";
+import { DBOrTx, db } from "../../db/index.js";
 import { TYPES } from "../../lib/inversify.types.js";
 import { PhasesRepository } from "./phases.repository.js";
 import { DBExternalPhase, DBPhase } from "./phases.types.js";
@@ -27,9 +27,23 @@ export class PhasesQueryService {
     startPhaseTemplateId: string,
     endPhaseTemplateId: string,
     currentDate: Date,
-    dbOrTx?: DBOrTx,
+    dbOrTx: DBOrTx = db,
   ): Promise<DBPhase[]> {
     return this.phasesRepository.findCurrentPhases(
+      startPhaseTemplateId,
+      endPhaseTemplateId,
+      currentDate,
+      dbOrTx,
+    );
+  }
+
+  async findNextPhases(
+    startPhaseTemplateId: string,
+    endPhaseTemplateId: string,
+    currentDate: Date,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase[]> {
+    return this.phasesRepository.findNextPhases(
       startPhaseTemplateId,
       endPhaseTemplateId,
       currentDate,
