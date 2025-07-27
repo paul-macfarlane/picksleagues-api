@@ -4,19 +4,13 @@ import {
   EVENT_TYPES,
   EspnExternalEventMetadataSchema,
   espnStatusToLiveScoreStatus,
-  DBEventInsert,
-  DBEventUpdate,
-  DBExternalEventUpdate,
-  DBExternalEventInsert,
 } from "./events.types.js";
 import {
   ESPNEvent,
-  ESPNSeasonType,
   ESPN_SPORT_LEAGUE_GAME_STATUSES,
   ESPN_SPORT_SLUGS,
   ESPN_LEAGUE_SLUGS,
 } from "../../integrations/espn/espn.types.js";
-import axios from "axios";
 import { NotFoundError } from "../../lib/errors.js";
 import { DataSourcesQueryService } from "../dataSources/dataSources.query.service.js";
 import { DATA_SOURCE_NAMES } from "../dataSources/dataSources.types.js";
@@ -236,26 +230,26 @@ export class EventsService {
     >,
   ) {
     const limit = pLimit(10);
-    const eventPromises = externalPhases.map((externalPhase) => {
+    const eventPromises = externalPhases.map(async (externalPhase) => {
       const phase = phasesToProcess.find((p) => p.id === externalPhase.phaseId);
-      if (!phase) return Promise.resolve([]);
+      if (!phase) return [];
 
       const season = seasonsToProcess.find((s) => s.id === phase.seasonId);
-      if (!season) return Promise.resolve([]);
+      if (!season) return [];
 
       const externalSeasonId = seasonIdToExternalIdMap.get(season.id);
-      if (!externalSeasonId) return Promise.resolve([]);
+      if (!externalSeasonId) return [];
 
       const externalSportLeagueMetadata =
         sportLeagueIdToExternalMetadataMap.get(season.sportLeagueId);
-      if (!externalSportLeagueMetadata) return Promise.resolve([]);
+      if (!externalSportLeagueMetadata) return [];
 
       const parsedMetadata = EspnExternalPhaseMetadataSchema.safeParse(
         externalPhase.metadata,
       );
-      if (!parsedMetadata.success) return Promise.resolve([]);
+      if (!parsedMetadata.success) return [];
 
-      return limit(() =>
+      const events = await limit(() =>
         this.espnService.getESPNEvents(
           externalSportLeagueMetadata.sportSlug as ESPN_SPORT_SLUGS,
           externalSportLeagueMetadata.leagueSlug as ESPN_LEAGUE_SLUGS,
@@ -264,19 +258,51 @@ export class EventsService {
           parsedMetadata.data.number,
         ),
       );
+
+      // Return events with their associated phase information
+      return events.map((event) => ({
+        event,
+        phaseId: phase.id,
+      }));
     });
 
     const espnEventsByPhase = await Promise.all(eventPromises);
-    const allEspnEvents: ESPNEvent[] = espnEventsByPhase.flat();
-    console.log(`Fetched a total of ${allEspnEvents.length} events from ESPN.`);
-    return allEspnEvents;
+    const allEspnEventsWithPhases = espnEventsByPhase.flat();
+    console.log(
+      `Fetched a total of ${allEspnEventsWithPhases.length} events from ESPN.`,
+    );
+    return allEspnEventsWithPhases;
+  }
+
+  private async _fetchCurrentAndNextPhaseEvents(
+    phasesToProcess: DBPhase[],
+    externalPhases: DBExternalPhase[],
+    seasonsToProcess: DBSeason[],
+    seasonIdToExternalIdMap: Map<string, string>,
+    sportLeagueIdToExternalMetadataMap: Map<
+      string,
+      { sportSlug: string; leagueSlug: string } | null
+    >,
+  ) {
+    // Filter external phases to only include current/next phases
+    const currentAndNextExternalPhases = externalPhases.filter(
+      (externalPhase) =>
+        phasesToProcess.some((phase) => phase.id === externalPhase.phaseId),
+    );
+
+    return this._fetchEspnEvents(
+      currentAndNextExternalPhases,
+      phasesToProcess,
+      seasonsToProcess,
+      seasonIdToExternalIdMap,
+      sportLeagueIdToExternalMetadataMap,
+    );
   }
 
   private async _createOrUpdateEvent(
     espnEvent: ESPNEvent,
     dataSourceId: string,
-    phasesToProcess: DBPhase[],
-    externalPhases: DBExternalPhase[],
+    phaseId: string,
     externalTeamIdToTeamIdMap: Map<string, string>,
     tx: DBTx,
   ) {
@@ -293,22 +319,6 @@ export class EventsService {
     const awayTeamId = externalTeamIdToTeamIdMap.get(espnAwayTeam.id);
     if (!homeTeamId || !awayTeamId) return { event: null, status: "skipped" };
 
-    const seasonTypeResponse = await axios.get<ESPNSeasonType>(
-      espnEvent.seasonType.$ref.replace("http://", "https://"),
-    );
-    const espnSeasonType = seasonTypeResponse.data;
-
-    const phase = phasesToProcess.find((p) => {
-      const externalPhase = externalPhases.find((ep) => ep.phaseId === p.id);
-      if (!externalPhase) return false;
-      const metadata = EspnExternalPhaseMetadataSchema.safeParse(
-        externalPhase.metadata,
-      );
-      if (!metadata.success) return false;
-      return espnSeasonType.type === metadata.data.type;
-    });
-    if (!phase) return { event: null, status: "skipped" };
-
     const externalEvent =
       await this.eventsQueryService.findExternalByDataSourceIdAndExternalId(
         dataSourceId,
@@ -322,6 +332,7 @@ export class EventsService {
       event = await this.eventsMutationService.update(
         externalEvent.eventId,
         {
+          phaseId: phaseId,
           startTime: new Date(espnEvent.competitions[0].date),
           homeTeamId,
           awayTeamId,
@@ -346,7 +357,7 @@ export class EventsService {
       status = "created";
       const createdEvent = await this.eventsMutationService.create(
         {
-          phaseId: phase.id,
+          phaseId: phaseId,
           startTime: new Date(espnEvent.competitions[0].date),
           type: EVENT_TYPES.GAME,
           homeTeamId,
@@ -490,9 +501,6 @@ export class EventsService {
           dataSource.id,
           tx,
         );
-      const existingExternalEventIds = new Set(
-        existingExternalEvents.map((ee) => ee.externalId),
-      );
       console.log(
         `Found ${existingExternalEvents.length} existing external events.`,
       );
@@ -507,215 +515,31 @@ export class EventsService {
 
       const futureEspnEvents = allEspnEvents.filter(
         (event) =>
-          event.competitions[0]?.date &&
-          new Date(event.competitions[0].date) > new Date(),
+          event.event.competitions[0]?.date &&
+          new Date(event.event.competitions[0].date) > new Date(),
       );
       console.log(`Found ${futureEspnEvents.length} future events from ESPN.`);
 
-      // Pre-fetch all unique season types in parallel to avoid serial requests in the loop.
-      const limit = pLimit(10);
-      const uniqueSeasonTypeRefs = [
-        ...new Set(futureEspnEvents.map((event) => event.seasonType.$ref)),
-      ];
-      console.log(
-        `Found ${uniqueSeasonTypeRefs.length} unique season type refs to fetch.`,
-      );
-
-      const seasonTypePromises = uniqueSeasonTypeRefs.map((ref) =>
-        limit(() =>
-          axios
-            .get<ESPNSeasonType>(ref.replace("http://", "https://"))
-            .catch((err) => {
-              console.error(
-                `Failed to fetch season type from ${ref}:`,
-                err.message,
-              );
-              return null; // Return null on error to not break Promise.all
-            }),
-        ),
-      );
-
-      const seasonTypeResponses = await Promise.all(seasonTypePromises);
-      const seasonTypeMap = new Map<string, ESPNSeasonType>();
-      seasonTypeResponses.forEach((response, index) => {
-        if (response) {
-          seasonTypeMap.set(uniqueSeasonTypeRefs[index], response.data);
-        }
-      });
-      console.log(
-        `Successfully fetched ${seasonTypeMap.size} unique season types.`,
-      );
-
-      const eventsToCreate: DBEventInsert[] = [];
-      const newEspnEventsForExternalCreation: ESPNEvent[] = [];
-      const eventsToUpdate: (DBEventUpdate & { id: string })[] = [];
-      const externalEventsToUpdate: (DBExternalEventUpdate & {
-        externalId: string;
-      })[] = [];
-
       console.log("Processing future ESPN events...");
+      let createdEventsCount = 0;
+      let updatedEventsCount = 0;
+
       for (const espnEvent of futureEspnEvents) {
-        const homeTeam = espnEvent.competitions[0].competitors.find(
-          (c) => c.homeAway === "home",
-        );
-        const awayTeam = espnEvent.competitions[0].competitors.find(
-          (c) => c.homeAway === "away",
-        );
-
-        if (!homeTeam || !awayTeam || homeTeam.id === "-1") {
-          continue;
-        }
-
-        const homeTeamId = externalTeamIdToTeamIdMap.get(homeTeam.id);
-        const awayTeamId = externalTeamIdToTeamIdMap.get(awayTeam.id);
-
-        if (!homeTeamId || !awayTeamId) {
-          console.warn(
-            `Could not map homeTeamId or awayTeamId for ESPN event ${espnEvent.id}. Skipping.`,
-          );
-          continue;
-        }
-
-        const espnSeasonType = seasonTypeMap.get(espnEvent.seasonType.$ref);
-        if (!espnSeasonType) {
-          console.warn(
-            `Could not find a matching season type for ESPN event ${espnEvent.id}. Skipping.`,
-          );
-          continue;
-        }
-
-        const phase = futurePhases.find((p) => {
-          const externalPhase = futureExternalPhases.find(
-            (ep) => ep.phaseId === p.id,
-          );
-          if (!externalPhase) return false;
-          const metadata = EspnExternalPhaseMetadataSchema.safeParse(
-            externalPhase.metadata,
-          );
-          if (!metadata.success) return false;
-          return espnSeasonType.type === metadata.data.type;
-        });
-
-        if (!phase) {
-          console.warn(
-            `Could not find a matching phase for ESPN event ${espnEvent.id}. Skipping.`,
-          );
-          continue;
-        }
-
-        const eventData = {
-          phaseId: phase.id,
-          startTime: new Date(espnEvent.competitions[0].date),
-          type: EVENT_TYPES.GAME,
-          homeTeamId,
-          awayTeamId,
-        };
-
-        if (existingExternalEventIds.has(espnEvent.id)) {
-          const existingExternalEvent = existingExternalEvents.find(
-            (ee) => ee.externalId === espnEvent.id,
-          );
-          if (existingExternalEvent) {
-            eventsToUpdate.push({
-              id: existingExternalEvent.eventId,
-              ...eventData,
-            });
-            externalEventsToUpdate.push({
-              dataSourceId: dataSource.id,
-              externalId: espnEvent.id,
-              metadata: {
-                oddsRef: espnEvent.competitions[0]?.odds?.$ref,
-                awayTeamScoreRef: awayTeam.score?.$ref,
-                homeTeamScoreRef: homeTeam.score?.$ref,
-                statusRef: espnEvent.competitions[0]?.status?.$ref,
-              },
-            });
-          }
-        } else {
-          eventsToCreate.push(eventData);
-          newEspnEventsForExternalCreation.push(espnEvent);
-        }
-      }
-
-      console.log(`Found ${eventsToUpdate.length} events to update.`);
-      console.log(`Found ${eventsToCreate.length} new events to create.`);
-
-      if (eventsToCreate.length > 0) {
-        console.log(`Bulk creating ${eventsToCreate.length} events...`);
-        const createdEvents = await this.eventsMutationService.bulkCreate(
-          eventsToCreate,
+        const { status } = await this._createOrUpdateEvent(
+          espnEvent.event,
+          dataSource.id,
+          espnEvent.phaseId,
+          externalTeamIdToTeamIdMap,
           tx,
         );
-        console.log(`Successfully created ${createdEvents.length} events.`);
 
-        const newExternalEvents: DBExternalEventInsert[] = createdEvents.map(
-          (event, index) => {
-            const espnEvent = newEspnEventsForExternalCreation[index];
-            const homeTeamScoreRef = espnEvent.competitions[0].competitors.find(
-              (c) => c.homeAway === "home",
-            )?.score?.$ref;
-            const awayTeamScoreRef = espnEvent.competitions[0].competitors.find(
-              (c) => c.homeAway === "away",
-            )?.score?.$ref;
-            return {
-              dataSourceId: dataSource.id,
-              eventId: event.id,
-              externalId: espnEvent.id,
-              metadata: {
-                oddsRef: espnEvent.competitions[0]?.odds?.$ref,
-                awayTeamScoreRef,
-                homeTeamScoreRef,
-                statusRef: espnEvent.competitions[0]?.status?.$ref,
-              },
-            };
-          },
-        );
-
-        console.log(
-          `Bulk creating ${newExternalEvents.length} external events...`,
-        );
-        await this.eventsMutationService.bulkCreateExternal(
-          newExternalEvents,
-          tx,
-        );
-        console.log(
-          `Successfully created ${newExternalEvents.length} external events.`,
-        );
+        if (status === "created") createdEventsCount++;
+        if (status === "updated") updatedEventsCount++;
       }
 
-      if (eventsToUpdate.length > 0) {
-        console.log(`Updating ${eventsToUpdate.length} events...`);
-        let updatedCount = 0;
-        for (const eventToUpdate of eventsToUpdate) {
-          await this.eventsMutationService.update(
-            eventToUpdate.id,
-            eventToUpdate,
-            tx,
-          );
-          updatedCount++;
-        }
-        console.log(`Successfully updated ${updatedCount} events.`);
-      }
-
-      if (externalEventsToUpdate.length > 0) {
-        console.log(
-          `Updating ${externalEventsToUpdate.length} external events...`,
-        );
-        let updatedExternalCount = 0;
-        for (const externalEventToUpdate of externalEventsToUpdate) {
-          await this.eventsMutationService.updateExternal(
-            dataSource.id,
-            externalEventToUpdate.externalId,
-            externalEventToUpdate,
-            tx,
-          );
-          updatedExternalCount++;
-        }
-        console.log(
-          `Successfully updated ${updatedExternalCount} external events.`,
-        );
-      }
-
+      console.log(`Processed ${futureEspnEvents.length} events:`);
+      console.log(`  - Created: ${createdEventsCount} events`);
+      console.log(`  - Updated: ${updatedEventsCount} events`);
       console.log("Event synchronization finished successfully.");
     });
   }
@@ -738,12 +562,16 @@ export class EventsService {
         return;
       }
 
-      const allEspnEvents = await this._fetchEspnEvents(
-        externalPhases,
+      const allEspnEvents = await this._fetchCurrentAndNextPhaseEvents(
         phasesToProcess,
+        externalPhases,
         seasonsToProcess,
         seasonIdToExternalIdMap,
         sportLeagueIdToExternalMetadataMap,
+      );
+
+      console.log(
+        `Processing ${allEspnEvents.length} events for current/next phases...`,
       );
 
       let createdEventsCount = 0;
@@ -755,10 +583,9 @@ export class EventsService {
 
       for (const espnEvent of allEspnEvents) {
         const { event, status } = await this._createOrUpdateEvent(
-          espnEvent,
+          espnEvent.event,
           dataSource.id,
-          phasesToProcess,
-          externalPhases,
+          espnEvent.phaseId,
           externalTeamIdToTeamIdMap,
           tx,
         );
@@ -787,9 +614,9 @@ export class EventsService {
           continue;
         }
 
-        if (espnEvent.competitions[0]?.odds?.$ref) {
+        if (espnEvent.event.competitions[0]?.odds?.$ref) {
           const espnOdds = await this.espnService.getESPNEventOdds(
-            espnEvent.competitions[0].odds.$ref,
+            espnEvent.event.competitions[0].odds.$ref,
           );
           const defaultOdd = espnOdds.find(
             (o) => o.provider.id === externalDefaultSportsbook.externalId,
@@ -800,11 +627,26 @@ export class EventsService {
               event.id,
               tx,
             );
+
+            // Determine which team is the favorite based on the odds
+            const homeTeamIsFavorite = defaultOdd.homeTeamOdds.favorite;
+            const spreadValue = defaultOdd.spread;
+
+            // Calculate spread for home and away teams
+            // If home team is favorite, they give points (negative spread)
+            // If away team is favorite, they give points (positive spread)
+            const spreadHome = homeTeamIsFavorite ? spreadValue : -spreadValue;
+            const spreadAway = homeTeamIsFavorite ? -spreadValue : spreadValue;
+
+            console.log(
+              `Event ${event.id}: Spread ${spreadValue}, Home favorite: ${homeTeamIsFavorite}, Home spread: ${spreadHome}, Away spread: ${spreadAway}`,
+            );
+
             const oddsData = {
               eventId: event.id,
               sportsbookId: defaultSportsbook.id,
-              spreadHome: defaultOdd.homeTeamOdds.spreadOdds.toString(),
-              spreadAway: defaultOdd.awayTeamOdds.spreadOdds.toString(),
+              spreadHome: spreadHome.toString(),
+              spreadAway: spreadAway.toString(),
               moneylineHome: defaultOdd.homeTeamOdds.moneyLine,
               moneylineAway: defaultOdd.awayTeamOdds.moneyLine,
               total: defaultOdd.overUnder.toString(),
@@ -884,12 +726,16 @@ export class EventsService {
         return;
       }
 
-      const allEspnEvents = await this._fetchEspnEvents(
-        externalPhases,
+      const allEspnEvents = await this._fetchCurrentAndNextPhaseEvents(
         phasesToProcess,
+        externalPhases,
         seasonsToProcess,
         seasonIdToExternalIdMap,
         sportLeagueIdToExternalMetadataMap,
+      );
+
+      console.log(
+        `Processing ${allEspnEvents.length} events for current/next phases...`,
       );
 
       let createdEventsCount = 0;
@@ -901,10 +747,9 @@ export class EventsService {
 
       for (const espnEvent of allEspnEvents) {
         const { event, status: eventStatus } = await this._createOrUpdateEvent(
-          espnEvent,
+          espnEvent.event,
           dataSource.id,
-          phasesToProcess,
-          externalPhases,
+          espnEvent.phaseId,
           externalTeamIdToTeamIdMap,
           tx,
         );

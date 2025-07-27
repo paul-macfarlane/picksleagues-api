@@ -314,17 +314,9 @@ export class PhasesService {
       }
 
       // Get the league to verify user membership
-      const league = await this.leaguesQueryService.findById(
-        phase.seasonId,
-        tx,
-      );
+      const league = await this.leaguesQueryService.findById(leagueId, tx);
       if (!league) {
         throw new NotFoundError("League not found");
-      }
-
-      // If leagueId is provided, verify it matches the phase's league
-      if (leagueId && league.id !== leagueId) {
-        throw new NotFoundError("Phase not found in this league");
       }
 
       // Verify user is a member of the league
@@ -392,6 +384,7 @@ export class PhasesService {
         [phase.id],
         tx,
       );
+
       phase.events = events.map((event) => ({
         id: event.id,
         phaseId: event.phaseId,

@@ -134,6 +134,7 @@ export class EventsRepository {
     if (phaseIds.length === 0) {
       return [];
     }
+
     return dbOrTx
       .select()
       .from(eventsTable)
