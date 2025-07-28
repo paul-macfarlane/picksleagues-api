@@ -116,7 +116,7 @@ npm run db:seed:pickem -- endSeason
 
 ```bash
 # Custom week simulation (in-season only)
-npm run db:seed:pickem -- inSeason --week 3
+npm run db:seed:pickem -- inSeason --week 7
 
 # Multiple leagues with custom user count
 npm run db:seed:pickem -- inSeason --leagues 4 --users 8
@@ -164,9 +164,12 @@ npm run db:seed:pickem -- inSeason --week 7 --leagues 3 --users 12 --ats
 
 ### Picks & Results
 
-- Picks generated based on phase and week
-- Realistic scores for completed games
-- Live scores for in-progress games
+- **Pick Count**: Each user makes exactly 3 picks per week (configurable)
+- **Pick Selection**: Randomly selects 3 games from each week's 6 games
+- **Team Selection**: Randomly picks one of the two teams actually playing in each selected game
+- **Pick Generation**: Based on phase and week logic
+- **Realistic Scores**: For completed games
+- **Live Scores**: For in-progress games
 
 ## 🎭 Season Phases
 
@@ -185,10 +188,12 @@ npm run db:seed:pickem -- inSeason --week 7 --leagues 3 --users 12 --ats
 
 ### In-Season
 
-- Current week games may be `scheduled` or `in_progress`
-- Past weeks have `final` scores
-- Future weeks are `scheduled`
-- Picks made up to current week
+- **Default**: Week 5 is the current active phase
+- **Picks**: Made for weeks 1-4 (completed phases)
+- **Current Week**: Week 5 games may be `scheduled` or `in_progress`
+- **Past Weeks**: Weeks 1-4 have `final` scores
+- **Future Weeks**: Weeks 6-10 are `scheduled`
+- **Custom Week**: Use `--week <number>` to simulate a different current week
 
 ### End of Season
 
@@ -219,6 +224,8 @@ Before running the **mock data seeding tool**, ensure you have:
    ```bash
    npm run db:migrate
    ```
+
+````
 
 2. **Required base data**: The tool needs:
    - League types (Pick'em)
@@ -383,3 +390,4 @@ To add new seeding scenarios or modify existing ones:
 - `SEEDING_STRATEGY.md` - Complete seeding strategy documentation
 - `SEEDING.md` - Original seeding plan
 - `src/db/schema.ts` - Database schema
+````

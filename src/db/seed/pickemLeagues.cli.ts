@@ -120,6 +120,20 @@ async function main() {
       console.log("\n🏆 Created Leagues:");
       result.leagues.forEach((league, index) => {
         console.log(`  ${index + 1}. ${league.name} (${league.type})`);
+
+        // Show league members
+        const leagueMembers = result.leagueMembers.filter(
+          (m) => m.leagueId === league.id,
+        );
+        const memberDetails = leagueMembers.map((m) => {
+          const user = result.users.find((u) => u.id === m.userId);
+          const role = m.role === "COMMISSIONER" ? "👑" : "👤";
+          return `${role} ${user?.name || "Unknown"} (${user?.email || "Unknown"})`;
+        });
+
+        if (memberDetails.length > 0) {
+          console.log(`     Members: ${memberDetails.join(", ")}`);
+        }
       });
 
       console.log("\n👥 Sample Users:");

@@ -111,6 +111,11 @@ export interface SeededData {
     week: number;
     phaseId: string;
   }>;
+  leagueMembers: Array<{
+    leagueId: string;
+    userId: string;
+    role: string;
+  }>;
 }
 
 // Generate fake team names
@@ -239,12 +244,14 @@ const calculateGameTimes = (phase: SeedingPhase, simulateWeek?: number) => {
       // Games happen 1-2 weeks from now
       baseTime.setDate(baseTime.getDate() + 10);
       break;
-    case "inSeason":
-      // Current week games are this week, past weeks are in the past
-      if (simulateWeek && simulateWeek > 1) {
-        baseTime.setDate(baseTime.getDate() - (simulateWeek - 1) * 7);
-      }
+    case "inSeason": {
+      // For in-season, we want to simulate being in the middle of the season
+      // Default to week 5, so weeks 1-4 are in the past, week 5 is current
+      const currentWeek = simulateWeek || 5;
+      // Move back so that the current week is "this week"
+      baseTime.setDate(baseTime.getDate() - (currentWeek - 1) * 7);
       break;
+    }
     case "endSeason":
       // Games happened 1-2 weeks ago
       baseTime.setDate(baseTime.getDate() - 10);
@@ -275,15 +282,16 @@ const generateGameStatus = (
         homeScore: 0,
         awayScore: 0,
       };
-    case "inSeason":
-      if (week < (simulateWeek || 1)) {
+    case "inSeason": {
+      const currentWeek = simulateWeek || 5;
+      if (week < currentWeek) {
         return {
           status: LIVE_SCORE_STATUSES.FINAL,
           hasScores: true,
           homeScore: Math.floor(Math.random() * 40) + 10,
           awayScore: Math.floor(Math.random() * 40) + 10,
         };
-      } else if (week === (simulateWeek || 1)) {
+      } else if (week === currentWeek) {
         // Some games might be in progress
         const isInProgress = Math.random() > 0.7;
         return {
@@ -302,6 +310,7 @@ const generateGameStatus = (
           awayScore: 0,
         };
       }
+    }
     case "endSeason":
       return {
         status: LIVE_SCORE_STATUSES.FINAL,
@@ -315,45 +324,83 @@ const generateGameStatus = (
 // Generate picks based on phase and week
 const generatePicks = (
   users: Array<{ id: string }>,
-  events: Array<{ id: string; week: number }>,
+  events: Array<{
+    id: string;
+    week: number;
+    homeTeamId: string;
+    awayTeamId: string;
+  }>,
   teams: Array<{ id: string }>,
   leagues: Array<{ id: string }>,
   phase: SeedingPhase,
   simulateWeek?: number,
 ) => {
   const picks = [];
+  const picksPerWeek = 3; // Default picks per week
 
   for (const user of users) {
-    for (const event of events) {
-      const shouldHavePick = (() => {
+    for (const league of leagues) {
+      // Group events by week
+      const eventsByWeek = new Map<
+        number,
+        Array<{
+          id: string;
+          week: number;
+          homeTeamId: string;
+          awayTeamId: string;
+        }>
+      >();
+      for (const event of events) {
+        if (!eventsByWeek.has(event.week)) {
+          eventsByWeek.set(event.week, []);
+        }
+        eventsByWeek.get(event.week)!.push(event);
+      }
+
+      // Determine which weeks should have picks
+      const weeksWithPicks = (() => {
         switch (phase) {
           case "offseason":
-            return true; // All picks made
+            return Array.from(eventsByWeek.keys()); // All weeks
           case "preseason":
-            return false; // No picks made
-          case "inSeason":
-            return event.week <= (simulateWeek || 1); // Picks up to current week
+            return []; // No picks
+          case "inSeason": {
+            const currentWeek = simulateWeek || 5;
+            return Array.from(eventsByWeek.keys()).filter(
+              (week) => week < currentWeek,
+            );
+          }
           case "endSeason":
-            return true; // All picks made
+            return Array.from(eventsByWeek.keys()); // All weeks
         }
       })();
 
-      if (shouldHavePick) {
-        // Randomly select a team and league from the actual generated ones
-        const randomTeam = teams[Math.floor(Math.random() * teams.length)];
-        const randomLeague =
-          leagues[Math.floor(Math.random() * leagues.length)];
+      // Generate picks for each week
+      for (const week of weeksWithPicks) {
+        const weekEvents = eventsByWeek.get(week) || [];
 
-        picks.push({
-          leagueId: randomLeague.id,
-          userId: user.id,
-          eventId: event.id,
-          teamId: randomTeam.id,
-          spread:
-            Math.random() > 0.5
-              ? (Math.floor(Math.random() * 14) - 7).toString()
-              : null, // Random spread for ATS
-        });
+        // Randomly select picksPerWeek events from this week
+        const selectedEvents = weekEvents
+          .sort(() => Math.random() - 0.5) // Shuffle
+          .slice(0, picksPerWeek);
+
+        for (const event of selectedEvents) {
+          // Randomly select one of the two teams playing in this game
+          const gameTeams = [event.homeTeamId, event.awayTeamId];
+          const randomTeamId =
+            gameTeams[Math.floor(Math.random() * gameTeams.length)];
+
+          picks.push({
+            leagueId: league.id,
+            userId: user.id,
+            eventId: event.id,
+            teamId: randomTeamId,
+            spread:
+              Math.random() > 0.5
+                ? (Math.floor(Math.random() * 14) - 7).toString()
+                : null, // Random spread for ATS
+          });
+        }
       }
     }
   }
@@ -659,6 +706,7 @@ export async function seedPickemLeagues(
       (i + 1) * config.usersPerLeague,
     );
 
+    // Add the regular users for this league
     for (let j = 0; j < leagueUsers.length; j++) {
       const user = leagueUsers[j];
       const isCommissioner = config.commissionerUserId
@@ -675,6 +723,31 @@ export async function seedPickemLeagues(
         updatedAt: new Date(),
       });
     }
+
+    // If a commissioner user ID is specified, ensure they're added to ALL leagues
+    if (config.commissionerUserId) {
+      const commissionerUser = users.find(
+        (u) => u.id === config.commissionerUserId,
+      );
+      if (commissionerUser) {
+        // Check if commissioner is already in this league
+        const alreadyInLeague = leagueMembers.some(
+          (member) =>
+            member.leagueId === league.id &&
+            member.userId === config.commissionerUserId,
+        );
+
+        if (!alreadyInLeague) {
+          leagueMembers.push({
+            leagueId: league.id,
+            userId: config.commissionerUserId,
+            role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
+      }
+    }
   }
 
   await tx.insert(leagueMembersTable).values(leagueMembers);
@@ -682,9 +755,11 @@ export async function seedPickemLeagues(
   // Generate picks
   const picks = generatePicks(
     users,
-    events.map((e) => ({
+    events.map((e, i) => ({
       id: e.id,
-      week: gameSchedule[events.indexOf(e)].week,
+      week: gameSchedule[i].week,
+      homeTeamId: e.homeTeamId,
+      awayTeamId: e.awayTeamId,
     })),
     teams,
     leagues,
@@ -728,6 +803,11 @@ export async function seedPickemLeagues(
       awayTeam: teams.find((t) => t.id === e.awayTeamId)?.name || "",
       week: gameSchedule[i].week,
       phaseId: e.phaseId,
+    })),
+    leagueMembers: leagueMembers.map((member) => ({
+      leagueId: member.leagueId,
+      userId: member.userId,
+      role: member.role,
     })),
   };
 }

@@ -117,6 +117,9 @@ npm run db:seed:pickem -- preseason --cleanup --commissioner my-user-id --league
 - **Pick Lock Times**: Set to noon on the second-to-last day of each phase
 - **Scores**: Generated scores based on season phase
 - **Picks**: User picks based on season phase logic
+- **Pick Count**: Each user makes exactly 3 picks per week (not picks for every game)
+- **Pick Selection**: Randomly selects 3 games from each week's 6 available games
+- **Team Selection**: Randomly picks one of the two teams actually playing in each selected game
 
 ## Season Phase Logic
 
@@ -134,10 +137,12 @@ npm run db:seed:pickem -- preseason --cleanup --commissioner my-user-id --league
 
 ### In-Season
 
-- Current week games may be scheduled or in-progress
-- Past weeks have final scores
-- Future weeks are scheduled
-- Picks made up to current week
+- **Default**: Week 5 is the current active phase
+- **Picks**: Made for weeks 1-4 (completed phases)
+- **Current Week**: Week 5 games may be scheduled or in-progress
+- **Past Weeks**: Weeks 1-4 have final scores
+- **Future Weeks**: Weeks 6-10 are scheduled
+- **Custom Week**: Use `--week <number>` to simulate a different current week
 
 ### End of Season
 
