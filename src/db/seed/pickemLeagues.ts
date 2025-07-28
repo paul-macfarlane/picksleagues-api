@@ -15,6 +15,8 @@ import {
   picksTable,
   seasonsTable,
   sportsLeaguesTable,
+  oddsTable,
+  sportsbooksTable,
 } from "../schema.js";
 import { LEAGUE_MEMBER_ROLES } from "../../features/leagueMembers/leagueMembers.types.js";
 import {
@@ -121,18 +123,90 @@ export interface SeededData {
 // Generate fake team names
 const generateTeams = () => {
   const teamNames = [
-    { name: "Lions", location: "Detroit", abbreviation: "DET" },
-    { name: "Bears", location: "Chicago", abbreviation: "CHI" },
-    { name: "Eagles", location: "Philadelphia", abbreviation: "PHI" },
-    { name: "Falcons", location: "Atlanta", abbreviation: "ATL" },
-    { name: "Ravens", location: "Baltimore", abbreviation: "BAL" },
-    { name: "Bills", location: "Buffalo", abbreviation: "BUF" },
-    { name: "Panthers", location: "Carolina", abbreviation: "CAR" },
-    { name: "Bengals", location: "Cincinnati", abbreviation: "CIN" },
-    { name: "Browns", location: "Cleveland", abbreviation: "CLE" },
-    { name: "Cowboys", location: "Dallas", abbreviation: "DAL" },
-    { name: "Broncos", location: "Denver", abbreviation: "DEN" },
-    { name: "Texans", location: "Houston", abbreviation: "HOU" },
+    {
+      name: "Lions",
+      location: "Detroit",
+      abbreviation: "DET",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/det.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/det.png",
+    },
+    {
+      name: "Bears",
+      location: "Chicago",
+      abbreviation: "CHI",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/chi.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/chi.png",
+    },
+    {
+      name: "Eagles",
+      location: "Philadelphia",
+      abbreviation: "PHI",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/phi.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/phi.png",
+    },
+    {
+      name: "Falcons",
+      location: "Atlanta",
+      abbreviation: "ATL",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/atl.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/atl.png",
+    },
+    {
+      name: "Ravens",
+      location: "Baltimore",
+      abbreviation: "BAL",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/bal.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/bal.png",
+    },
+    {
+      name: "Bills",
+      location: "Buffalo",
+      abbreviation: "BUF",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/buf.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/buf.png",
+    },
+    {
+      name: "Panthers",
+      location: "Carolina",
+      abbreviation: "CAR",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/car.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/car.png",
+    },
+    {
+      name: "Bengals",
+      location: "Cincinnati",
+      abbreviation: "CIN",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/cin.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/cin.png",
+    },
+    {
+      name: "Browns",
+      location: "Cleveland",
+      abbreviation: "CLE",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/cle.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/cle.png",
+    },
+    {
+      name: "Cowboys",
+      location: "Dallas",
+      abbreviation: "DAL",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/dal.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/dal.png",
+    },
+    {
+      name: "Broncos",
+      location: "Denver",
+      abbreviation: "DEN",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/den.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/den.png",
+    },
+    {
+      name: "Texans",
+      location: "Houston",
+      abbreviation: "HOU",
+      image_light: "https://a.espncdn.com/i/teamlogos/nfl/500/hou.png",
+      image_dark: "https://a.espncdn.com/i/teamlogos/nfl/500-dark/hou.png",
+    },
   ];
 
   return teamNames.map((team, index) => ({
@@ -142,6 +216,8 @@ const generateTeams = () => {
     abbreviation: team.abbreviation,
     externalId: `team_${index + 1}`,
     dataSourceId: randomUUID(), // Will be set to actual data source
+    image_light: team.image_light,
+    image_dark: team.image_dark,
   }));
 };
 
@@ -321,6 +397,43 @@ const generateGameStatus = (
   }
 };
 
+// Generate odds for events
+const generateOdds = (events: Array<{ id: string }>, sportsbookId: string) => {
+  const odds = [];
+
+  for (const event of events) {
+    // Generate realistic NFL spreads (typically between -14 and +14)
+    // NFL spreads are always whole numbers or .5
+    const baseSpread = Math.floor(Math.random() * 29) - 14; // -14 to +14
+    const isHalfPoint = Math.random() > 0.5; // 50% chance of .5
+    const spreadHome = isHalfPoint ? baseSpread + 0.5 : baseSpread;
+    const spreadAway = -spreadHome; // If home team is -3.5, away team is +3.5
+
+    // Generate realistic moneylines (typically between -300 and +300)
+    const moneylineHome = Math.floor(Math.random() * 600 - 300); // -300 to +300
+    const moneylineAway = -moneylineHome; // If home is -150, away is +150
+
+    // Generate realistic totals (typically between 35 and 55)
+    const total = (Math.random() * 20 + 35).toFixed(1); // 35.0 to 55.0
+
+    odds.push({
+      id: randomUUID(),
+      eventId: event.id,
+      sportsbookId,
+      spreadHome: spreadHome.toString(),
+      spreadAway: spreadAway.toString(),
+      moneylineHome,
+      moneylineAway,
+      total: total,
+      metadata: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+
+  return odds;
+};
+
 // Generate picks based on phase and week
 const generatePicks = (
   users: Array<{ id: string }>,
@@ -331,7 +444,13 @@ const generatePicks = (
     awayTeamId: string;
   }>,
   teams: Array<{ id: string }>,
-  leagues: Array<{ id: string }>,
+  leagues: Array<{ id: string; settings: Record<string, unknown> }>,
+  odds: Array<{
+    id: string;
+    eventId: string;
+    spreadHome: string;
+    spreadAway: string;
+  }>,
   phase: SeedingPhase,
   simulateWeek?: number,
 ) => {
@@ -390,15 +509,30 @@ const generatePicks = (
           const randomTeamId =
             gameTeams[Math.floor(Math.random() * gameTeams.length)];
 
+          // Find the odds for this event
+          const eventOdds = odds.find((o) => o.eventId === event.id);
+
+          // Determine if this is an ATS league
+          const isATS =
+            (league.settings as Record<string, unknown>).pickType ===
+            PICK_EM_PICK_TYPES.SPREAD;
+
+          // Set the spread based on the picked team and league type
+          let spread: string | null = null;
+          if (isATS && eventOdds) {
+            if (randomTeamId === event.homeTeamId) {
+              spread = eventOdds.spreadHome;
+            } else {
+              spread = eventOdds.spreadAway;
+            }
+          }
+
           picks.push({
             leagueId: league.id,
             userId: user.id,
             eventId: event.id,
             teamId: randomTeamId,
-            spread:
-              Math.random() > 0.5
-                ? (Math.floor(Math.random() * 14) - 7).toString()
-                : null, // Random spread for ATS
+            spread,
           });
         }
       }
@@ -520,6 +654,8 @@ export async function seedPickemLeagues(
       sportLeagueId: sportLeague.id,
       location: team.location,
       abbreviation: team.abbreviation,
+      imageLight: team.image_light,
+      imageDark: team.image_dark,
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
@@ -683,7 +819,9 @@ export async function seedPickemLeagues(
       startPhaseTemplateId: firstPhaseTemplate.id,
       endPhaseTemplateId: lastPhaseTemplate.id,
       visibility: LEAGUE_VISIBILITIES.PRIVATE,
-      size: config.usersPerLeague,
+      size: config.commissionerUserId
+        ? config.usersPerLeague + 1
+        : config.usersPerLeague,
       settings: {
         picksPerPhase: 3,
         pickType: isATS
@@ -752,6 +890,49 @@ export async function seedPickemLeagues(
 
   await tx.insert(leagueMembersTable).values(leagueMembers);
 
+  // Get or create a default sportsbook for odds
+  let sportsbookId: string;
+  try {
+    const defaultSportsbook = await tx
+      .select()
+      .from(sportsbooksTable)
+      .where(eq(sportsbooksTable.isDefault, true))
+      .limit(1);
+
+    if (defaultSportsbook.length > 0) {
+      sportsbookId = defaultSportsbook[0].id;
+    } else {
+      // Create a default sportsbook if none exists
+      const [newSportsbook] = await tx
+        .insert(sportsbooksTable)
+        .values({
+          id: randomUUID(),
+          name: "ESPN",
+          isDefault: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      sportsbookId = newSportsbook.id;
+    }
+  } catch {
+    // If sportsbooks table doesn't exist or other error, create a mock sportsbook ID
+    sportsbookId = randomUUID();
+  }
+
+  // Generate odds for events
+  const odds = generateOdds(events, sportsbookId);
+
+  // Insert odds if we have a valid sportsbook
+  if (odds.length > 0) {
+    try {
+      await tx.insert(oddsTable).values(odds);
+      console.log(`📊 Generated ${odds.length} odds entries`);
+    } catch (error) {
+      console.log(`⚠️ Could not insert odds: ${error}`);
+    }
+  }
+
   // Generate picks
   const picks = generatePicks(
     users,
@@ -763,6 +944,7 @@ export async function seedPickemLeagues(
     })),
     teams,
     leagues,
+    odds,
     config.phase,
     config.simulateWeek,
   );

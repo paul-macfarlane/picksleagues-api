@@ -120,6 +120,9 @@ npm run db:seed:pickem -- preseason --cleanup --commissioner my-user-id --league
 - **Pick Count**: Each user makes exactly 3 picks per week (not picks for every game)
 - **Pick Selection**: Randomly selects 3 games from each week's 6 available games
 - **Team Selection**: Randomly picks one of the two teams actually playing in each selected game
+- **Spread Handling**: For ATS leagues, picks include the correct spread for the selected team
+- **Odds Generation**: Realistic NFL odds (spreads, moneylines, totals) generated for all events
+- **Spread Values**: Only whole numbers or .5 (e.g., -3, -3.5, +7, +7.5)
 
 ## Season Phase Logic
 

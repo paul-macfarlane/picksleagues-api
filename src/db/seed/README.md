@@ -168,8 +168,18 @@ npm run db:seed:pickem -- inSeason --week 7 --leagues 3 --users 12 --ats
 - **Pick Selection**: Randomly selects 3 games from each week's 6 games
 - **Team Selection**: Randomly picks one of the two teams actually playing in each selected game
 - **Pick Generation**: Based on phase and week logic
+- **Spread Handling**: For ATS leagues, picks include the correct spread for the selected team
 - **Realistic Scores**: For completed games
 - **Live Scores**: For in-progress games
+
+### Odds & Spreads
+
+- **Odds Generation**: Realistic NFL odds generated for all events
+- **Spreads**: Range from -14 to +14, only whole numbers or .5 (e.g., -3, -3.5, +7, +7.5)
+- **Moneylines**: Range from -300 to +300 (realistic NFL moneylines)
+- **Totals**: Range from 35.0 to 55.0 (typical NFL game totals)
+- **ATS Picks**: Include the correct spread for the selected team
+- **Straight Up Picks**: No spread included (null value)
 
 ## 🎭 Season Phases
 
