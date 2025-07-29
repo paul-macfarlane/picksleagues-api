@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { mock, MockProxy } from "vitest-mock-extended";
 import { LeagueMembersService } from "./leagueMembers.service.js";
 import { LeagueMembersQueryService } from "./leagueMembers.query.service.js";
@@ -14,6 +14,18 @@ import {
 import { LeaguesUtilService } from "../leagues/leagues.util.service.js";
 import { DBLeague, LEAGUE_VISIBILITIES } from "../leagues/leagues.types.js";
 import { LeaguesMutationService } from "../leagues/leagues.mutation.service.js";
+import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
+import { StandingsMutationService } from "../standings/standings.mutation.service.js";
+import { SeasonsUtilService } from "../seasons/seasons.util.service.js";
+import { DBLeagueType } from "../leagueTypes/leagueTypes.types.js";
+import { DBSeason } from "../seasons/seasons.types.js";
+
+// Mock the database
+vi.mock("../../db/index.js", () => ({
+  db: {
+    transaction: vi.fn((callback) => callback()),
+  },
+}));
 
 describe("LeagueMembersService", () => {
   let leagueMembersService: LeagueMembersService;
@@ -23,6 +35,9 @@ describe("LeagueMembersService", () => {
   let leagueMembersMutationService: MockProxy<LeagueMembersMutationService>;
   let leaguesUtilService: MockProxy<LeaguesUtilService>;
   let leaguesMutationService: MockProxy<LeaguesMutationService>;
+  let leagueTypesQueryService: MockProxy<LeagueTypesQueryService>;
+  let standingsMutationService: MockProxy<StandingsMutationService>;
+  let seasonsUtilService: MockProxy<SeasonsUtilService>;
 
   beforeEach(() => {
     leagueMembersQueryService = mock<LeagueMembersQueryService>();
@@ -31,6 +46,9 @@ describe("LeagueMembersService", () => {
     leagueMembersMutationService = mock<LeagueMembersMutationService>();
     leaguesUtilService = mock<LeaguesUtilService>();
     leaguesMutationService = mock<LeaguesMutationService>();
+    leagueTypesQueryService = mock<LeagueTypesQueryService>();
+    standingsMutationService = mock<StandingsMutationService>();
+    seasonsUtilService = mock<SeasonsUtilService>();
 
     leagueMembersService = new LeagueMembersService(
       leagueMembersQueryService,
@@ -39,6 +57,9 @@ describe("LeagueMembersService", () => {
       leaguesQueryService,
       leaguesMutationService,
       profilesQueryService,
+      leagueTypesQueryService,
+      standingsMutationService,
+      seasonsUtilService,
     );
   });
 
@@ -159,6 +180,16 @@ describe("LeagueMembersService", () => {
       leaguesQueryService.findById.mockResolvedValue(league);
       leaguesUtilService.leagueSeasonInProgress.mockResolvedValue(false);
       leagueMembersMutationService.delete.mockResolvedValue();
+      leagueTypesQueryService.findById.mockResolvedValue({
+        id: "type-1",
+        sportLeagueId: "sport-1",
+      } as DBLeagueType);
+      seasonsUtilService.findCurrentOrLatestSeasonForSportLeagueId.mockResolvedValue(
+        {
+          id: "season-1",
+        } as DBSeason,
+      );
+      standingsMutationService.deleteByUserLeagueSeason.mockResolvedValue();
 
       await leagueMembersService.removeMember(
         "acting-user",
@@ -169,6 +200,7 @@ describe("LeagueMembersService", () => {
       expect(leagueMembersMutationService.delete).toHaveBeenCalledWith(
         "league-1",
         "target-user",
+        undefined,
       );
     });
 

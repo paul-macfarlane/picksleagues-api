@@ -90,6 +90,7 @@ export class LeagueInvitesService {
   ): Promise<{
     leagueIsAtCapacity: boolean;
     leagueIsInProgress: boolean;
+    memberWasAdded: boolean;
   }> {
     if (invite.expiresAt && invite.expiresAt < new Date()) {
       throw new ValidationError("Invite has expired");
@@ -104,6 +105,7 @@ export class LeagueInvitesService {
       return {
         leagueIsAtCapacity: false,
         leagueIsInProgress: false,
+        memberWasAdded: false,
       }; // silently succeed if user is already a member
     }
 
@@ -122,94 +124,122 @@ export class LeagueInvitesService {
       return {
         leagueIsAtCapacity: false,
         leagueIsInProgress: false,
+        memberWasAdded: false,
       };
     }
 
-    let leagueIsAtCapacity = true;
-    let leagueIsInProgress = true;
     const leagueCapacity = await this.leaguesUtilService.getLeagueCapacity(
       league,
       tx,
     );
-    if (leagueCapacity > 0) {
-      leagueIsAtCapacity = false;
-      leagueIsInProgress = await this.leaguesUtilService.leagueSeasonInProgress(
-        league,
+    const leagueIsInProgress =
+      await this.leaguesUtilService.leagueSeasonInProgress(league, tx);
+
+    // Check if league would be at capacity after adding this member
+    const currentMembers = await this.leagueMembersQueryService.listByLeagueId(
+      invite.leagueId,
+      tx,
+    );
+    const leagueIsAtCapacity = currentMembers.length >= leagueCapacity;
+
+    if (leagueIsInProgress) {
+      // League is in progress, so we can't accept new members
+      await this.cleanupPendingInvites(invite.leagueId, tx);
+      return {
+        leagueIsAtCapacity: false,
+        leagueIsInProgress: true,
+        memberWasAdded: false,
+      };
+    }
+
+    if (leagueIsAtCapacity) {
+      // League is at capacity, so we can't accept new members
+      await this.cleanupPendingInvites(invite.leagueId, tx);
+      return {
+        leagueIsAtCapacity: true,
+        leagueIsInProgress: false,
+        memberWasAdded: false,
+      };
+    }
+
+    // League has capacity and is not in progress, so we can accept the member
+    await this.leagueInvitesMutationService.update(
+      invite.id,
+      { status: response },
+      tx,
+    );
+
+    if (
+      response === LEAGUE_INVITE_STATUSES.ACCEPTED ||
+      response === null // link invites are accepted by default
+    ) {
+      await this.leagueMembersMutationService.createLeagueMember(
+        {
+          leagueId: invite.leagueId,
+          userId,
+          role: invite.role,
+        },
         tx,
       );
-      if (!leagueIsInProgress) {
-        await this.leagueInvitesMutationService.update(
-          invite.id,
-          { status: response },
+
+      const leagueType = await this.leagueTypesQueryService.findById(
+        league.leagueTypeId,
+        tx,
+      );
+      if (!leagueType) {
+        throw new NotFoundError("League type not found");
+      }
+
+      const season =
+        await this.seasonsUtilService.findCurrentOrLatestSeasonForSportLeagueId(
+          leagueType.sportLeagueId,
           tx,
         );
+      if (!season) {
+        throw new NotFoundError(
+          "Season not found to create standings record for new member",
+        );
+      }
 
-        if (
-          response === LEAGUE_INVITE_STATUSES.ACCEPTED ||
-          response === null // link invites are accepted by default
-        ) {
-          await this.leagueMembersMutationService.createLeagueMember(
-            {
-              leagueId: invite.leagueId,
-              userId,
-              role: invite.role,
-            },
-            tx,
-          );
+      // create standings record for the new member
+      await this.standingsMutationService.create(
+        {
+          userId,
+          leagueId: invite.leagueId,
+          seasonId: season.id,
+          points: 0,
+          metadata: {
+            wins: 0,
+            losses: 0,
+            pushes: 0,
+          },
+        },
+        tx,
+      );
 
-          const leagueType = await this.leagueTypesQueryService.findById(
-            league.leagueTypeId,
-            tx,
-          );
-          if (!leagueType) {
-            throw new NotFoundError("League type not found");
-          }
+      // Check if the league is now at capacity after adding this member
+      const updatedMembers =
+        await this.leagueMembersQueryService.listByLeagueId(
+          invite.leagueId,
+          tx,
+        );
+      const isNowAtCapacity = updatedMembers.length >= leagueCapacity;
 
-          const season =
-            await this.seasonsUtilService.findCurrentOrLatestSeasonForSportLeagueId(
-              leagueType.sportLeagueId,
-              tx,
-            );
-          if (!season) {
-            throw new NotFoundError(
-              "Season not found to create standings record for new member",
-            );
-          }
-
-          // create standings record for the new member
-          await this.standingsMutationService.create(
-            {
-              userId,
-              leagueId: invite.leagueId,
-              seasonId: season.id,
-              points: 0,
-              metadata: {
-                wins: 0,
-                losses: 0,
-                pushes: 0,
-              },
-            },
-            tx,
-          );
-        }
-
-        if (leagueCapacity - 1 > 0) {
-          // there is still capacity after this user joins, so no need to clean up
-          return {
-            leagueIsAtCapacity: false,
-            leagueIsInProgress: false,
-          };
-        }
+      if (isNowAtCapacity) {
+        // League just reached capacity, clean up pending invites
+        await this.cleanupPendingInvites(invite.leagueId, tx);
+        return {
+          leagueIsAtCapacity: true,
+          leagueIsInProgress: false,
+          memberWasAdded: true,
+        };
       }
     }
 
-    // either the league is at capacity, in progress, or just reached capacity.
-    // In all cases, we need to clean up pending invites
-    await this.cleanupPendingInvites(invite.leagueId, tx);
-
     return {
-      leagueIsAtCapacity,
-      leagueIsInProgress,
+      leagueIsAtCapacity: false,
+      leagueIsInProgress: false,
+      memberWasAdded: true,
     };
   }
 
@@ -243,7 +273,12 @@ export class LeagueInvitesService {
         league,
         tx,
       );
-      if (leagueCapacity <= 0) {
+      const currentMembers =
+        await this.leagueMembersQueryService.listByLeagueId(
+          inviteData.leagueId,
+          tx,
+        );
+      if (currentMembers.length >= leagueCapacity) {
         throw new ValidationError("League is at capacity");
       }
 
@@ -329,6 +364,7 @@ export class LeagueInvitesService {
   ): Promise<void> {
     let leagueIsAtCapacity = false;
     let leagueIsInProgress = false;
+    let memberWasAdded = false;
 
     await db.transaction(async (tx) => {
       const invite = await this.leagueInvitesQueryService.findById(
@@ -350,13 +386,17 @@ export class LeagueInvitesService {
       const {
         leagueIsAtCapacity: leagueIsAtCapacityFromCleanup,
         leagueIsInProgress: leagueIsInProgressFromCleanup,
+        memberWasAdded: memberWasAddedFromCleanup,
       } = await this.respondAndCleanup(userId, invite, response, tx);
 
       leagueIsAtCapacity = leagueIsAtCapacityFromCleanup;
       leagueIsInProgress = leagueIsInProgressFromCleanup;
+      memberWasAdded = memberWasAddedFromCleanup;
     });
 
-    if (leagueIsAtCapacity) {
+    // Only throw error if the league was already at capacity before adding the member
+    // If the league became at capacity by adding this member, that's fine
+    if (leagueIsAtCapacity && !memberWasAdded) {
       throw new ValidationError("League is at capacity");
     }
 
