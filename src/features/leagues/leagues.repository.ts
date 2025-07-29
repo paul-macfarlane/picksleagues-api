@@ -144,6 +144,10 @@ export class LeaguesRepository {
     return result.map((row) => row.league);
   }
 
+  async listAll(dbOrTx: DBOrTx = db): Promise<DBLeague[]> {
+    return dbOrTx.select().from(leaguesTable);
+  }
+
   async delete(id: string, dbOrTx: DBOrTx = db): Promise<void> {
     await dbOrTx.delete(leaguesTable).where(eq(leaguesTable.id, id));
   }

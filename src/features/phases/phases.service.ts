@@ -318,7 +318,7 @@ export class PhasesService {
     return db.transaction(async (tx) => {
       // Use the util service to get the current phase ID
       const { id: phaseId } =
-        await this.phasesUtilService.getCurrentOrNextPhaseForLeague(
+        await this.phasesUtilService.getCurrentOrNextPhaseForLeagueForUser(
           userId,
           leagueId,
         );

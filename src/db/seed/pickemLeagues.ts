@@ -437,13 +437,13 @@ const generateOdds = (events: Array<{ id: string }>, sportsbookId: string) => {
 // Generate picks based on phase and week
 const generatePicks = (
   users: Array<{ id: string }>,
+  seasonId: string,
   events: Array<{
     id: string;
     week: number;
     homeTeamId: string;
     awayTeamId: string;
   }>,
-  teams: Array<{ id: string }>,
   leagues: Array<{ id: string; settings: Record<string, unknown> }>,
   odds: Array<{
     id: string;
@@ -530,6 +530,7 @@ const generatePicks = (
           picks.push({
             leagueId: league.id,
             userId: user.id,
+            seasonId,
             eventId: event.id,
             teamId: randomTeamId,
             spread,
@@ -936,13 +937,13 @@ export async function seedPickemLeagues(
   // Generate picks
   const picks = generatePicks(
     users,
+    season.id,
     events.map((e, i) => ({
       id: e.id,
       week: gameSchedule[i].week,
       homeTeamId: e.homeTeamId,
       awayTeamId: e.awayTeamId,
     })),
-    teams,
     leagues,
     odds,
     config.phase,

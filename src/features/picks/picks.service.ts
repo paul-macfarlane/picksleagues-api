@@ -138,13 +138,14 @@ export class PicksService {
         return [];
       }
 
-      // Get all picks for this league that match the events in the phase
+      // Get all picks for this league that match the events in the phase (only from current members)
       const eventIds = events.map((event) => event.id);
-      const allPicks = await this.picksQueryService.findByLeagueIdAndEventIds(
-        leagueId,
-        eventIds,
-        tx,
-      );
+      const allPicks =
+        await this.picksQueryService.findByLeagueIdAndEventIdsForMembers(
+          leagueId,
+          eventIds,
+          tx,
+        );
 
       // Filter picks based on pick lock time
       const currentTime = new Date();
@@ -181,7 +182,7 @@ export class PicksService {
   ): Promise<PopulatedPick[]> {
     // Get the current or next phase for the league
     const { id: phaseId } =
-      await this.phasesUtilService.getCurrentOrNextPhaseForLeague(
+      await this.phasesUtilService.getCurrentOrNextPhaseForLeagueForUser(
         userId,
         leagueId,
       );
@@ -196,7 +197,7 @@ export class PicksService {
   ): Promise<PopulatedPick[]> {
     // Get the current or next phase for the league
     const { id: phaseId } =
-      await this.phasesUtilService.getCurrentOrNextPhaseForLeague(
+      await this.phasesUtilService.getCurrentOrNextPhaseForLeagueForUser(
         userId,
         leagueId,
       );
@@ -332,6 +333,7 @@ export class PicksService {
         const pickInsert: DBPickInsert = {
           leagueId,
           userId,
+          seasonId: phase.seasonId,
           eventId: pickData.eventId,
           teamId: pickData.teamId,
           spread: null, // Will be set below if needed

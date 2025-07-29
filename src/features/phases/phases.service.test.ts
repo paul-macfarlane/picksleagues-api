@@ -92,9 +92,11 @@ describe("PhasesService", () => {
         role: LEAGUE_MEMBER_ROLES.MEMBER,
       };
 
-      phasesUtilService.getCurrentOrNextPhaseForLeague.mockResolvedValue({
-        id: "phase-1",
-      });
+      phasesUtilService.getCurrentOrNextPhaseForLeagueForUser.mockResolvedValue(
+        {
+          id: "phase-1",
+        },
+      );
       phasesQueryService.findById.mockResolvedValue(mockCurrentPhase);
       leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
@@ -120,7 +122,7 @@ describe("PhasesService", () => {
     });
 
     it("should throw NotFoundError when league not found", async () => {
-      phasesUtilService.getCurrentOrNextPhaseForLeague.mockRejectedValue(
+      phasesUtilService.getCurrentOrNextPhaseForLeagueForUser.mockRejectedValue(
         new NotFoundError("League not found"),
       );
 
@@ -130,7 +132,7 @@ describe("PhasesService", () => {
     });
 
     it("should throw ForbiddenError when user is not a member of the league", async () => {
-      phasesUtilService.getCurrentOrNextPhaseForLeague.mockRejectedValue(
+      phasesUtilService.getCurrentOrNextPhaseForLeagueForUser.mockRejectedValue(
         new ForbiddenError("You are not a member of this league"),
       );
 
@@ -142,7 +144,7 @@ describe("PhasesService", () => {
     });
 
     it("should throw NotFoundError when no current phase found", async () => {
-      phasesUtilService.getCurrentOrNextPhaseForLeague.mockRejectedValue(
+      phasesUtilService.getCurrentOrNextPhaseForLeagueForUser.mockRejectedValue(
         new NotFoundError("No current or next phase found for this league"),
       );
 
@@ -202,9 +204,11 @@ describe("PhasesService", () => {
         role: LEAGUE_MEMBER_ROLES.MEMBER,
       };
 
-      phasesUtilService.getCurrentOrNextPhaseForLeague.mockResolvedValue({
-        id: "phase-2",
-      });
+      phasesUtilService.getCurrentOrNextPhaseForLeagueForUser.mockResolvedValue(
+        {
+          id: "phase-2",
+        },
+      );
       phasesQueryService.findById.mockResolvedValue(mockCurrentPhase);
       leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(

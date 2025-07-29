@@ -78,6 +78,10 @@ import { PicksQueryService } from "../features/picks/picks.query.service.js";
 import { PicksService } from "../features/picks/picks.service.js";
 import { PicksMutationService } from "../features/picks/picks.mutation.service.js";
 import { PhasesUtilService } from "../features/phases/phases.util.service.js";
+import { StandingsRepository } from "../features/standings/standings.repository.js";
+import { StandingsQueryService } from "../features/standings/standings.query.service.js";
+import { StandingsService } from "../features/standings/standings.service.js";
+import { StandingsMutationService } from "../features/standings/standings.mutation.service.js";
 
 const container = new Container();
 
@@ -289,6 +293,16 @@ container
   .to(PicksMutationService)
   .inSingletonScope();
 
+// Standings Bindings
+container
+  .bind<StandingsRepository>(TYPES.StandingsRepository)
+  .to(StandingsRepository)
+  .inSingletonScope();
+container
+  .bind<StandingsService>(TYPES.StandingsService)
+  .to(StandingsService)
+  .inSingletonScope();
+
 // Query Services
 container
   .bind<LeaguesQueryService>(TYPES.LeaguesQueryService)
@@ -357,6 +371,10 @@ container
 container
   .bind<OutcomesQueryService>(TYPES.OutcomesQueryService)
   .to(OutcomesQueryService)
+  .inSingletonScope();
+container
+  .bind<StandingsQueryService>(TYPES.StandingsQueryService)
+  .to(StandingsQueryService)
   .inSingletonScope();
 
 // Util Services
@@ -437,6 +455,10 @@ container
 container
   .bind<OutcomesMutationService>(TYPES.OutcomesMutationService)
   .to(OutcomesMutationService)
+  .inSingletonScope();
+container
+  .bind<StandingsMutationService>(TYPES.StandingsMutationService)
+  .to(StandingsMutationService)
   .inSingletonScope();
 
 // Add other feature bindings here as we migrate them

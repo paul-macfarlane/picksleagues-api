@@ -1,8 +1,18 @@
 import { injectable } from "inversify";
 import { DBOrTx, db } from "../../db/index.js";
-import { DBPick, DBPickInsert, DBPickUpdate } from "./picks.types.js";
-import { picksTable } from "../../db/schema.js";
-import { and, eq, inArray } from "drizzle-orm";
+import {
+  DBPick,
+  DBPickInsert,
+  DBPickUpdate,
+  UnassessedPick,
+} from "./picks.types.js";
+import {
+  eventsTable,
+  outcomesTable,
+  picksTable,
+  leagueMembersTable,
+} from "../../db/schema.js";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 @injectable()
 export class PicksRepository {
@@ -83,6 +93,36 @@ export class PicksRepository {
       );
   }
 
+  async findByLeagueIdAndEventIdsForMembers(
+    leagueId: string,
+    eventIds: string[],
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPick[]> {
+    if (eventIds.length === 0) {
+      return [];
+    }
+    const result = await dbOrTx
+      .select({
+        pick: picksTable,
+      })
+      .from(picksTable)
+      .innerJoin(
+        leagueMembersTable,
+        and(
+          eq(picksTable.userId, leagueMembersTable.userId),
+          eq(picksTable.leagueId, leagueMembersTable.leagueId),
+        ),
+      )
+      .where(
+        and(
+          eq(picksTable.leagueId, leagueId),
+          inArray(picksTable.eventId, eventIds),
+        ),
+      );
+
+    return result.map((row) => row.pick);
+  }
+
   async findByUserIdAndLeagueIdAndEventIds(
     userId: string,
     leagueId: string,
@@ -104,22 +144,52 @@ export class PicksRepository {
       );
   }
 
-  async findByUserIdAndLeagueIdAndEventId(
-    userId: string,
+  async findUnassessedPicksForLeague(
     leagueId: string,
-    eventId: string,
     dbOrTx: DBOrTx = db,
-  ): Promise<DBPick | null> {
-    const [pick] = await dbOrTx
-      .select()
+  ): Promise<UnassessedPick[]> {
+    const result = await dbOrTx
+      .select({
+        id: picksTable.id,
+        userId: picksTable.userId,
+        leagueId: picksTable.leagueId,
+        seasonId: picksTable.seasonId,
+        eventId: picksTable.eventId,
+        teamId: picksTable.teamId,
+        spread: picksTable.spread,
+        homeScore: outcomesTable.homeScore,
+        awayScore: outcomesTable.awayScore,
+        homeTeamId: eventsTable.homeTeamId,
+        awayTeamId: eventsTable.awayTeamId,
+      })
       .from(picksTable)
-      .where(
+      .innerJoin(eventsTable, eq(picksTable.eventId, eventsTable.id))
+      .innerJoin(outcomesTable, eq(picksTable.eventId, outcomesTable.eventId))
+      .innerJoin(
+        leagueMembersTable,
         and(
-          eq(picksTable.userId, userId),
-          eq(picksTable.leagueId, leagueId),
-          eq(picksTable.eventId, eventId),
+          eq(picksTable.userId, leagueMembersTable.userId),
+          eq(picksTable.leagueId, leagueMembersTable.leagueId),
         ),
-      );
-    return pick || null;
+      )
+      .where(and(eq(picksTable.leagueId, leagueId), isNull(picksTable.result)));
+
+    return result.map((row) => ({
+      id: row.id,
+      userId: row.userId,
+      leagueId: row.leagueId,
+      seasonId: row.seasonId,
+      eventId: row.eventId,
+      teamId: row.teamId,
+      spread: row.spread ? Number(row.spread) : null,
+      outcome: {
+        homeScore: row.homeScore,
+        awayScore: row.awayScore,
+      },
+      event: {
+        homeTeamId: row.homeTeamId,
+        awayTeamId: row.awayTeamId,
+      },
+    }));
   }
 }

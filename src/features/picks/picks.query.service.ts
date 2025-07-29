@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx, db } from "../../db/index.js";
+import { DBOrTx } from "../../db/index.js";
 import { TYPES } from "../../lib/inversify.types.js";
 import { PicksRepository } from "./picks.repository.js";
-import { DBPick } from "./picks.types.js";
+import { DBPick, UnassessedPick } from "./picks.types.js";
 
 @injectable()
 export class PicksQueryService {
@@ -51,11 +51,23 @@ export class PicksQueryService {
     );
   }
 
+  async findByLeagueIdAndEventIdsForMembers(
+    leagueId: string,
+    eventIds: string[],
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPick[]> {
+    return this.picksRepository.findByLeagueIdAndEventIdsForMembers(
+      leagueId,
+      eventIds,
+      dbOrTx,
+    );
+  }
+
   async findByUserIdAndLeagueIdAndEventIds(
     userId: string,
     leagueId: string,
     eventIds: string[],
-    dbOrTx: DBOrTx = db,
+    dbOrTx?: DBOrTx,
   ): Promise<DBPick[]> {
     return this.picksRepository.findByUserIdAndLeagueIdAndEventIds(
       userId,
@@ -65,17 +77,10 @@ export class PicksQueryService {
     );
   }
 
-  async findByUserIdAndLeagueIdAndEventId(
-    userId: string,
+  async findUnassessedPicksForLeague(
     leagueId: string,
-    eventId: string,
-    dbOrTx: DBOrTx = db,
-  ): Promise<DBPick | null> {
-    return this.picksRepository.findByUserIdAndLeagueIdAndEventId(
-      userId,
-      leagueId,
-      eventId,
-      dbOrTx,
-    );
+    dbOrTx?: DBOrTx,
+  ): Promise<UnassessedPick[]> {
+    return this.picksRepository.findUnassessedPicksForLeague(leagueId, dbOrTx);
   }
 }

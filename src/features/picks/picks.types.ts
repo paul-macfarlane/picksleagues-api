@@ -18,6 +18,12 @@ export enum PICK_INCLUDES {
   EVENT_ODDS_SPORTSBOOK = "event.odds.sportsbook",
 }
 
+export enum PICK_RESULTS {
+  WIN = "win",
+  LOSS = "loss",
+  PUSH = "push",
+}
+
 // DB Types
 export type DBPick = typeof picksTable.$inferSelect;
 export type DBPickInsert = typeof picksTable.$inferInsert;
@@ -27,6 +33,24 @@ export type PopulatedPick = DBPick & {
   profile?: DBProfile;
   team?: DBTeam;
   event?: PopulatedEvent;
+};
+
+export type UnassessedPick = {
+  id: string;
+  userId: string;
+  leagueId: string;
+  seasonId: string;
+  eventId: string;
+  teamId: string;
+  spread: number | null;
+  event: {
+    homeTeamId: string;
+    awayTeamId: string;
+  };
+  outcome: {
+    homeScore: number;
+    awayScore: number;
+  };
 };
 
 // validaion

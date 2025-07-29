@@ -25,6 +25,7 @@ import {
   EVENT_TYPES,
   LIVE_SCORE_STATUSES,
 } from "../features/events/events.types.js";
+import { PICK_RESULTS } from "../features/picks/picks.types.js";
 
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -622,6 +623,11 @@ export const picksTable = pgTable("picks", {
       onDelete: "cascade",
     })
     .notNull(),
+  seasonId: uuid("season_id")
+    .references(() => seasonsTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
   // this can be non-nullable as long as the picks are only related to teams
   teamId: uuid("team_id")
     .references(() => teamsTable.id, {
@@ -630,9 +636,43 @@ export const picksTable = pgTable("picks", {
     .notNull(),
   // optional, because picks could be ats, but could just be straight up
   spread: decimal("spread", { precision: 10, scale: 2 }),
+  result: text("result", {
+    enum: [PICK_RESULTS.WIN, PICK_RESULTS.LOSS, PICK_RESULTS.PUSH],
+  }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+
+export const standingsTable = pgTable(
+  "standings",
+  {
+    userId: text("user_id")
+      .references(() => usersTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    leagueId: uuid("league_id")
+      .references(() => leaguesTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    seasonId: uuid("season_id")
+      .references(() => seasonsTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    points: integer("points").notNull(),
+    metadata: jsonb("metadata").notNull().default({}), // wins, losses, pushes, other league type specific stats
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.leagueId, table.seasonId] }),
+  ],
+);

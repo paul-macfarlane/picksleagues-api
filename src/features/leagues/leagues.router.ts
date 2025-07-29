@@ -21,6 +21,8 @@ import { PhasesService } from "../phases/phases.service.js";
 import { PhaseIncludesSchema, PhaseIdSchema } from "../phases/phases.types.js";
 import { PicksService } from "../picks/picks.service.js";
 import { PickIncludesSchema, SubmitPicksSchema } from "../picks/picks.types.js";
+import { StandingsService } from "../standings/standings.service.js";
+import { StandingsIncludesSchema } from "../standings/standings.types.js";
 
 const router = Router();
 const leaguesService = container.get<LeaguesService>(TYPES.LeaguesService);
@@ -32,6 +34,9 @@ const leagueInvitesService = container.get<LeagueInvitesService>(
 );
 const phasesService = container.get<PhasesService>(TYPES.PhasesService);
 const picksService = container.get<PicksService>(TYPES.PicksService);
+const standingsService = container.get<StandingsService>(
+  TYPES.StandingsService,
+);
 
 router.use(requireAuth);
 
@@ -268,6 +273,23 @@ router.post(
     await picksService.submitPicks(req.user!.id, leagueId, pickData);
 
     res.status(204).send();
+  },
+);
+
+// Get current standings for a league
+router.get(
+  "/:leagueId/standings/current",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const query = StandingsIncludesSchema.parse(req.query);
+
+    const standings = await standingsService.getCurrentStandings(
+      leagueId,
+      req.user!.id,
+      query,
+    );
+
+    res.status(200).json(standings);
   },
 );
 

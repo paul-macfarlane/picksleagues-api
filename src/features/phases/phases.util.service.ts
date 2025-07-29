@@ -17,7 +17,7 @@ export class PhasesUtilService {
     private leagueMembersQueryService: LeagueMembersQueryService,
   ) {}
 
-  async getCurrentOrNextPhaseForLeague(
+  async getCurrentOrNextPhaseForLeagueForUser(
     userId: string,
     leagueId: string,
   ): Promise<{ id: string }> {

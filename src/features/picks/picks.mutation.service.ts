@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../lib/inversify.types.js";
 import { PicksRepository } from "./picks.repository.js";
-import { DBPickInsert, DBPickUpdate, DBPick } from "./picks.types.js";
+import { DBPickInsert, DBPick, DBPickUpdate } from "./picks.types.js";
 import { DBOrTx, db } from "../../db/index.js";
 
 @injectable()
