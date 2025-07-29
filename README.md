@@ -198,6 +198,9 @@ curl http://localhost:3001/api/crons/events/withOdds --header "x-cron-api-key: l
 
 # You can sync live scores for the current or next phase by running the following command
 curl http://localhost:3001/api/crons/events/withLiveScores --header "x-cron-api-key: local"
+
+# Then, sync the standings for those leagues
+curl http://localhost:3001/api/crons/standings --header "x-cron-api-key: local"
 ```
 
 ## Available Scripts

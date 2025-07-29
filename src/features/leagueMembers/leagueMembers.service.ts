@@ -20,6 +20,10 @@ import {
 import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
 import { LeaguesMutationService } from "../leagues/leagues.mutation.service.js";
 import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
+import { db } from "../../db/index.js";
+import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
+import { StandingsMutationService } from "../standings/standings.mutation.service.js";
+import { SeasonsUtilService } from "../seasons/seasons.util.service.js";
 
 @injectable()
 export class LeagueMembersService {
@@ -36,6 +40,12 @@ export class LeagueMembersService {
     private leaguesMutationService: LeaguesMutationService,
     @inject(TYPES.ProfilesQueryService)
     private profilesQueryService: ProfilesQueryService,
+    @inject(TYPES.LeagueTypesQueryService)
+    private leagueTypesQueryService: LeagueTypesQueryService,
+    @inject(TYPES.StandingsMutationService)
+    private standingsMutationService: StandingsMutationService,
+    @inject(TYPES.SeasonsUtilService)
+    private seasonsUtilService: SeasonsUtilService,
   ) {}
 
   private async populateMembers(
@@ -137,47 +147,79 @@ export class LeagueMembersService {
     leagueId: string,
     targetUserId: string,
   ): Promise<void> {
-    const actingUserMember =
-      await this.leagueMembersQueryService.findByLeagueAndUserId(
-        leagueId,
-        actingUserId,
-      );
-    if (
-      !actingUserMember ||
-      actingUserMember.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER
-    ) {
-      throw new ForbiddenError(
-        "You are not authorized to remove members from this league",
-      );
-    }
+    return db.transaction(async (tx) => {
+      const actingUserMember =
+        await this.leagueMembersQueryService.findByLeagueAndUserId(
+          leagueId,
+          actingUserId,
+          tx,
+        );
+      if (
+        !actingUserMember ||
+        actingUserMember.role !== LEAGUE_MEMBER_ROLES.COMMISSIONER
+      ) {
+        throw new ForbiddenError(
+          "You are not authorized to remove members from this league",
+        );
+      }
 
-    if (actingUserId === targetUserId) {
-      throw new ValidationError("You cannot remove yourself from the league");
-    }
+      if (actingUserId === targetUserId) {
+        throw new ValidationError("You cannot remove yourself from the league");
+      }
 
-    const targetUserMember =
-      await this.leagueMembersQueryService.findByLeagueAndUserId(
+      const targetUserMember =
+        await this.leagueMembersQueryService.findByLeagueAndUserId(
+          leagueId,
+          targetUserId,
+          tx,
+        );
+      if (!targetUserMember) {
+        throw new NotFoundError("Target user is not a member of this league");
+      }
+
+      const league = await this.leaguesQueryService.findById(leagueId, tx);
+      if (!league) {
+        throw new NotFoundError("League not found");
+      }
+
+      const leagueIsInProgress =
+        await this.leaguesUtilService.leagueSeasonInProgress(league, tx);
+      if (leagueIsInProgress) {
+        throw new ValidationError(
+          "You cannot remove members while the league is in season",
+        );
+      }
+
+      await this.leagueMembersMutationService.delete(
         leagueId,
         targetUserId,
+        tx,
       );
-    if (!targetUserMember) {
-      throw new NotFoundError("Target user is not a member of this league");
-    }
 
-    const league = await this.leaguesQueryService.findById(leagueId);
-    if (!league) {
-      throw new NotFoundError("League not found");
-    }
-
-    const leagueIsInProgress =
-      await this.leaguesUtilService.leagueSeasonInProgress(league);
-    if (leagueIsInProgress) {
-      throw new ValidationError(
-        "You cannot remove members while the league is in season",
+      const leagueType = await this.leagueTypesQueryService.findById(
+        league.leagueTypeId,
+        tx,
       );
-    }
+      if (!leagueType) {
+        throw new NotFoundError("League type not found");
+      }
 
-    await this.leagueMembersMutationService.delete(leagueId, targetUserId);
+      const season =
+        await this.seasonsUtilService.findCurrentOrLatestSeasonForSportLeagueId(
+          leagueType.sportLeagueId,
+          tx,
+        );
+      if (!season) {
+        throw new NotFoundError("Season not found");
+      }
+
+      await this.standingsMutationService.deleteByUserLeagueSeason(
+        targetUserId,
+        leagueId,
+        season.id,
+        tx,
+      );
+    });
   }
 
   async leaveLeague(userId: string, leagueId: string): Promise<void> {

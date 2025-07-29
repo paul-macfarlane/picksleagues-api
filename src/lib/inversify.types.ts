@@ -21,6 +21,7 @@ export const TYPES = {
   LiveScoresRepository: Symbol.for("LiveScoresRepository"),
   OutcomesRepository: Symbol.for("OutcomesRepository"),
   PicksRepository: Symbol.for("PicksRepository"),
+  StandingsRepository: Symbol.for("StandingsRepository"),
 
   // Services
   ProfilesService: Symbol.for("ProfilesService"),
@@ -37,6 +38,8 @@ export const TYPES = {
   TeamsService: Symbol.for("TeamsService"),
   EventsService: Symbol.for("EventsService"),
   PicksService: Symbol.for("PicksService"),
+  StandingsService: Symbol.for("StandingsService"),
+  StandingsMutationService: Symbol.for("StandingsMutationService"),
 
   // Util Services
   LeaguesUtilService: Symbol.for("LeaguesUtilService"),
@@ -62,6 +65,7 @@ export const TYPES = {
   LiveScoresQueryService: Symbol.for("LiveScoresQueryService"),
   OutcomesQueryService: Symbol.for("OutcomesQueryService"),
   PicksQueryService: Symbol.for("PicksQueryService"),
+  StandingsQueryService: Symbol.for("StandingsQueryService"),
 
   // Mutation Services
   AccountsMutationService: Symbol.for("AccountsMutationService"),

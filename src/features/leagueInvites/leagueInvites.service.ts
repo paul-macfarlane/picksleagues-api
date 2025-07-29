@@ -27,8 +27,9 @@ import { LeagueInvitesQueryService } from "./leagueInvites.query.service.js";
 import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
 import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
-import { PhasesQueryService } from "../phases/phases.query.service.js";
 import { LeaguesUtilService } from "../leagues/leagues.util.service.js";
+import { SeasonsUtilService } from "../seasons/seasons.util.service.js";
+import { StandingsMutationService } from "../standings/standings.mutation.service.js";
 
 @injectable()
 export class LeagueInvitesService {
@@ -49,10 +50,12 @@ export class LeagueInvitesService {
     private leagueTypesQueryService: LeagueTypesQueryService,
     @inject(TYPES.ProfilesQueryService)
     private profilesQueryService: ProfilesQueryService,
-    @inject(TYPES.PhasesQueryService)
-    private phasesQueryService: PhasesQueryService,
     @inject(TYPES.LeaguesUtilService)
     private leaguesUtilService: LeaguesUtilService,
+    @inject(TYPES.SeasonsUtilService)
+    private seasonsUtilService: SeasonsUtilService,
+    @inject(TYPES.StandingsMutationService)
+    private standingsMutationService: StandingsMutationService,
   ) {}
 
   // Private helper method to clean up pending invites
@@ -150,6 +153,41 @@ export class LeagueInvitesService {
               leagueId: invite.leagueId,
               userId,
               role: invite.role,
+            },
+            tx,
+          );
+
+          const leagueType = await this.leagueTypesQueryService.findById(
+            league.leagueTypeId,
+            tx,
+          );
+          if (!leagueType) {
+            throw new NotFoundError("League type not found");
+          }
+
+          const season =
+            await this.seasonsUtilService.findCurrentOrLatestSeasonForSportLeagueId(
+              leagueType.sportLeagueId,
+              tx,
+            );
+          if (!season) {
+            throw new NotFoundError(
+              "Season not found to create standings record for new member",
+            );
+          }
+
+          // create standings record for the new member
+          await this.standingsMutationService.create(
+            {
+              userId,
+              leagueId: invite.leagueId,
+              seasonId: season.id,
+              points: 0,
+              metadata: {
+                wins: 0,
+                losses: 0,
+                pushes: 0,
+              },
             },
             tx,
           );
