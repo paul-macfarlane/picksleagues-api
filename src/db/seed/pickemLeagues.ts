@@ -17,6 +17,7 @@ import {
   sportsLeaguesTable,
   oddsTable,
   sportsbooksTable,
+  standingsTable,
 } from "../schema.js";
 import { LEAGUE_MEMBER_ROLES } from "../../features/leagueMembers/leagueMembers.types.js";
 import {
@@ -38,6 +39,10 @@ async function cleanupPickemData(tx: DBTx, commissionerUserId?: string) {
   // Delete picks first (depends on users, events, teams, leagues)
   await tx.delete(picksTable);
   console.log("  ✅ Deleted picks");
+
+  // Delete standings (depends on users, leagues, seasons)
+  await tx.delete(standingsTable);
+  console.log("  ✅ Deleted standings");
 
   // Delete live scores and outcomes (depend on events)
   await tx.delete(liveScoresTable);
@@ -117,6 +122,12 @@ export interface SeededData {
     leagueId: string;
     userId: string;
     role: string;
+  }>;
+  standings: Array<{
+    userId: string;
+    leagueId: string;
+    seasonId: string;
+    points: number;
   }>;
 }
 
@@ -647,6 +658,22 @@ export async function seedPickemLeagues(
 
   console.log(`📅 Created ${phases.length} phases (one per week)`);
 
+  // Update season start and end dates to match the phases
+  const seasonStartDate = phases[0].startDate; // First phase start date
+  const seasonEndDate = phases[phases.length - 1].endDate; // Last phase end date
+
+  await tx
+    .update(seasonsTable)
+    .set({
+      startDate: seasonStartDate,
+      endDate: seasonEndDate,
+    })
+    .where(eq(seasonsTable.id, season.id));
+
+  console.log(
+    `📅 Updated season dates: ${seasonStartDate.toDateString()} to ${seasonEndDate.toDateString()}`,
+  );
+
   // Insert teams
   await tx.insert(teamsTable).values(
     teams.map((team) => ({
@@ -891,6 +918,23 @@ export async function seedPickemLeagues(
 
   await tx.insert(leagueMembersTable).values(leagueMembers);
 
+  // Create empty standings records for all league members
+  const standings = [];
+  for (const member of leagueMembers) {
+    standings.push({
+      userId: member.userId,
+      leagueId: member.leagueId,
+      seasonId: season.id,
+      points: 0,
+      metadata: { wins: 0, losses: 0, pushes: 0 },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+
+  await tx.insert(standingsTable).values(standings);
+  console.log(`📊 Created ${standings.length} empty standings records`);
+
   // Get or create a default sportsbook for odds
   let sportsbookId: string;
   try {
@@ -991,6 +1035,12 @@ export async function seedPickemLeagues(
       leagueId: member.leagueId,
       userId: member.userId,
       role: member.role,
+    })),
+    standings: standings.map((standing) => ({
+      userId: standing.userId,
+      leagueId: standing.leagueId,
+      seasonId: standing.seasonId,
+      points: standing.points,
     })),
   };
 }

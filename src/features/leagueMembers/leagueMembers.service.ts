@@ -23,7 +23,7 @@ import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
 import { db } from "../../db/index.js";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
 import { StandingsMutationService } from "../standings/standings.mutation.service.js";
-import { SeasonsQueryService } from "../seasons/seasons.query.service.js";
+import { SeasonsUtilService } from "../seasons/seasons.util.service.js";
 
 @injectable()
 export class LeagueMembersService {
@@ -42,10 +42,10 @@ export class LeagueMembersService {
     private profilesQueryService: ProfilesQueryService,
     @inject(TYPES.LeagueTypesQueryService)
     private leagueTypesQueryService: LeagueTypesQueryService,
-    @inject(TYPES.SeasonsQueryService)
-    private seasonsQueryService: SeasonsQueryService,
     @inject(TYPES.StandingsMutationService)
     private standingsMutationService: StandingsMutationService,
+    @inject(TYPES.SeasonsUtilService)
+    private seasonsUtilService: SeasonsUtilService,
   ) {}
 
   private async populateMembers(
@@ -204,10 +204,11 @@ export class LeagueMembersService {
         throw new NotFoundError("League type not found");
       }
 
-      const season = await this.seasonsQueryService.findCurrentBySportLeagueId(
-        leagueType.sportLeagueId,
-        tx,
-      );
+      const season =
+        await this.seasonsUtilService.findCurrentOrLatestSeasonForSportLeagueId(
+          leagueType.sportLeagueId,
+          tx,
+        );
       if (!season) {
         throw new NotFoundError("Season not found");
       }
