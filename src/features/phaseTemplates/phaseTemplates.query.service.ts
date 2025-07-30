@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { DBOrTx, db } from "../../db/index.js";
+import { DBOrTx } from "../../db/index.js";
 import { TYPES } from "../../lib/inversify.types.js";
 import { PhaseTemplatesRepository } from "./phaseTemplates.repository.js";
 import { DBPhaseTemplate } from "./phaseTemplates.types.js";
@@ -11,17 +11,14 @@ export class PhaseTemplatesQueryService {
     private phaseTemplatesRepository: PhaseTemplatesRepository,
   ) {}
 
-  async findById(
-    id: string,
-    dbOrTx: DBOrTx = db,
-  ): Promise<DBPhaseTemplate | null> {
+  async findById(id: string, dbOrTx?: DBOrTx): Promise<DBPhaseTemplate | null> {
     return this.phaseTemplatesRepository.findById(id, dbOrTx);
   }
 
   async findBySportLeagueAndLabel(
     sportLeagueId: string,
     label: string,
-    dbOrTx: DBOrTx = db,
+    dbOrTx?: DBOrTx,
   ): Promise<DBPhaseTemplate | null> {
     return this.phaseTemplatesRepository.findBySportLeagueAndLabel(
       sportLeagueId,
@@ -32,7 +29,7 @@ export class PhaseTemplatesQueryService {
 
   async listBySportLeagueId(
     sportLeagueId: string,
-    dbOrTx: DBOrTx = db,
+    dbOrTx?: DBOrTx,
   ): Promise<DBPhaseTemplate[]> {
     return this.phaseTemplatesRepository.listBySportLeagueId(
       sportLeagueId,

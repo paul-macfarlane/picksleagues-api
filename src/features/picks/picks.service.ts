@@ -237,6 +237,7 @@ export class PicksService {
         await this.phasesUtilService.getCurrentPhaseOnlyForLeague(
           userId,
           leagueId,
+          tx,
         );
 
       // Get the phase details to check pick lock time

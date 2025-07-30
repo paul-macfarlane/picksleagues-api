@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { mock } from "vitest-mock-extended";
 import { PhasesService } from "./phases.service.js";
 import { PhasesQueryService } from "./phases.query.service.js";
@@ -21,13 +21,6 @@ import {
 } from "../leagueMembers/leagueMembers.types.js";
 import { DBPhaseTemplate } from "../phaseTemplates/phaseTemplates.types.js";
 import { PHASE_TEMPLATE_TYPES } from "../phaseTemplates/phaseTemplates.types.js";
-
-// Mock the database transaction
-vi.mock("../../db", () => ({
-  db: {
-    transaction: vi.fn((callback) => callback({} as unknown)),
-  },
-}));
 
 describe("PhasesService", () => {
   const phasesQueryService = mock<PhasesQueryService>();
@@ -453,7 +446,6 @@ describe("PhasesService", () => {
       });
       expect(phaseTemplatesQueryService.findById).toHaveBeenCalledWith(
         "template-1",
-        expect.anything(),
       );
     });
   });

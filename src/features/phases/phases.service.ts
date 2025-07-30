@@ -24,7 +24,6 @@ import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
 import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
 import { TeamsQueryService } from "../teams/teams.query.service.js";
 import { PopulatedPhase, PHASE_INCLUDES } from "./phases.types.js";
-import { DBOrTx } from "../../db/index.js";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 @injectable()
@@ -315,38 +314,36 @@ export class PhasesService {
     leagueId: string,
     includes?: string[],
   ): Promise<PopulatedPhase> {
-    return db.transaction(async (tx) => {
-      // Use the util service to get the current phase ID
-      const { id: phaseId } =
-        await this.phasesUtilService.getCurrentOrNextPhaseForLeagueForUser(
-          userId,
-          leagueId,
-        );
+    // Use the util service to get the current phase ID
+    const { id: phaseId } =
+      await this.phasesUtilService.getCurrentOrNextPhaseForLeagueForUser(
+        userId,
+        leagueId,
+      );
 
-      // Get the full phase data
-      const phase = await this.phasesQueryService.findById(phaseId, tx);
-      if (!phase) {
-        throw new NotFoundError("Phase not found");
-      }
+    // Get the full phase data
+    const phase = await this.phasesQueryService.findById(phaseId);
+    if (!phase) {
+      throw new NotFoundError("Phase not found");
+    }
 
-      const result: PopulatedPhase = phase;
+    const result: PopulatedPhase = phase;
 
-      // Get the league for context (needed for previous/next phase includes)
-      const league = await this.leaguesQueryService.findById(leagueId, tx);
-      if (!league) {
-        throw new NotFoundError("League not found");
-      }
+    // Get the league for context (needed for previous/next phase includes)
+    const league = await this.leaguesQueryService.findById(leagueId);
+    if (!league) {
+      throw new NotFoundError("League not found");
+    }
 
-      // Handle includes
-      if (includes) {
-        await this._populatePhaseIncludes(result, includes, tx, {
-          startPhaseTemplateId: league.startPhaseTemplateId,
-          endPhaseTemplateId: league.endPhaseTemplateId,
-        });
-      }
+    // Handle includes
+    if (includes) {
+      await this._populatePhaseIncludes(result, includes, {
+        startPhaseTemplateId: league.startPhaseTemplateId,
+        endPhaseTemplateId: league.endPhaseTemplateId,
+      });
+    }
 
-      return result;
-    });
+    return result;
   }
 
   async getPhaseByIdAndLeagueId(
@@ -355,47 +352,43 @@ export class PhasesService {
     leagueId: string,
     includes?: string[],
   ): Promise<PopulatedPhase> {
-    return db.transaction(async (tx) => {
-      // Get the phase
-      const phase = await this.phasesQueryService.findById(phaseId, tx);
-      if (!phase) {
-        throw new NotFoundError("Phase not found");
-      }
+    // Get the phase
+    const phase = await this.phasesQueryService.findById(phaseId);
+    if (!phase) {
+      throw new NotFoundError("Phase not found");
+    }
 
-      // Get the league to verify user membership
-      const league = await this.leaguesQueryService.findById(leagueId, tx);
-      if (!league) {
-        throw new NotFoundError("League not found");
-      }
+    // Get the league to verify user membership
+    const league = await this.leaguesQueryService.findById(leagueId);
+    if (!league) {
+      throw new NotFoundError("League not found");
+    }
 
-      // Verify user is a member of the league
-      const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
-        league.id,
-        userId,
-        tx,
-      );
-      if (!member) {
-        throw new ForbiddenError("You are not a member of this league");
-      }
+    // Verify user is a member of the league
+    const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
+      league.id,
+      userId,
+    );
+    if (!member) {
+      throw new ForbiddenError("You are not a member of this league");
+    }
 
-      const result: PopulatedPhase = phase;
+    const result: PopulatedPhase = phase;
 
-      // Handle includes (only events-related includes for individual phase)
-      if (includes) {
-        await this._populatePhaseIncludes(result, includes, tx, {
-          startPhaseTemplateId: league.startPhaseTemplateId,
-          endPhaseTemplateId: league.endPhaseTemplateId,
-        });
-      }
+    // Handle includes (only events-related includes for individual phase)
+    if (includes) {
+      await this._populatePhaseIncludes(result, includes, {
+        startPhaseTemplateId: league.startPhaseTemplateId,
+        endPhaseTemplateId: league.endPhaseTemplateId,
+      });
+    }
 
-      return result;
-    });
+    return result;
   }
 
   private async _populatePhaseIncludes(
     phase: PopulatedPhase,
     includes: string[],
-    tx: DBOrTx,
     leagueContext?: {
       startPhaseTemplateId: string;
       endPhaseTemplateId: string;
@@ -405,7 +398,6 @@ export class PhasesService {
     if (includes.includes(PHASE_INCLUDES.PHASE_TEMPLATE)) {
       const phaseTemplate = await this.phaseTemplatesQueryService.findById(
         phase.phaseTemplateId,
-        tx,
       );
       phase.phaseTemplate = phaseTemplate ?? undefined;
     }
@@ -420,7 +412,6 @@ export class PhasesService {
           phase.id,
           leagueContext.startPhaseTemplateId,
           leagueContext.endPhaseTemplateId,
-          tx,
         );
         phase.previousPhase = previousPhase ?? undefined;
       }
@@ -430,7 +421,6 @@ export class PhasesService {
           phase.id,
           leagueContext.startPhaseTemplateId,
           leagueContext.endPhaseTemplateId,
-          tx,
         );
         phase.nextPhase = nextPhase ?? undefined;
       }
@@ -438,10 +428,7 @@ export class PhasesService {
 
     // Events
     if (includes.includes(PHASE_INCLUDES.EVENTS)) {
-      const events = await this.eventsQueryService.listByPhaseIds(
-        [phase.id],
-        tx,
-      );
+      const events = await this.eventsQueryService.listByPhaseIds([phase.id]);
 
       phase.events = events.map((event) => ({
         id: event.id,
@@ -464,7 +451,6 @@ export class PhasesService {
           if (includes.includes(PHASE_INCLUDES.EVENTS_LIVE_SCORES)) {
             const liveScore = await this.liveScoresQueryService.findByEventId(
               event.id,
-              tx,
             );
             event.liveScore = liveScore ?? undefined;
           }
@@ -472,7 +458,6 @@ export class PhasesService {
           if (includes.includes(PHASE_INCLUDES.EVENTS_OUTCOMES)) {
             const outcome = await this.outcomesQueryService.findByEventId(
               event.id,
-              tx,
             );
             event.outcome = outcome ?? undefined;
           }
@@ -486,10 +471,7 @@ export class PhasesService {
       ) {
         for (const event of phase.events!) {
           if (includes.includes(PHASE_INCLUDES.EVENTS_ODDS)) {
-            const odds = await this.oddsQueryService.findByEventId(
-              event.id,
-              tx,
-            );
+            const odds = await this.oddsQueryService.findByEventId(event.id);
             if (odds) {
               event.odds = odds;
 
@@ -497,7 +479,6 @@ export class PhasesService {
               if (includes.includes(PHASE_INCLUDES.EVENTS_ODDS_SPORTSBOOK)) {
                 const sportsbook = await this.sportsbooksQueryService.findById(
                   odds.sportsbookId,
-                  tx,
                 );
                 if (sportsbook) {
                   event.odds.sportsbook = sportsbook;
@@ -522,7 +503,6 @@ export class PhasesService {
           ) {
             const homeTeam = await this.teamsQueryService.findById(
               event.homeTeamId,
-              tx,
             );
             event.homeTeam = homeTeam ?? undefined;
           }
@@ -533,7 +513,6 @@ export class PhasesService {
           ) {
             const awayTeam = await this.teamsQueryService.findById(
               event.awayTeamId,
-              tx,
             );
             event.awayTeam = awayTeam ?? undefined;
           }
