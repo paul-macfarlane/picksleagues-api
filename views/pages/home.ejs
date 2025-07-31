@@ -1,73 +1,177 @@
 <%- contentFor('additionalStyles') %>
 <style>
   .hero {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    text-align: left;
-    min-height: calc(100vh - 80px); /* Account for footer */
-    padding: 0 2rem;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    padding-top: 3rem;
   }
 
   .hero h1 {
-    font-size: 4rem;
-    font-weight: 800;
-    line-height: 1.1;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
     margin-bottom: 1.5rem;
-    background: linear-gradient(to right, var(--accent), #60a5fa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    line-height: 1.1;
+  }
+
+  .hero h1 .brand {
+    color: var(--accent-blue);
   }
 
   .hero p {
-    font-size: 1.5rem;
-    line-height: 1.5;
-    margin-bottom: 2rem;
-    max-width: 600px;
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
     color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .features {
+    margin-top: 4rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2.5rem;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .feature {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .feature:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .feature h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .feature p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  .cta-section {
+    margin-top: 3rem;
+    text-align: center;
   }
 
   .cta-button {
-    font-size: 1.25rem;
-    padding: 1rem 2.5rem;
-    background: linear-gradient(to right, var(--accent), #60a5fa);
-    border-radius: 9999px;
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
-    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 1.25rem 2.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
   }
 
   .cta-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    background: linear-gradient(to right, #2563eb, #3b82f6);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
   }
 
   @media (max-width: 768px) {
     .hero {
-      padding: 2rem 1rem;
-      text-align: center;
-      align-items: center;
+      padding: 2rem 1rem 0 1rem;
     }
 
     .hero h1 {
-      font-size: 3rem;
+      font-size: 2.5rem;
     }
 
     .hero p {
-      font-size: 1.25rem;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
+    .features {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+      padding: 0 1rem;
+    }
+
+    .feature {
+      padding: 1.5rem 1rem;
+    }
+
+    .cta-section {
+      margin-top: 2rem;
+    }
+
+    .cta-button {
+      font-size: 1rem;
+      padding: 1rem 2rem;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .hero {
+      max-width: 900px;
+    }
+
+    .features {
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 1200px;
+      gap: 3rem;
+    }
+
+    .feature {
+      padding: 2.5rem 2rem;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .hero {
+      max-width: 1000px;
+    }
+
+    .features {
+      max-width: 1400px;
     }
   }
 </style>
 
 <div class="hero">
-  <h1>Welcome to<br />PicksLeagues</h1>
+  <h1>Welcome to <span class="brand">PicksLeagues</span></h1>
   <p>
     Join the ultimate sports prediction platform. Make your picks, compete with
-    friends, and prove your sports knowledge.
+    friends, and prove your sports knowledge across multiple game modes.
   </p>
-  <a href="/login" class="cta-button">Get Started</a>
+
+  <div class="cta-section">
+    <a href="/login" class="cta-button">Get Started</a>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <h3>🏈 NFL Pick'em</h3>
+      <p>
+        Compete against friends picking games straight up or against the spread
+      </p>
+    </div>
+    <div class="feature">
+      <h3>🏆 Elimination Pools</h3>
+      <p>Survive as long as you can in our thrilling elimination challenges</p>
+    </div>
+    <div class="feature">
+      <h3>📊 Team Drafts</h3>
+      <p>Draft teams based on how you think they will perform</p>
+    </div>
+  </div>
 </div>
