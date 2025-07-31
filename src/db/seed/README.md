@@ -4,11 +4,26 @@ This tool creates realistic test data for Pick'em leagues across different phase
 
 > **📖 For a complete overview of seeding strategies, see [SEEDING_STRATEGY.md](./SEEDING_STRATEGY.md)**
 
-## Types of Seeding
+## 🚀 Quick Start
 
-This project supports two different seeding approaches:
+Get up and running in minutes:
 
-### 🎯 Mock Data Seeding (This Tool)
+```bash
+# 1. Set up your database
+npm run db:migrate
+
+# 2. Create base data (if needed)
+npm run db:seed:base
+
+# 3. Seed pick'em leagues
+npm run db:seed:pickem -- inSeason --leagues 2 --users 5
+```
+
+That's it! You now have realistic test data to work with.
+
+## 🎯 What This Tool Does
+
+### Mock Data Seeding (This Tool)
 
 - **Purpose**: Generate fictional test data for development and testing
 - **Data Source**: Completely generated/mock data
@@ -16,7 +31,7 @@ This project supports two different seeding approaches:
 - **Speed**: Fast, no external dependencies
 - **Command**: `npm run db:seed:pickem`
 
-### 🌐 Real Data Seeding (ESPN Integration)
+### Alternative: Real Data Seeding (ESPN Integration)
 
 - **Purpose**: Populate database with actual ESPN data
 - **Data Source**: ESPN APIs via cron jobs
@@ -28,75 +43,35 @@ This project supports two different seeding approaches:
 
 > **💡 Tip**: If you see npm warnings about argument parsing, you can also run the CLI directly: `npx tsx src/db/seed/pickemLeagues.cli.ts <phase> [options]`
 
-## 🧹 Data Cleanup Feature
+## 🔧 Prerequisites
 
-The seeding tool supports cleaning up existing pick'em data before seeding new data. This ensures a clean slate for each scenario and prevents data conflicts.
+Before running the **mock data seeding tool**, ensure you have:
 
-### Usage
+1. **Database setup**: Run migrations first
 
-```bash
-# Clean up existing data and seed new preseason data
-npm run db:seed:pickem preseason -- --cleanup --leagues 2 --users 5
+   ```bash
+   npm run db:migrate
+   ```
 
-# Clean up and seed with commissioner user
-npm run db:seed:pickem -- inSeason --cleanup --commissioner my-user --leagues 1 --users 3
-```
+2. **Required base data**: The tool needs:
+   - League types (Pick'em)
+   - Sport leagues (NFL)
+   - Seasons
+   - Phase templates
 
-### What Gets Cleaned Up
+### Setting up Base Data
 
-The cleanup process removes all pick'em related data in the correct order:
-
-1. **Picks** (depends on users, events, teams, leagues)
-2. **Live Scores & Outcomes** (depend on events)
-3. **Events** (depend on phases, teams)
-4. **League Members** (depend on leagues, users)
-5. **Leagues** (depend on league types, phase templates)
-6. **Phases** (depend on seasons, phase templates)
-7. **Teams** (depend on sport leagues)
-8. **Users** (preserves commissioner if specified)
-
-### Commissioner User Preservation
-
-When using `--cleanup` with `--commissioner`, the cleanup process will:
-
-- Delete all other users
-- Preserve the specified commissioner user
-- Reuse the existing commissioner user for the new leagues
-
-This allows you to maintain a consistent test user across different scenarios.
-
-## 👑 Commissioner User Feature
-
-The seeding tool supports designating a specific user as the commissioner of all generated leagues. This is useful for testing purposes, allowing you to log in with a known user ID and see all the seeded data.
-
-### Usage
+If you encounter "Required base data not found" errors, you can set up minimal base data using:
 
 ```bash
-# Make user "my-test-user" the commissioner of all leagues
-npm run db:seed:pickem -- inSeason --commissioner my-test-user --leagues 2 --users 5
-
-# Use an existing user ID from your database
-npm run db:seed:pickem -- preseason --commissioner existing-user-123 --leagues 1 --users 3
+npm run db:seed:base
 ```
 
-### How it Works
+This will create the minimum required data for the pick'em seeding to work.
 
-- **New User**: If the commissioner user ID doesn't exist, a new user will be created with that ID
-- **Existing User**: If the commissioner user ID already exists, it will be used as-is (no duplicate creation)
-- **Commissioner Role**: The specified user becomes the commissioner of ALL generated leagues
-- **User Count**: The commissioner user counts toward the total users per league
+## 🚀 Basic Usage
 
-## 🎯 Features
-
-- **4 Season Phases**: Offseason, Preseason, In-Season, End of Season
-- **Realistic Data**: 12 teams, 60 games (6 per week × 10 weeks), users, leagues, picks
-- **Flexible Configuration**: Customize league count, users per league, week simulation
-- **League Types**: Support for both ATS (Against The Spread) and Straight Up leagues
-- **Dynamic Game States**: Games are scheduled, in-progress, or final based on phase
-
-## 🚀 Quick Start
-
-### Basic Usage
+### Simple Commands
 
 ```bash
 # Seed offseason data (completed season)
@@ -112,7 +87,7 @@ npm run db:seed:pickem -- inSeason
 npm run db:seed:pickem -- endSeason
 ```
 
-### Advanced Usage
+### With Custom Options
 
 ```bash
 # Custom week simulation (in-season only)
@@ -128,7 +103,61 @@ npm run db:seed:pickem -- preseason --ats --straight-up
 npm run db:seed:pickem -- inSeason --week 7 --leagues 3 --users 12 --ats
 ```
 
-## 📊 Data Generated
+## ⚙️ Advanced Features
+
+### 👑 Commissioner User Feature
+
+Designate a specific user as the commissioner of all generated leagues. This is useful for testing purposes, allowing you to log in with a known user ID and see all the seeded data.
+
+```bash
+# Make user "my-test-user" the commissioner of all leagues
+npm run db:seed:pickem -- inSeason --commissioner my-test-user --leagues 2 --users 5
+
+# Use an existing user ID from your database
+npm run db:seed:pickem -- preseason --commissioner existing-user-123 --leagues 1 --users 3
+```
+
+**How it Works:**
+
+- **New User**: If the commissioner user ID doesn't exist, a new user will be created with that ID
+- **Existing User**: If the commissioner user ID already exists, it will be used as-is (no duplicate creation)
+- **Commissioner Role**: The specified user becomes the commissioner of ALL generated leagues
+- **User Count**: The commissioner user counts toward the total users per league
+
+### 🧹 Data Cleanup Feature
+
+Clean up existing pick'em data before seeding new data. This ensures a clean slate for each scenario and prevents data conflicts.
+
+```bash
+# Clean up existing data and seed new preseason data
+npm run db:seed:pickem -- preseason --cleanup --leagues 2 --users 5
+
+# Clean up and seed with commissioner user
+npm run db:seed:pickem -- inSeason --cleanup --commissioner my-user --leagues 1 --users 3
+```
+
+**What Gets Cleaned Up:**
+The cleanup process removes all pick'em related data in the correct order:
+
+1. **Picks** (depends on users, events, teams, leagues)
+2. **Live Scores & Outcomes** (depend on events)
+3. **Events** (depend on phases, teams)
+4. **League Members** (depend on leagues, users)
+5. **Leagues** (depend on league types, phase templates)
+6. **Phases** (depend on seasons, phase templates)
+7. **Teams** (depend on sport leagues)
+8. **Users** (preserves commissioner if specified)
+
+**Commissioner User Preservation:**
+When using `--cleanup` with `--commissioner`, the cleanup process will:
+
+- Delete all other users
+- Preserve the specified commissioner user
+- Reuse the existing commissioner user for the new leagues
+
+This allows you to maintain a consistent test user across different scenarios.
+
+## 📊 What Data Gets Generated
 
 ### Teams (12 total)
 
@@ -181,7 +210,7 @@ npm run db:seed:pickem -- inSeason --week 7 --leagues 3 --users 12 --ats
 - **ATS Picks**: Include the correct spread for the selected team
 - **Straight Up Picks**: No spread included (null value)
 
-## 🎭 Season Phases
+## 🎭 Season Phases Explained
 
 ### Offseason
 
@@ -224,48 +253,7 @@ npm run db:seed:pickem -- inSeason --week 7 --leagues 3 --users 12 --ats
 | `--straight-up`  | Include Straight Up leagues                   | true     | `--straight-up`          |
 | `--commissioner` | User ID to make commissioner of all leagues   | None     | `--commissioner user123` |
 | `--cleanup`      | Clean up existing pick'em data before seeding | false    | `--cleanup`              |
-
-## 🔧 Prerequisites
-
-Before running the **mock data seeding tool**, ensure you have:
-
-1. **Database setup**: Run migrations first
-
-   ```bash
-   npm run db:migrate
-   ```
-
-````
-
-2. **Required base data**: The tool needs:
-   - League types (Pick'em)
-   - Sport leagues (NFL)
-   - Seasons
-   - Phase templates
-
-### Setting up Base Data
-
-If you encounter "Required base data not found" errors, you can set up minimal base data using:
-
-```bash
-npm run db:seed:base
-```
-
-This will create the minimum required data for the pick'em seeding to work.
-
-### Alternative: Real Data Seeding
-
-If you want to use real ESPN data instead of mock data:
-
-```bash
-npm run db:seed
-```
-
-**Note**:
-
-- The real data seeding requires ESPN API credentials and may fail if dependencies are missing
-- For development and testing, the mock data approach (`npm run db:seed:base` + `npm run db:seed:pickem`) is recommended
-- See [SEEDING_STRATEGY.md](./SEEDING_STRATEGY.md) for detailed comparison
+| `--help`         | Show help information                         | N/A      | `--help`                 |
 
 ## 📝 Example Output
 
@@ -314,13 +302,13 @@ npm run db:seed
 
 ### Which Seeding Approach Should I Use?
 
-| Scenario                 | Use This  | Command                                                        |
-| ------------------------ | --------- | -------------------------------------------------------------- |
-| **Development/Testing**  | Mock Data | `npm run db:seed:base` then `npm run db:seed:pickem`           |
-| **Production/Real Data** | Real Data | `npm run db:seed`                                              |
-| **Quick Demo**           | Mock Data | `npm run db:seed:base` then `npm run db:seed:pickem preseason` |
-| **Integration Testing**  | Real Data | `npm run db:seed`                                              |
-| **Unit Testing**         | Mock Data | `npm run db:seed:pickem offseason`                             |
+| Scenario                 | Use This  | Command                                                           |
+| ------------------------ | --------- | ----------------------------------------------------------------- |
+| **Development/Testing**  | Mock Data | `npm run db:seed:base` then `npm run db:seed:pickem -- inSeason`  |
+| **Production/Real Data** | Real Data | `npm run db:seed`                                                 |
+| **Quick Demo**           | Mock Data | `npm run db:seed:base` then `npm run db:seed:pickem -- preseason` |
+| **Integration Testing**  | Real Data | `npm run db:seed`                                                 |
+| **Unit Testing**         | Mock Data | `npm run db:seed:pickem -- offseason`                             |
 
 ### Common Workflows
 
@@ -400,4 +388,3 @@ To add new seeding scenarios or modify existing ones:
 - `SEEDING_STRATEGY.md` - Complete seeding strategy documentation
 - `SEEDING.md` - Original seeding plan
 - `src/db/schema.ts` - Database schema
-````

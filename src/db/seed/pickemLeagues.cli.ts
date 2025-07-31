@@ -14,7 +14,7 @@ function printUsage() {
   console.log(`
 🌱 Pick'em Leagues Seeding Tool
 
-Usage: npm run seed:pickem [phase] [options]
+Usage: npm run db:seed:pickem [phase] [options]
 
 Phases:
   ${phases.map((p) => `  ${p}`).join("\n")}
@@ -30,11 +30,11 @@ Options:
   --help             Show this help
 
 Examples:
-  npm run seed:pickem offseason
-  npm run seed:pickem inSeason --week 3 --leagues 4 --users 8
-  npm run seed:pickem preseason --ats --straight-up
-  npm run seed:pickem inSeason --commissioner user123 --leagues 2 --users 5
-  npm run seed:pickem preseason --cleanup --leagues 1 --users 3
+  npm run db:seed:pickem -- offseason
+  npm run db:seed:pickem -- inSeason --week 3 --leagues 4 --users 8
+  npm run db:seed:pickem -- preseason --ats --straight-up
+  npm run db:seed:pickem -- inSeason --commissioner user123 --leagues 2 --users 5
+  npm run db:seed:pickem -- preseason --cleanup --leagues 1 --users 3
 `);
 }
 
