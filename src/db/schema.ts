@@ -165,8 +165,8 @@ export const seasonsTable = pgTable("seasons", {
     .notNull(),
   name: text("name").notNull(),
   year: text("year").notNull(),
-  startDate: timestamp("start_date"),
-  endDate: timestamp("end_date"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
 });
 
 export const externalSeasonsTable = pgTable(

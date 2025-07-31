@@ -374,4 +374,21 @@ export class PhasesRepository {
       .where(eq(phasesTable.id, id));
     return phase || null;
   }
+
+  async findBySeasonIdAndTemplateId(
+    seasonId: string,
+    phaseTemplateId: string,
+    dbOrTx: DBOrTx = db,
+  ): Promise<DBPhase[]> {
+    const phases = await dbOrTx
+      .select()
+      .from(phasesTable)
+      .where(
+        and(
+          eq(phasesTable.seasonId, seasonId),
+          eq(phasesTable.phaseTemplateId, phaseTemplateId),
+        ),
+      );
+    return phases;
+  }
 }

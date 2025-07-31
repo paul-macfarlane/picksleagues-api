@@ -39,6 +39,8 @@ export async function insertMinimalBaseData() {
       name: "2024 NFL Season",
       year: "2024",
       sportLeagueId: sportLeagueId,
+      startDate: new Date("2024-09-05T00:00:00Z"), // NFL season typically starts in September
+      endDate: new Date("2025-02-09T23:59:59Z"), // Super Bowl typically in February
     });
 
     // Insert league type
