@@ -1,56 +1,101 @@
-<h1>Privacy Policy</h1>
+<%- contentFor('additionalStyles') %>
+<style>
+  .content-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+  }
 
-<h2>1. Information We Collect</h2>
-<p>
-  We collect information you provide directly to us, including name, email
-  address, and other account information. We also collect data about your usage
-  of PicksLeagues, including your picks, competition participation, and
-  interaction with other users.
-</p>
+  .last-updated {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 3rem;
+    font-size: 0.95rem;
+  }
 
-<h2>2. How We Use Your Information</h2>
-<p>
-  We use the information we collect to operate and improve PicksLeagues,
-  personalize your experience, communicate with you, and provide customer
-  support. We may also use your information to send you updates about new
-  features or promotions.
-</p>
+  h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 1rem;
+  }
 
-<h2>3. Information Sharing</h2>
-<p>
-  We do not sell your personal information. We may share your information with
-  other users as part of the platform's social features, and with service
-  providers who assist in operating our platform.
-</p>
+  h2 {
+    font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+  }
 
-<h2>4. Data Security</h2>
-<p>
-  We implement appropriate security measures to protect your personal
-  information. However, no method of transmission over the Internet is 100%
-  secure.
-</p>
+  p {
+    font-size: clamp(0.95rem, 1.5vw, 1rem);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+  }
 
-<h2>5. Cookies and Tracking</h2>
-<p>
-  We use cookies and similar technologies to track usage of our services and
-  remember your preferences. You can control cookie settings through your
-  browser.
-</p>
+  @media (max-width: 768px) {
+    .content-wrapper {
+      padding: 1rem 1rem;
+    }
 
-<h2>6. Your Rights</h2>
-<p>
-  You have the right to access, correct, or delete your personal information.
-  You can also opt out of marketing communications at any time.
-</p>
+    h1 {
+      font-size: 2rem;
+    }
 
-<h2>7. Children's Privacy</h2>
-<p>
-  Our service is not directed to children under 13. We do not knowingly collect
-  information from children under 13.
-</p>
+    h2 {
+      font-size: 1.25rem;
+      margin-top: 2rem;
+    }
 
-<h2>8. Changes to Privacy Policy</h2>
-<p>
-  We may update this privacy policy from time to time. We will notify you of any
-  changes by posting the new policy on this page.
-</p>
+    p {
+      font-size: 0.95rem;
+    }
+
+    .last-updated {
+      margin-bottom: 2rem;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .content-wrapper {
+      max-width: 900px;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .content-wrapper {
+      max-width: 1000px;
+    }
+  }
+</style>
+
+<div class="content-wrapper">
+  <h1>Privacy Policy</h1>
+  <p class="last-updated">Last updated: January 2024</p>
+
+  <h2>1. Information We Collect</h2>
+  <p>We collect information you provide directly to us, including name, email address, and other account information. We also collect data about your usage of PicksLeagues, including your picks, competition participation, and interaction with other users.</p>
+
+  <h2>2. How We Use Your Information</h2>
+  <p>We use the information we collect to operate and improve PicksLeagues, personalize your experience, communicate with you, and provide customer support. We may also use your information to send you updates about new features or promotions.</p>
+
+  <h2>3. Information Sharing</h2>
+  <p>We do not sell your personal information. We may share your information with other users as part of the platform's social features, and with service providers who assist in operating our platform.</p>
+
+  <h2>4. Data Security</h2>
+  <p>We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure.</p>
+
+  <h2>5. Cookies and Tracking</h2>
+  <p>We use cookies and similar technologies to track usage of our services and remember your preferences. You can control cookie settings through your browser.</p>
+
+  <h2>6. Your Rights</h2>
+  <p>You have the right to access, correct, or delete your personal information. You can also opt out of marketing communications at any time.</p>
+
+  <h2>7. Children's Privacy</h2>
+  <p>Our service is not directed to children under 13. We do not knowingly collect information from children under 13.</p>
+
+  <h2>8. Changes to Privacy Policy</h2>
+  <p>We reserve the right to modify this privacy policy at any time. Continued use of the platform after changes constitutes acceptance of the modified policy.</p>
+
+  <h2>9. Contact Us</h2>
+  <p>If you have any questions about this Privacy Policy, please contact us at privacy@picksleagues.com.</p>
+</div>

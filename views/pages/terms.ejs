@@ -1,52 +1,104 @@
-<h1>Terms and Conditions</h1>
+<%- contentFor('additionalStyles') %>
+<style>
+  .content-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+  }
 
-<h2>1. Acceptance of Terms</h2>
-<p>
-  By accessing and using PicksLeagues, you accept and agree to be bound by these
-  Terms and Conditions. If you do not agree to these terms, please do not use
-  our service.
-</p>
+  .last-updated {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 3rem;
+    font-size: 0.95rem;
+  }
 
-<h2>2. Description of Service</h2>
-<p>
-  PicksLeagues is a sports prediction platform that allows users to make picks,
-  compete with friends, and participate in sports-related competitions.
-</p>
+  h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 1rem;
+  }
 
-<h2>3. User Accounts</h2>
-<p>
-  You must create an account to use our services. You are responsible for
-  maintaining the confidentiality of your account information and for all
-  activities under your account.
-</p>
+  h2 {
+    font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+  }
 
-<h2>4. User Conduct</h2>
-<p>
-  Users agree to use the platform in compliance with all applicable laws and
-  regulations. Prohibited activities include cheating, manipulating results, or
-  engaging in any form of harassment.
-</p>
+  p {
+    font-size: clamp(0.95rem, 1.5vw, 1rem);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+  }
 
-<h2>5. Intellectual Property</h2>
-<p>
-  All content and materials available on PicksLeagues are protected by
-  applicable copyright and trademark laws.
-</p>
+  @media (max-width: 768px) {
+    .content-wrapper {
+      padding: 1rem 1rem;
+    }
 
-<h2>6. Limitation of Liability</h2>
-<p>
-  PicksLeagues is provided "as is" without any warranties. We are not liable for
-  any damages arising from your use of our service.
-</p>
+    h1 {
+      font-size: 2rem;
+    }
 
-<h2>7. Changes to Terms</h2>
-<p>
-  We reserve the right to modify these terms at any time. Continued use of the
-  platform after changes constitutes acceptance of the modified terms.
-</p>
+    h2 {
+      font-size: 1.25rem;
+      margin-top: 2rem;
+    }
 
-<h2>8. Termination</h2>
-<p>
-  We reserve the right to terminate or suspend access to our service
-  immediately, without prior notice, for any violation of these Terms.
-</p>
+    p {
+      font-size: 0.95rem;
+    }
+
+    .last-updated {
+      margin-bottom: 2rem;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .content-wrapper {
+      max-width: 900px;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .content-wrapper {
+      max-width: 1000px;
+    }
+  }
+</style>
+
+<div class="content-wrapper">
+  <h1>Terms & Conditions</h1>
+  <p class="last-updated">Last updated: January 2024</p>
+
+  <h2>1. Acceptance of Terms</h2>
+  <p>By accessing and using PicksLeagues, you accept and agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our service.</p>
+
+  <h2>2. Description of Service</h2>
+  <p>PicksLeagues is a sports prediction platform that allows users to make picks, compete with friends, and participate in sports-related competitions.</p>
+
+  <h2>3. User Accounts</h2>
+  <p>You must create an account to use our services. You are responsible for maintaining the confidentiality of your account information and for all activities under your account.</p>
+
+  <h2>4. User Conduct</h2>
+  <p>Users agree to use the platform in compliance with all applicable laws and regulations. Prohibited activities include cheating, manipulating results, or engaging in any form of harassment.</p>
+
+  <h2>5. Intellectual Property</h2>
+  <p>All content and materials available on PicksLeagues are protected by applicable copyright and trademark laws.</p>
+
+  <h2>6. Limitation of Liability</h2>
+  <p>PicksLeagues is provided "as is" without any warranties. We are not liable for any damages arising from your use of our service.</p>
+
+  <h2>7. Changes to Terms</h2>
+  <p>We reserve the right to modify these terms at any time. Continued use of the platform after changes constitutes acceptance of the modified terms.</p>
+
+  <h2>8. Termination</h2>
+  <p>We reserve the right to terminate or suspend access to our service immediately, without prior notice, for any violation of these Terms.</p>
+
+  <h2>9. Governing Law</h2>
+  <p>These Terms shall be interpreted and governed in accordance with the laws of the jurisdiction in which PicksLeagues operates.</p>
+
+  <h2>10. Contact Information</h2>
+  <p>If you have any questions about these Terms & Conditions, please contact us at legal@picksleagues.com.</p>
+</div>
