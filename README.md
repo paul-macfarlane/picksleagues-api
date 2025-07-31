@@ -190,6 +190,9 @@ curl http://localhost:3001/api/crons/teams --header "x-cron-api-key: local"
 # Then, sync the phases for those seasons
 curl http://localhost:3001/api/crons/phases --header "x-cron-api-key: local"
 
+# Then, update the phases for the NFL season to have the correct start and end dates (needed because we want start and end times to be 2AM ET on Tuesdays, ESPN has midnight ET on Thursdays)
+npm run db:seed
+
 # Then, sync the events for those phases
 curl http://localhost:3001/api/crons/events --header "x-cron-api-key: local"
 

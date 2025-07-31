@@ -49,4 +49,16 @@ export class PhasesMutationService {
       dbOrTx,
     );
   }
+
+  async findBySeasonIdAndTemplateId(
+    seasonId: string,
+    phaseTemplateId: string,
+    dbOrTx?: DBOrTx,
+  ): Promise<DBPhase[]> {
+    return this.phasesRepository.findBySeasonIdAndTemplateId(
+      seasonId,
+      phaseTemplateId,
+      dbOrTx,
+    );
+  }
 }

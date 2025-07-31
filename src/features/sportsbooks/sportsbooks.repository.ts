@@ -12,7 +12,7 @@ import {
 @injectable()
 export class SportsbooksRepository {
   async findDefault(dbOrTx: DBOrTx = db): Promise<DBSportsbook | null> {
-    const sportsbooks = await dbOrTx
+    const [result] = await dbOrTx
       .select({
         sportsbook: sportsbooksTable,
       })
@@ -22,7 +22,7 @@ export class SportsbooksRepository {
         eq(sportsbooksTable.id, externalSportsbooksTable.sportsbookId),
       )
       .where(eq(sportsbooksTable.isDefault, true));
-    return sportsbooks[0].sportsbook || null;
+    return result?.sportsbook || null;
   }
 
   async create(values: DBSportsbookInsert, dbOrTx: DBOrTx = db) {
