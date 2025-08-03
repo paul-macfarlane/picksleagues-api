@@ -1,7 +1,7 @@
 {
   "name": "picksleagues-api",
   "version": "1.0.0",
-  "description": "API for the Picks Leagues Client Apps",
+  "description": "API for the PicksLeagues Client Apps",
   "main": "dist/api/index.js",
   "scripts": {
     "build": "tsc",
