@@ -1,6 +1,7 @@
-import "reflect-metadata";
 import "dotenv/config.js";
-
+import "./instrument.js";
+import * as Sentry from "@sentry/node";
+import "reflect-metadata";
 import express, { Request, Response } from "express";
 import apiRouter from "./router.js";
 import staticRouter from "./static.router.js";
@@ -49,16 +50,19 @@ app.use("/api", apiRouter);
 // Handle static page routes
 app.use("/", staticRouter);
 
-// Register the error middleware
-// This must be the last app.use() call
-app.use(errorMiddleware);
-
 // Redirect all other routes to frontend
 app.get("*splat", (req: Request, res: Response) => {
   if (!req.path.startsWith("/api")) {
     res.redirect(`${process.env.WEB_FRONTEND_URL}${req.path}`);
   }
 });
+
+// The error handler must be registered before any other error middleware and after all controllers
+Sentry.setupExpressErrorHandler(app);
+
+// Register the error middleware
+// This must be the last app.use() call
+app.use(errorMiddleware);
 
 // For local development
 if (process.env.NODE_ENV !== "production") {

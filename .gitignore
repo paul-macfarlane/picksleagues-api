@@ -42,3 +42,6 @@ temp/
 google-credentials.json
 *.p8
 .vercel
+
+# Sentry Config File
+.sentryclirc

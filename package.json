@@ -4,7 +4,7 @@
   "description": "API for the PicksLeagues Client Apps",
   "main": "dist/api/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run sentry:sourcemaps",
     "start": "node dist/api/index.js",
     "dev": "tsx watch src/api/index.ts",
     "format": "prettier --write src/ --ext .ts,.tsx",
@@ -24,11 +24,14 @@
     "backlog:edit": "backlog task edit",
     "backlog:ui": "backlog browser",
     "test": "vitest",
-    "favicons": "node scripts/generate-favicons.js"
+    "favicons": "node scripts/generate-favicons.js",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org paul-macfarlane --project picksleagues-api ./dist && sentry-cli sourcemaps upload --org paul-macfarlane --project picksleagues-api ./dist"
   },
   "dependencies": {
     "@better-auth/expo": "^1.2.9",
     "@neondatabase/serverless": "^1.0.1",
+    "@sentry/cli": "^2.50.2",
+    "@sentry/node": "^10.1.0",
     "@types/ejs": "^3.1.5",
     "@types/express-ejs-layouts": "^2.5.4",
     "axios": "^1.10.0",
