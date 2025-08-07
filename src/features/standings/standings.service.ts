@@ -20,6 +20,11 @@ import { SeasonsUtilService } from "../seasons/seasons.util.service.js";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
 import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
 import z from "zod";
+import {
+  ForbiddenError,
+  InternalServerError,
+  NotFoundError,
+} from "../../lib/errors.js";
 
 @injectable()
 export class StandingsService {
@@ -116,19 +121,19 @@ export class StandingsService {
       userId,
     );
     if (!member) {
-      throw new Error("User is not a member of this league");
+      throw new ForbiddenError("User is not a member of this league");
     }
 
     const league = await this.leaguesQueryService.findById(leagueId);
     if (!league) {
-      throw new Error("League not found");
+      throw new NotFoundError("League not found");
     }
 
     const leagueType = await this.leagueTypesQueryService.findById(
       league.leagueTypeId,
     );
     if (!leagueType) {
-      throw new Error("League type not found");
+      throw new NotFoundError("League type not found");
     }
 
     const season =
@@ -136,7 +141,7 @@ export class StandingsService {
         leagueType.sportLeagueId,
       );
     if (!season) {
-      throw new Error("No current or latest season found");
+      throw new NotFoundError("No current or latest season found");
     }
 
     const standings = await this.standingsQueryService.findByLeagueSeason(
@@ -214,7 +219,7 @@ export class StandingsService {
         dbOrTx,
       );
       if (!standings) {
-        throw new Error(
+        throw new NotFoundError(
           `Failed to create standings for user ${userId} in league ${leagueId}`,
         );
       }
@@ -224,7 +229,7 @@ export class StandingsService {
         standings.metadata,
       );
       if (!metadataParseResult.success) {
-        throw new Error(
+        throw new InternalServerError(
           `Failed to parse metadata for user ${userId} in league ${leagueId}`,
         );
       }

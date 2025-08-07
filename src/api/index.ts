@@ -1,6 +1,5 @@
 import "dotenv/config.js";
 import "./instrument.js";
-import * as Sentry from "@sentry/node";
 import "reflect-metadata";
 import express, { Request, Response } from "express";
 import apiRouter from "./router.js";
@@ -56,9 +55,6 @@ app.get("*splat", (req: Request, res: Response) => {
     res.redirect(`${process.env.WEB_FRONTEND_URL}${req.path}`);
   }
 });
-
-// The error handler must be registered before any other error middleware and after all controllers
-Sentry.setupExpressErrorHandler(app);
 
 // Register the error middleware
 // This must be the last app.use() call

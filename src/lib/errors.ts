@@ -1,5 +1,6 @@
 import { Response, Request, NextFunction } from "express";
 import { ZodError } from "zod";
+import * as Sentry from "@sentry/node";
 
 // Base class for our custom API errors
 export class ApiError extends Error {
@@ -42,6 +43,12 @@ export class ConflictError extends ApiError {
   }
 }
 
+export class InternalServerError extends ApiError {
+  constructor(message = "An internal server error occurred") {
+    super(message, 500);
+  }
+}
+
 // Centralized error handling utility
 export const handleApiError = (err: unknown, res: Response) => {
   if (err instanceof ZodError) {
@@ -55,7 +62,7 @@ export const handleApiError = (err: unknown, res: Response) => {
     return;
   }
 
-  if (err instanceof ApiError) {
+  if (err instanceof ApiError && !(err instanceof InternalServerError)) {
     res.status(err.statusCode).json({
       error: {
         message: err.message,
@@ -69,8 +76,12 @@ export const handleApiError = (err: unknown, res: Response) => {
     return;
   }
 
-  // Fallback for unexpected errors
-  console.error("An unexpected error occurred:", err);
+  // Fallback for unexpected errors and InternalServerErrors
+  console.error("An unexpected or internal server error occurred:", err);
+
+  // Only capture unexpected or internal server errors in Sentry
+  Sentry.captureException(err);
+
   res.status(500).json({
     error: {
       message: "An internal server error occurred.",

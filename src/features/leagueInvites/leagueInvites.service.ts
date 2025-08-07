@@ -112,7 +112,7 @@ export class LeagueInvitesService {
     const league = await this.leaguesQueryService.findById(invite.leagueId, tx);
     if (!league) {
       // this should never happen because of data integrity, but have to handle it
-      throw new Error("League not found for invite");
+      throw new NotFoundError("League not found for invite");
     }
 
     if (response === LEAGUE_INVITE_STATUSES.DECLINED) {
