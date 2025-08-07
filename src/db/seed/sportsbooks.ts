@@ -3,6 +3,7 @@ import { DATA_SOURCE_NAMES } from "../../features/dataSources/dataSources.types.
 import { DataSourcesQueryService } from "../../features/dataSources/dataSources.query.service.js";
 import { SportsbooksMutationService } from "../../features/sportsbooks/sportsbooks.mutation.service.js";
 import { SportsbooksQueryService } from "../../features/sportsbooks/sportsbooks.query.service.js";
+import { NotFoundError } from "../../lib/errors.js";
 
 export async function seedSportsbooks(
   dataSourcesQueryService: DataSourcesQueryService,
@@ -18,7 +19,7 @@ export async function seedSportsbooks(
   );
 
   if (!espnDataSource) {
-    throw new Error("ESPN data source not found");
+    throw new NotFoundError("ESPN data source not found");
   }
 
   // avoid re-seeding if already exists

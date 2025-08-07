@@ -29,6 +29,7 @@ import {
   EVENT_TYPES,
 } from "../../features/events/events.types.js";
 import { DBTx } from "../index.js";
+import { NotFoundError } from "../../lib/errors.js";
 
 // Clean up existing pick'em data
 async function cleanupPickemData(tx: DBTx, commissionerUserId?: string) {
@@ -575,12 +576,14 @@ export async function seedPickemLeagues(
     .orderBy(phaseTemplatesTable.sequence);
 
   if (!leagueType || !sportLeague || !season || phaseTemplates.length === 0) {
-    throw new Error("Required base data not found. Run basic seeding first.");
+    throw new NotFoundError(
+      "Required base data not found. Please run basic seeding first.",
+    );
   }
 
   if (phaseTemplates.length < 10) {
-    throw new Error(
-      `Expected 10 phase templates, found ${phaseTemplates.length}. Run basic seeding first.`,
+    throw new NotFoundError(
+      `Expected 10 phase templates, found ${phaseTemplates.length}. Please run basic seeding first.`,
     );
   }
 
@@ -628,7 +631,7 @@ export async function seedPickemLeagues(
     // Find the phase template for this week
     const phaseTemplate = phaseTemplates.find((pt) => pt.sequence === week);
     if (!phaseTemplate) {
-      throw new Error(`No phase template found for week ${week}`);
+      throw new NotFoundError(`No phase template found for week ${week}`);
     }
 
     phases.push({
@@ -758,7 +761,7 @@ export async function seedPickemLeagues(
     // Find the phase for this week
     const phase = phases.find((p) => p.sequence === game.week);
     if (!phase) {
-      throw new Error(`No phase found for week ${game.week}`);
+      throw new NotFoundError(`No phase found for week ${game.week}`);
     }
 
     // All events in a phase happen on the same day (last day of the phase)
