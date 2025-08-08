@@ -1,9 +1,11 @@
 ---
 id: task-007
 title: Add Discord social login
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@paul'
 created_date: '2025-08-08'
+updated_date: '2025-08-08'
 labels: []
 dependencies: []
 ---
@@ -21,3 +23,13 @@ Enable users to log in with Discord alongside existing Google and Apple. Ensure 
 - [ ] On first login without profile create profile and redirect to WEB_FRONTEND_URL/profile?setup=true
 - [ ] Environment variables DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET are required and documented
 - [ ] Basic integration test or manual verification steps added
+
+## Implementation Plan
+
+1) Add Discord provider to better-auth config in src/lib/auth.ts
+2) Set Discord redirect URL in Dev Portal to {API_BASE}/api/auth/callback/discord
+3) Confirm account linking by email works across providers
+4) Use /api/v1/profiles/onboard for post-login redirect (new→/profile?setup=true, existing→home)
+5) Document DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET in README with setup instructions
+6) Add manual verification steps and sanity-check Google/Apple
+7) Run lint and build
