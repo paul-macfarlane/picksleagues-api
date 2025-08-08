@@ -32,6 +32,10 @@ export const auth = betterAuth({
       clientSecret: process.env.APPLE_CLIENT_SECRET!,
       appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER!, // for expo app
     },
+    discord: {
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    },
   },
   trustedOrigins: [
     process.env.WEB_FRONTEND_URL!,
