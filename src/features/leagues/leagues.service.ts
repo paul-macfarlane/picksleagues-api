@@ -79,9 +79,7 @@ export class LeaguesService {
       }
 
       if (startPhaseTemplate.sequence > endPhaseTemplate.sequence) {
-        throw new ValidationError(
-          "Start phase must be before or equal to end phase",
-        );
+        throw new ValidationError("Start phase cannot be after end phase");
       }
 
       const newLeague = await this.leaguesMutationService.create(
