@@ -14,7 +14,7 @@ The project also includes a comprehensive seeding strategy that supports both re
 - **Language**: TypeScript
 - **Database**: PostgreSQL
 - **ORM**: Drizzle ORM
-- **Authentication**: Better Auth
+- **Authentication**: Better Auth (Google, Apple, Discord)
 
 ## Local Development Setup
 
