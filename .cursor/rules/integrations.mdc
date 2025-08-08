@@ -1,0 +1,13 @@
+---
+description: Integrations layer standards (auto-attach to src/integrations)
+globs:
+  - src/integrations/**/*.ts
+alwaysApply: false
+---
+
+- Encapsulate each external API in an `@injectable` service (e.g., `EspnService`).
+- Perform all network I/O here; translate external data to internal shapes.
+- Make services mockable in tests; avoid direct calls from services without an abstraction.
+- No database access in integrations; return data to feature services for persistence.
+
+@STANDARDS.md

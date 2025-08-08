@@ -1,0 +1,27 @@
+---
+description: API Routers and Versioning (auto-attach to src/api)
+globs:
+  - src/api/**/*.ts
+alwaysApply: false
+---
+
+- Requests/Responses
+
+  - JSON-only; ensure `Content-Type: application/json` for bodies
+  - Use plural nouns and nested routes for relationships
+
+- Validation
+
+  - Routers must validate input shape with `zodSchema.parse()` before calling services
+  - Normalize/validate `include` query param against an allowlist; reject unsupported relations
+
+- Versioning: Default + Override
+
+  - Keep un-versioned routers as the stable default implementation
+  - For breaking changes: create `*.v{n}.router.ts` override within the feature directory
+  - Compose new version under `src/api/v{n}.router.ts` and mount in `src/api/router.ts` at `/api/v{n}`
+
+- Composition Root
+  - Routers wire repositories/services and call into services only (no DB access in routers)
+
+@STANDARDS.md

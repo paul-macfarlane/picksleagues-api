@@ -1,0 +1,17 @@
+---
+description: Database and Repository standards (auto-attach to src/db and repositories)
+globs:
+  - src/db/**/*.ts
+  - src/features/**/*.repository.ts
+alwaysApply: false
+---
+
+- Repositories are thin mappers to the database; no cross-feature logic, no business rules.
+- All repository methods accept an optional `dbOrTx` and pass it through to queries.
+- Return semantics
+  - `get...` helpers throw NotFoundError on missing
+  - `find...` return null
+  - `list...` return []
+- Keep SQL/schema concerns in `src/db`; keep business rules in services.
+
+@STANDARDS.md

@@ -1,0 +1,47 @@
+---
+description: PicksLeagues Core Standards (TL;DR)
+globs:
+alwaysApply: true
+---
+
+- Architecture
+
+  - Feature-sliced by domain under `src/features/*`.
+  - Class-based design with strict Inversion of Control: never instantiate dependencies inside a class; inject via constructor.
+
+- Feature layers
+
+  - `*.repository.ts`: database access only; no cross-feature logic; accept optional `dbOrTx` for transactions.
+  - `*.query.service.ts`: read-only; may depend only on repositories; can assemble view models and caching.
+  - `*.mutation.service.ts`: atomic writes for its own entity only; depend only on its own repository.
+  - `*.service.ts`: orchestration/business processes; may depend on any QueryService and MutationService.
+  - `*.util.service.ts`: shared business logic leaf; may depend only on QueryServices and other UtilServices.
+
+- Validation
+
+  - Router validates shape/types using `zodSchema.parse()`.
+  - Services validate business rules (e.g., uniqueness, permissions) using application context.
+
+- Transactions
+
+  - Pass an optional `dbOrTx` argument through repositories/services to participate in broader transactions.
+
+- Method naming semantics
+
+  - `get...`: throws NotFoundError when missing.
+  - `find...`: returns null when missing.
+  - `list...`: returns [] when no rows.
+  - Prefer patterns like: `listByLeagueIdWithMembers`, `getMemberForUserByLeagueId`.
+
+- API
+
+  - JSON-only; plural resource names; nested routes to reflect relationships; versioned under `/api/v{n}`.
+  - V2+ uses Default + Override: keep un-versioned routers as stable defaults; add `*.v2.router.ts` overrides and compose in `src/api/v2.router.ts`.
+  - Support `include` query param; validate requested relations with zod against an allowlist.
+
+- Testing
+
+  - Use Vitest and `vitest-mock-extended` for typed mocks.
+  - Mock transactions; assert on error classes, not messages.
+
+- See `STANDARDS.md` for full detail.

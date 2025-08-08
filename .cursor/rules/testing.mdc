@@ -1,0 +1,23 @@
+---
+description: Testing standards (auto-attach to test files)
+globs:
+  - src/**/*.test.ts
+alwaysApply: false
+---
+
+- Use Vitest for unit/integration tests; colocate tests next to code.
+- Use `vitest-mock-extended` for type-safe service mocks.
+- Mock DB transactions and external integrations; avoid real network/DB calls.
+- Assert error classes (e.g., `NotFoundError`) rather than error messages.
+
+Example transaction mock:
+
+```ts
+import { vi } from "vitest";
+
+vi.mock("../../db", () => ({
+  db: { transaction: vi.fn((callback) => callback()) },
+}));
+```
+
+@STANDARDS.md

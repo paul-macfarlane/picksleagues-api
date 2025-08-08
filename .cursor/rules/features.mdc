@@ -1,0 +1,48 @@
+---
+description: Feature Slices and Service Patterns (auto-attach to features)
+globs:
+  - src/features/**/*.ts
+alwaysApply: false
+---
+
+- Feature directory is source of truth for its domain. Keep domain logic local.
+
+- Layers and allowed dependencies
+
+  - Repository (`*.repository.ts`)
+    - Allowed deps: db layer only
+    - Accept `dbOrTx?: any` (transaction passthrough)
+    - No cross-feature knowledge
+  - QueryService (`*.query.service.ts`)
+    - Allowed deps: repositories only
+    - Responsibilities: reads, joins, aggregations, view models, caching
+  - MutationService (`*.mutation.service.ts`)
+    - Allowed deps: own repository only
+    - Responsibilities: atomic CUD for own entity
+  - Service (`*.service.ts`)
+    - Allowed deps: any QueryService and any MutationService
+    - Responsibilities: orchestration/business processes, may use transactions
+  - UtilService (`*.util.service.ts`)
+    - Allowed deps: QueryServices and other UtilServices only
+    - No deps on Services or MutationServices
+
+- Method naming and semantics
+
+  - Use `{get|find|list}By{Filter}With{Relations}[ForUser]`
+  - `get...` throws NotFoundError when missing
+  - `find...` returns null when missing
+  - `list...` returns [] when none
+
+- Constructor Injection
+
+  - Do not instantiate dependencies inside classes; inject via constructor parameters.
+
+- Validation split
+
+  - Routers do shape/type `zodSchema.parse()`
+  - Services do business-rule validation
+
+- Transactions
+  - All repo/service methods that hit the DB accept optional `dbOrTx` and pass through.
+
+@STANDARDS.md
