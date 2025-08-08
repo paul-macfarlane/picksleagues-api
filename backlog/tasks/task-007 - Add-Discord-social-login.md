@@ -1,7 +1,7 @@
 ---
 id: task-007
 title: Add Discord social login
-status: In Progress
+status: Done
 assignee:
   - '@paul'
 created_date: '2025-08-08'
@@ -33,3 +33,7 @@ Enable users to log in with Discord alongside existing Google and Apple. Ensure 
 5) Document DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET in README with setup instructions
 6) Add manual verification steps and sanity-check Google/Apple
 7) Run lint and build
+
+## Implementation Notes
+
+Added Discord social login provider alongside existing Google and Apple providers. Added Discord client env vars to README with setup instructions. Using existing /api/v1/profiles/onboard endpoint for post-login redirects (new users to profile setup, existing to home). Better Auth handles account linking by email automatically.
