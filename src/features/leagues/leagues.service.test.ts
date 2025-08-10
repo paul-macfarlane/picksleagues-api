@@ -23,7 +23,15 @@ import {
   LEAGUE_TYPE_SLUGS,
 } from "../leagueTypes/leagueTypes.types.js";
 import { LeaguesUtilService } from "./leagues.util.service.js";
-import { ForbiddenError } from "../../lib/errors.js";
+import {
+  DBPhaseTemplate,
+  PHASE_TEMPLATE_TYPES,
+} from "../phaseTemplates/phaseTemplates.types.js";
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "../../lib/errors.js";
 import { vi } from "vitest";
 
 vi.mock("../../db", () => ({
@@ -217,6 +225,175 @@ describe("LeaguesService", () => {
       );
       expect(result[0].members).toEqual([member]);
       expect(result[0].leagueType).toEqual(leagueType);
+    });
+  });
+
+  describe("create", () => {
+    const userId = "user-1";
+    const createData = {
+      name: "My League",
+      image: null,
+      leagueTypeSlug: LEAGUE_TYPE_SLUGS.PICK_EM,
+      startPhaseTemplateId: "phase-start-1",
+      endPhaseTemplateId: "phase-end-1",
+      visibility: LEAGUE_VISIBILITIES.PRIVATE,
+      size: 10,
+      settings: { picksPerPhase: 5, pickType: PICK_EM_PICK_TYPES.STRAIGHT_UP },
+    };
+
+    it("throws when league type not found", async () => {
+      leagueTypesQueryService.findBySlug.mockResolvedValue(null);
+
+      await expect(leaguesService.create(userId, createData)).rejects.toThrow(
+        new NotFoundError("League type not found"),
+      );
+    });
+
+    it("throws when start phase template not found", async () => {
+      leagueTypesQueryService.findBySlug.mockResolvedValue({
+        id: "type-1",
+        slug: LEAGUE_TYPE_SLUGS.PICK_EM,
+        name: LEAGUE_TYPE_NAMES.PICK_EM,
+        description: "",
+        sportLeagueId: "sport-1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      phaseTemplatesQueryService.findById.mockResolvedValueOnce(null);
+
+      await expect(leaguesService.create(userId, createData)).rejects.toThrow(
+        new NotFoundError("Start phase template not found"),
+      );
+    });
+
+    it("throws when end phase template not found", async () => {
+      leagueTypesQueryService.findBySlug.mockResolvedValue({
+        id: "type-1",
+        slug: LEAGUE_TYPE_SLUGS.PICK_EM,
+        name: LEAGUE_TYPE_NAMES.PICK_EM,
+        description: "",
+        sportLeagueId: "sport-1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const startTemplate: DBPhaseTemplate = {
+        id: "phase-start-1",
+        sportLeagueId: "sport-1",
+        label: "Week 1",
+        sequence: 1,
+        type: PHASE_TEMPLATE_TYPES.WEEK,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      phaseTemplatesQueryService.findById.mockResolvedValueOnce(startTemplate);
+      phaseTemplatesQueryService.findById.mockResolvedValueOnce(null);
+
+      await expect(leaguesService.create(userId, createData)).rejects.toThrow(
+        new NotFoundError("End phase template not found"),
+      );
+    });
+
+    it("throws when start phase is after end phase", async () => {
+      leagueTypesQueryService.findBySlug.mockResolvedValue({
+        id: "type-1",
+        slug: LEAGUE_TYPE_SLUGS.PICK_EM,
+        name: LEAGUE_TYPE_NAMES.PICK_EM,
+        description: "",
+        sportLeagueId: "sport-1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const startTemplate: DBPhaseTemplate = {
+        id: "phase-start-1",
+        sportLeagueId: "sport-1",
+        label: "Week 5",
+        sequence: 5,
+        type: PHASE_TEMPLATE_TYPES.WEEK,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const endTemplate: DBPhaseTemplate = {
+        id: "phase-end-1",
+        sportLeagueId: "sport-1",
+        label: "Week 3",
+        sequence: 3,
+        type: PHASE_TEMPLATE_TYPES.WEEK,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      phaseTemplatesQueryService.findById.mockResolvedValueOnce(startTemplate);
+      phaseTemplatesQueryService.findById.mockResolvedValueOnce(endTemplate);
+
+      await expect(leaguesService.create(userId, createData)).rejects.toThrow(
+        new ValidationError("Start phase cannot be after end phase"),
+      );
+    });
+
+    it("creates league and commissioner membership on success", async () => {
+      leagueTypesQueryService.findBySlug.mockResolvedValue({
+        id: "type-1",
+        slug: LEAGUE_TYPE_SLUGS.PICK_EM,
+        name: LEAGUE_TYPE_NAMES.PICK_EM,
+        description: "",
+        sportLeagueId: "sport-1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const startTemplate: DBPhaseTemplate = {
+        id: "phase-start-1",
+        sportLeagueId: "sport-1",
+        label: "Week 1",
+        sequence: 1,
+        type: PHASE_TEMPLATE_TYPES.WEEK,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const endTemplate: DBPhaseTemplate = {
+        id: "phase-end-1",
+        sportLeagueId: "sport-1",
+        label: "Week 10",
+        sequence: 10,
+        type: PHASE_TEMPLATE_TYPES.WEEK,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      phaseTemplatesQueryService.findById.mockResolvedValueOnce(startTemplate);
+      phaseTemplatesQueryService.findById.mockResolvedValueOnce(endTemplate);
+
+      const createdLeague: DBLeague = {
+        id: "league-1",
+        name: createData.name,
+        image: null,
+        leagueTypeId: "type-1",
+        startPhaseTemplateId: createData.startPhaseTemplateId,
+        endPhaseTemplateId: createData.endPhaseTemplateId,
+        visibility: createData.visibility,
+        size: createData.size,
+        settings: createData.settings,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      leaguesMutationService.create.mockResolvedValue(createdLeague);
+
+      const result = await leaguesService.create(userId, createData);
+
+      expect(leaguesMutationService.create).toHaveBeenCalledWith(
+        { ...createData, leagueTypeId: "type-1" },
+        undefined,
+      );
+      expect(
+        leagueMembersMutationService.createLeagueMember,
+      ).toHaveBeenCalledWith(
+        {
+          userId,
+          leagueId: createdLeague.id,
+          role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+        },
+        undefined,
+      );
+      expect(result).toEqual(createdLeague);
     });
   });
 
