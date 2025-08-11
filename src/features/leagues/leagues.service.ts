@@ -17,7 +17,6 @@ import {
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
 import { z } from "zod";
 import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
 import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types.js";
 import { LeaguesMutationService } from "./leagues.mutation.service.js";
 import { LeaguesQueryService } from "./leagues.query.service.js";
@@ -29,6 +28,7 @@ import {
 } from "../leagueTypes/leagueTypes.types.js";
 import { DBLeagueMember } from "../leagueMembers/leagueMembers.types.js";
 import { LeaguesUtilService } from "./leagues.util.service.js";
+import { LeagueMembersUtilService } from "../leagueMembers/leagueMembers.util.service.js";
 
 @injectable()
 export class LeaguesService {
@@ -39,14 +39,14 @@ export class LeaguesService {
     private leaguesMutationService: LeaguesMutationService,
     @inject(TYPES.LeagueMembersQueryService)
     private leagueMembersQueryService: LeagueMembersQueryService,
-    @inject(TYPES.LeagueMembersMutationService)
-    private leagueMembersMutationService: LeagueMembersMutationService,
     @inject(TYPES.LeagueTypesQueryService)
     private leagueTypesQueryService: LeagueTypesQueryService,
     @inject(TYPES.PhaseTemplatesQueryService)
     private phaseTemplatesQueryService: PhaseTemplatesQueryService,
     @inject(TYPES.LeaguesUtilService)
     private leaguesUtilService: LeaguesUtilService,
+    @inject(TYPES.LeagueMembersUtilService)
+    private leagueMembersUtilService: LeagueMembersUtilService,
   ) {}
 
   async create(
@@ -89,14 +89,14 @@ export class LeaguesService {
         },
         tx,
       );
-      await this.leagueMembersMutationService.createLeagueMember(
-        {
-          userId,
-          leagueId: newLeague.id,
-          role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
-        },
+
+      await this.leagueMembersUtilService.addMemberAndInitializeStandings(
+        newLeague.id,
+        userId,
+        LEAGUE_MEMBER_ROLES.COMMISSIONER,
         tx,
       );
+
       return newLeague;
     });
   }

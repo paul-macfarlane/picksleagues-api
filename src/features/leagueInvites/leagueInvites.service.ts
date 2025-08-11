@@ -20,7 +20,6 @@ import {
 import { LEAGUE_MEMBER_ROLES } from "../leagueMembers/leagueMembers.types.js";
 import { z } from "zod";
 import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
 import { UsersQueryService } from "../users/users.query.service.js";
 import { LeagueInvitesMutationService } from "./leagueInvites.mutation.service.js";
 import { LeagueInvitesQueryService } from "./leagueInvites.query.service.js";
@@ -28,8 +27,7 @@ import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
 import { ProfilesQueryService } from "../profiles/profiles.query.service.js";
 import { LeaguesUtilService } from "../leagues/leagues.util.service.js";
-import { SeasonsUtilService } from "../seasons/seasons.util.service.js";
-import { StandingsMutationService } from "../standings/standings.mutation.service.js";
+import { LeagueMembersUtilService } from "../leagueMembers/leagueMembers.util.service.js";
 
 @injectable()
 export class LeagueInvitesService {
@@ -40,8 +38,6 @@ export class LeagueInvitesService {
     private leagueInvitesMutationService: LeagueInvitesMutationService,
     @inject(TYPES.LeagueMembersQueryService)
     private leagueMembersQueryService: LeagueMembersQueryService,
-    @inject(TYPES.LeagueMembersMutationService)
-    private leagueMembersMutationService: LeagueMembersMutationService,
     @inject(TYPES.UsersQueryService)
     private usersQueryService: UsersQueryService,
     @inject(TYPES.LeaguesQueryService)
@@ -52,10 +48,8 @@ export class LeagueInvitesService {
     private profilesQueryService: ProfilesQueryService,
     @inject(TYPES.LeaguesUtilService)
     private leaguesUtilService: LeaguesUtilService,
-    @inject(TYPES.SeasonsUtilService)
-    private seasonsUtilService: SeasonsUtilService,
-    @inject(TYPES.StandingsMutationService)
-    private standingsMutationService: StandingsMutationService,
+    @inject(TYPES.LeagueMembersUtilService)
+    private leagueMembersUtilService: LeagueMembersUtilService,
   ) {}
 
   // Private helper method to clean up pending invites
@@ -135,13 +129,6 @@ export class LeagueInvitesService {
     const leagueIsInProgress =
       await this.leaguesUtilService.leagueSeasonInProgress(league, tx);
 
-    // Check if league would be at capacity after adding this member
-    const currentMembers = await this.leagueMembersQueryService.listByLeagueId(
-      invite.leagueId,
-      tx,
-    );
-    const leagueIsAtCapacity = currentMembers.length >= leagueCapacity;
-
     if (leagueIsInProgress) {
       // League is in progress, so we can't accept new members
       await this.cleanupPendingInvites(invite.leagueId, tx);
@@ -152,7 +139,7 @@ export class LeagueInvitesService {
       };
     }
 
-    if (leagueIsAtCapacity) {
+    if (leagueCapacity <= 0) {
       // League is at capacity, so we can't accept new members
       await this.cleanupPendingInvites(invite.leagueId, tx);
       return {
@@ -173,59 +160,14 @@ export class LeagueInvitesService {
       response === LEAGUE_INVITE_STATUSES.ACCEPTED ||
       response === null // link invites are accepted by default
     ) {
-      await this.leagueMembersMutationService.createLeagueMember(
-        {
-          leagueId: invite.leagueId,
-          userId,
-          role: invite.role,
-        },
+      await this.leagueMembersUtilService.addMemberAndInitializeStandings(
+        invite.leagueId,
+        userId,
+        invite.role,
         tx,
       );
 
-      const leagueType = await this.leagueTypesQueryService.findById(
-        league.leagueTypeId,
-        tx,
-      );
-      if (!leagueType) {
-        throw new NotFoundError("League type not found");
-      }
-
-      const season =
-        await this.seasonsUtilService.findCurrentOrLatestSeasonForSportLeagueId(
-          leagueType.sportLeagueId,
-          tx,
-        );
-      if (!season) {
-        throw new NotFoundError(
-          "Season not found to create standings record for new member",
-        );
-      }
-
-      // create standings record for the new member
-      await this.standingsMutationService.create(
-        {
-          userId,
-          leagueId: invite.leagueId,
-          seasonId: season.id,
-          points: 0,
-          metadata: {
-            wins: 0,
-            losses: 0,
-            pushes: 0,
-          },
-        },
-        tx,
-      );
-
-      // Check if the league is now at capacity after adding this member
-      const updatedMembers =
-        await this.leagueMembersQueryService.listByLeagueId(
-          invite.leagueId,
-          tx,
-        );
-      const isNowAtCapacity = updatedMembers.length >= leagueCapacity;
-
-      if (isNowAtCapacity) {
+      if (leagueCapacity - 1 <= 0) {
         // League just reached capacity, clean up pending invites
         await this.cleanupPendingInvites(invite.leagueId, tx);
         return {
@@ -273,12 +215,7 @@ export class LeagueInvitesService {
         league,
         tx,
       );
-      const currentMembers =
-        await this.leagueMembersQueryService.listByLeagueId(
-          inviteData.leagueId,
-          tx,
-        );
-      if (currentMembers.length >= leagueCapacity) {
+      if (leagueCapacity <= 0) {
         throw new ValidationError("League is at capacity");
       }
 

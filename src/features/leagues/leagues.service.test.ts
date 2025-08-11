@@ -4,7 +4,7 @@ import { LeaguesService } from "./leagues.service.js";
 import { LeaguesQueryService } from "./leagues.query.service.js";
 import { LeaguesMutationService } from "./leagues.mutation.service.js";
 import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
+import { LeagueMembersUtilService } from "../leagueMembers/leagueMembers.util.service.js";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
 import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service.js";
 import {
@@ -45,7 +45,7 @@ describe("LeaguesService", () => {
   let leaguesQueryService: MockProxy<LeaguesQueryService>;
   let leaguesMutationService: MockProxy<LeaguesMutationService>;
   let leagueMembersQueryService: MockProxy<LeagueMembersQueryService>;
-  let leagueMembersMutationService: MockProxy<LeagueMembersMutationService>;
+  let leagueMembersUtilService: MockProxy<LeagueMembersUtilService>;
   let leagueTypesQueryService: MockProxy<LeagueTypesQueryService>;
   let phaseTemplatesQueryService: MockProxy<PhaseTemplatesQueryService>;
   let leaguesUtilService: MockProxy<LeaguesUtilService>;
@@ -54,7 +54,7 @@ describe("LeaguesService", () => {
     leaguesQueryService = mock<LeaguesQueryService>();
     leaguesMutationService = mock<LeaguesMutationService>();
     leagueMembersQueryService = mock<LeagueMembersQueryService>();
-    leagueMembersMutationService = mock<LeagueMembersMutationService>();
+    leagueMembersUtilService = mock<LeagueMembersUtilService>();
     leagueTypesQueryService = mock<LeagueTypesQueryService>();
     phaseTemplatesQueryService = mock<PhaseTemplatesQueryService>();
     leaguesUtilService = mock<LeaguesUtilService>();
@@ -63,10 +63,10 @@ describe("LeaguesService", () => {
       leaguesQueryService,
       leaguesMutationService,
       leagueMembersQueryService,
-      leagueMembersMutationService,
       leagueTypesQueryService,
       phaseTemplatesQueryService,
       leaguesUtilService,
+      leagueMembersUtilService,
     );
   });
 
@@ -384,13 +384,11 @@ describe("LeaguesService", () => {
         undefined,
       );
       expect(
-        leagueMembersMutationService.createLeagueMember,
+        leagueMembersUtilService.addMemberAndInitializeStandings,
       ).toHaveBeenCalledWith(
-        {
-          userId,
-          leagueId: createdLeague.id,
-          role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
-        },
+        createdLeague.id,
+        userId,
+        LEAGUE_MEMBER_ROLES.COMMISSIONER,
         undefined,
       );
       expect(result).toEqual(createdLeague);

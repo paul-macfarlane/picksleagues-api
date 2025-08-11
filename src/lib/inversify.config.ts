@@ -82,6 +82,7 @@ import { StandingsRepository } from "../features/standings/standings.repository.
 import { StandingsQueryService } from "../features/standings/standings.query.service.js";
 import { StandingsService } from "../features/standings/standings.service.js";
 import { StandingsMutationService } from "../features/standings/standings.mutation.service.js";
+import { LeagueMembersUtilService } from "../features/leagueMembers/leagueMembers.util.service.js";
 
 const container = new Container();
 
@@ -389,6 +390,10 @@ container
 container
   .bind<PhasesUtilService>(TYPES.PhasesUtilService)
   .to(PhasesUtilService)
+  .inSingletonScope();
+container
+  .bind<LeagueMembersUtilService>(TYPES.LeagueMembersUtilService)
+  .to(LeagueMembersUtilService)
   .inSingletonScope();
 
 // Mutation Services

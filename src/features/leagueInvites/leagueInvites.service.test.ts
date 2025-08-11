@@ -20,7 +20,7 @@ import { LeagueInvitesService } from "./leagueInvites.service.js";
 import { LeagueInvitesQueryService } from "./leagueInvites.query.service.js";
 import { LeagueInvitesMutationService } from "./leagueInvites.mutation.service.js";
 import { LeagueMembersQueryService } from "../leagueMembers/leagueMembers.query.service.js";
-import { LeagueMembersMutationService } from "../leagueMembers/leagueMembers.mutation.service.js";
+import { LeagueMembersUtilService } from "../leagueMembers/leagueMembers.util.service.js";
 import { UsersQueryService } from "../users/users.query.service.js";
 import { LeaguesQueryService } from "../leagues/leagues.query.service.js";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
@@ -46,7 +46,7 @@ describe("LeagueInvitesService", () => {
   let leagueInvitesQueryService: MockProxy<LeagueInvitesQueryService>;
   let leagueInvitesMutationService: MockProxy<LeagueInvitesMutationService>;
   let leagueMembersQueryService: MockProxy<LeagueMembersQueryService>;
-  let leagueMembersMutationService: MockProxy<LeagueMembersMutationService>;
+  let leagueMembersUtilService: MockProxy<LeagueMembersUtilService>;
   let usersQueryService: MockProxy<UsersQueryService>;
   let leaguesQueryService: MockProxy<LeaguesQueryService>;
   let leagueTypesQueryService: MockProxy<LeagueTypesQueryService>;
@@ -62,7 +62,7 @@ describe("LeagueInvitesService", () => {
     leagueInvitesQueryService = mock<LeagueInvitesQueryService>();
     leagueInvitesMutationService = mock<LeagueInvitesMutationService>();
     leagueMembersQueryService = mock<LeagueMembersQueryService>();
-    leagueMembersMutationService = mock<LeagueMembersMutationService>();
+    leagueMembersUtilService = mock<LeagueMembersUtilService>();
     usersQueryService = mock<UsersQueryService>();
     leaguesQueryService = mock<LeaguesQueryService>();
     leagueTypesQueryService = mock<LeagueTypesQueryService>();
@@ -76,14 +76,12 @@ describe("LeagueInvitesService", () => {
       leagueInvitesQueryService,
       leagueInvitesMutationService,
       leagueMembersQueryService,
-      leagueMembersMutationService,
       usersQueryService,
       leaguesQueryService,
       leagueTypesQueryService,
       profilesQueryService,
       leaguesUtilService,
-      seasonsUtilService,
-      standingsMutationService,
+      leagueMembersUtilService,
     );
   });
 
@@ -122,15 +120,6 @@ describe("LeagueInvitesService", () => {
       };
       leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
       leaguesQueryService.findById.mockResolvedValue(mockLeague);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([
-        {
-          userId: "user-uuid",
-          leagueId: leagueId,
-          role: LEAGUE_MEMBER_ROLES.MEMBER,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ] as DBLeagueMember[]); // After member is added
       phasesQueryService.findCurrentPhases.mockResolvedValue([]);
       leagueInvitesMutationService.deleteByIds.mockResolvedValue();
       leaguesUtilService.getLeagueCapacity
@@ -160,14 +149,12 @@ describe("LeagueInvitesService", () => {
 
       // Assert
       expect(
-        leagueMembersMutationService.createLeagueMember,
+        leagueMembersUtilService.addMemberAndInitializeStandings,
       ).toHaveBeenCalledWith(
-        {
-          leagueId,
-          userId,
-          role: LEAGUE_MEMBER_ROLES.MEMBER,
-        },
-        undefined, // expecting transaction to be undefined in mock
+        leagueId,
+        userId,
+        LEAGUE_MEMBER_ROLES.MEMBER,
+        undefined,
       );
       expect(leagueInvitesMutationService.update).toHaveBeenCalledWith(
         inviteId,
@@ -210,22 +197,6 @@ describe("LeagueInvitesService", () => {
       leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
       leaguesQueryService.findById.mockResolvedValue(mockLeague);
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(null);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([
-        {
-          userId: "user1",
-          leagueId: leagueId,
-          role: LEAGUE_MEMBER_ROLES.MEMBER,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          userId: "user2",
-          leagueId: leagueId,
-          role: LEAGUE_MEMBER_ROLES.MEMBER,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ] as DBLeagueMember[]);
       leaguesUtilService.getLeagueCapacity
         .calledWith(mockLeague, undefined)
         .mockResolvedValue(0);
@@ -282,7 +253,6 @@ describe("LeagueInvitesService", () => {
       leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
       leaguesQueryService.findById.mockResolvedValue(mockLeague);
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(null);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([]);
       phasesQueryService.findCurrentPhases.mockResolvedValue([
         {
           id: "phase1",
@@ -354,17 +324,6 @@ describe("LeagueInvitesService", () => {
       leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
       leaguesQueryService.findById.mockResolvedValue(mockLeague);
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(null);
-      leagueMembersQueryService.listByLeagueId
-        .mockResolvedValueOnce([]) // Before adding member
-        .mockResolvedValueOnce([
-          {
-            userId: "user-uuid",
-            leagueId: leagueId,
-            role: LEAGUE_MEMBER_ROLES.MEMBER,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ] as DBLeagueMember[]); // After adding member
       phasesQueryService.findCurrentPhases.mockResolvedValue([]);
       leaguesUtilService.getLeagueCapacity
         .calledWith(mockLeague, undefined)
@@ -396,7 +355,7 @@ describe("LeagueInvitesService", () => {
 
       // Assert
       expect(
-        leagueMembersMutationService.createLeagueMember,
+        leagueMembersUtilService.addMemberAndInitializeStandings,
       ).toHaveBeenCalled();
       expect(leagueInvitesMutationService.deleteByIds).toHaveBeenCalledWith(
         [inviteId], // This is the only pending invite in the test setup
@@ -440,7 +399,7 @@ describe("LeagueInvitesService", () => {
 
       // Assert
       expect(
-        leagueMembersMutationService.createLeagueMember,
+        leagueMembersUtilService.addMemberAndInitializeStandings,
       ).not.toHaveBeenCalled();
       expect(leagueInvitesMutationService.update).not.toHaveBeenCalled();
     });
@@ -478,7 +437,6 @@ describe("LeagueInvitesService", () => {
       };
       leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
       leaguesQueryService.findById.mockResolvedValue(mockLeague);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([]);
       phasesQueryService.findCurrentPhases.mockResolvedValue([]);
 
       // Act
@@ -490,7 +448,7 @@ describe("LeagueInvitesService", () => {
 
       // Assert
       expect(
-        leagueMembersMutationService.createLeagueMember,
+        leagueMembersUtilService.addMemberAndInitializeStandings,
       ).not.toHaveBeenCalled();
       expect(leagueInvitesMutationService.deleteByIds).not.toHaveBeenCalled();
       expect(leagueInvitesMutationService.update).toHaveBeenCalledWith(
@@ -607,17 +565,6 @@ describe("LeagueInvitesService", () => {
       leaguesUtilService.leagueSeasonInProgress
         .calledWith(mockLeague, undefined)
         .mockResolvedValue(false);
-      leagueMembersQueryService.listByLeagueId
-        .mockResolvedValueOnce([]) // Before member is added
-        .mockResolvedValueOnce([
-          {
-            userId: "user-uuid",
-            leagueId: leagueId,
-            role: LEAGUE_MEMBER_ROLES.MEMBER,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ] as DBLeagueMember[]); // After member is added
       usersQueryService.findById.mockResolvedValue({ id: inviteeId } as DBUser);
       leagueInvitesQueryService.findByInviteeLeagueAndStatus.mockResolvedValue(
         null,
@@ -659,7 +606,6 @@ describe("LeagueInvitesService", () => {
       leaguesUtilService.leagueSeasonInProgress
         .calledWith(mockLeague, undefined)
         .mockResolvedValue(false);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([]);
 
       const inviteData = {
         leagueId,
@@ -704,7 +650,6 @@ describe("LeagueInvitesService", () => {
       leaguesUtilService.getLeagueCapacity
         .calledWith(mockLeague, undefined)
         .mockResolvedValue(0);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([]);
 
       const inviteData = { leagueId } as z.infer<
         typeof CreateLeagueInviteSchema
@@ -729,7 +674,6 @@ describe("LeagueInvitesService", () => {
       leaguesUtilService.leagueSeasonInProgress
         .calledWith(mockLeague, undefined)
         .mockResolvedValue(true);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([]);
 
       const inviteData = { leagueId } as z.infer<
         typeof CreateLeagueInviteSchema
@@ -755,7 +699,6 @@ describe("LeagueInvitesService", () => {
       leaguesUtilService.leagueSeasonInProgress
         .calledWith(mockLeague, undefined)
         .mockResolvedValue(false);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([]);
       usersQueryService.findById.mockResolvedValue({ id: inviteeId } as DBUser);
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValueOnce({
         userId: inviteeId,
@@ -789,7 +732,6 @@ describe("LeagueInvitesService", () => {
       leaguesUtilService.leagueSeasonInProgress
         .calledWith(mockLeague, undefined)
         .mockResolvedValue(false);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([]);
       usersQueryService.findById.mockResolvedValue({ id: inviteeId } as DBUser);
       leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValueOnce(
         null,
@@ -853,7 +795,6 @@ describe("LeagueInvitesService", () => {
         .calledWith(mockLeague, undefined)
         .mockResolvedValue(false);
       leagueInvitesQueryService.listActiveByLeagueId.mockResolvedValue([]);
-      leagueMembersQueryService.listByLeagueId.mockResolvedValue([]);
       leagueTypesQueryService.findById.mockResolvedValue({
         id: "lt-uuid",
         sportLeagueId: "sport-1",
@@ -868,7 +809,7 @@ describe("LeagueInvitesService", () => {
       await leagueInvitesService.joinWithToken(userId, token);
 
       expect(
-        leagueMembersMutationService.createLeagueMember,
+        leagueMembersUtilService.addMemberAndInitializeStandings,
       ).toHaveBeenCalled();
     });
 

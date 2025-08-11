@@ -39,7 +39,7 @@ temp/
 *.tmp
 
 # credentials
-google-credentials.json
+google-credentials.*.json
 *.p8
 .vercel
 

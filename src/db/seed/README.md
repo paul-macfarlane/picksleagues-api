@@ -111,7 +111,7 @@ Designate a specific user as the commissioner of all generated leagues. This is 
 
 ```bash
 # Make user "my-test-user" the commissioner of all leagues
-npm run db:seed:pickem -- inSeason --commissioner TiY8aUZimT833XGmm7KC0wfvQrVrAlvL --leagues 2 --users 5
+npm run db:seed:pickem -- inSeason --commissioner GBaJwUaIsmOIpMXlA0KGX9OzmnSd3Ygg --leagues 2 --users 5
 
 # Use an existing user ID from your database
 npm run db:seed:pickem -- preseason --commissioner existing-user-123 --leagues 1 --users 3
