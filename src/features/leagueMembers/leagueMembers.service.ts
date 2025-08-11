@@ -213,6 +213,8 @@ export class LeagueMembersService {
         throw new NotFoundError("Season not found");
       }
 
+      // because of the fact that we can't remove members when a league is in season, what this means
+      // is that we'd only every delete standings before a season starts.
       await this.standingsMutationService.deleteByUserLeagueSeason(
         targetUserId,
         leagueId,
