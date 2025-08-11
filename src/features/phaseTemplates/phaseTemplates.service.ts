@@ -8,6 +8,8 @@ import { PhaseTemplatesQueryService } from "./phaseTemplates.query.service.js";
 import { PhaseTemplatesMutationService } from "./phaseTemplates.mutation.service.js";
 import { SportLeaguesQueryService } from "../sportLeagues/sportLeagues.query.service.js";
 import { LeagueTypesQueryService } from "../leagueTypes/leagueTypes.query.service.js";
+import { SeasonsQueryService } from "../seasons/seasons.query.service.js";
+import { PhasesQueryService } from "../phases/phases.query.service.js";
 import {
   DBLeagueType,
   LEAGUE_TYPE_SLUGS,
@@ -25,6 +27,10 @@ export class PhaseTemplatesService {
     private phaseTemplatesQueryService: PhaseTemplatesQueryService,
     @inject(TYPES.PhaseTemplatesMutationService)
     private phaseTemplatesMutationService: PhaseTemplatesMutationService,
+    @inject(TYPES.SeasonsQueryService)
+    private seasonsQueryService: SeasonsQueryService,
+    @inject(TYPES.PhasesQueryService)
+    private phasesQueryService: PhasesQueryService,
   ) {}
 
   async listBySportLeagueId(
@@ -83,6 +89,38 @@ export class PhaseTemplatesService {
       throw new NotFoundError("League type not found");
     }
 
-    return this.listBySportLeagueId(leagueType.sportLeagueId, dbOrTx);
+    // Get all templates for the sport league
+    const allTemplates = await this.listBySportLeagueId(
+      leagueType.sportLeagueId,
+      dbOrTx,
+    );
+
+    // Find current (active) season for the sport league
+    const currentSeason =
+      await this.seasonsQueryService.findCurrentBySportLeagueId(
+        leagueType.sportLeagueId,
+        dbOrTx,
+      );
+
+    // If no active season, return all templates (offseason)
+    if (!currentSeason) {
+      return allTemplates;
+    }
+
+    // There is an active season: include only templates that correspond to phases
+    // that have not yet started in this season
+    const phases = await this.phasesQueryService.listBySeasonIds(
+      [currentSeason.id],
+      dbOrTx,
+    );
+
+    const now = new Date();
+    const upcomingTemplateIds = new Set(
+      phases
+        .filter((p) => new Date(p.startDate) > now)
+        .map((p) => p.phaseTemplateId),
+    );
+
+    return allTemplates.filter((t) => upcomingTemplateIds.has(t.id));
   }
 }
