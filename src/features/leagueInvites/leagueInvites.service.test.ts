@@ -823,4 +823,293 @@ describe("LeagueInvitesService", () => {
 
     // all the other tests are in the respond test
   });
+
+  describe("revoke", () => {
+    const userId = "user-uuid";
+    const inviteId = "invite-uuid";
+    const leagueId = "league-uuid";
+
+    it("should successfully revoke an invite when user is a commissioner", async () => {
+      // Arrange
+      const mockInvite: DBLeagueInvite = {
+        id: inviteId,
+        leagueId,
+        inviteeId: "invitee-uuid",
+        status: LEAGUE_INVITE_STATUSES.PENDING,
+        expiresAt: new Date(Date.now() + 86400000),
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+        type: LEAGUE_INVITE_TYPES.DIRECT,
+        inviterId: "inviter-uuid",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        token: null,
+      };
+      const mockMember: DBLeagueMember = {
+        userId,
+        leagueId,
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember,
+      );
+      leagueInvitesMutationService.delete.mockResolvedValue();
+
+      // Act
+      await leagueInvitesService.revoke(userId, inviteId);
+
+      // Assert
+      expect(leagueInvitesQueryService.findById).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+      expect(
+        leagueMembersQueryService.findByLeagueAndUserId,
+      ).toHaveBeenCalledWith(leagueId, userId, undefined);
+      expect(leagueInvitesMutationService.delete).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+    });
+
+    it("should throw NotFoundError when invite is not found", async () => {
+      // Arrange
+      leagueInvitesQueryService.findById.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        leagueInvitesService.revoke(userId, inviteId),
+      ).rejects.toThrow(new NotFoundError("Invite not found"));
+
+      expect(leagueInvitesQueryService.findById).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+      expect(
+        leagueMembersQueryService.findByLeagueAndUserId,
+      ).not.toHaveBeenCalled();
+      expect(leagueInvitesMutationService.delete).not.toHaveBeenCalled();
+    });
+
+    it("should throw ForbiddenError when user is not a member of the league", async () => {
+      // Arrange
+      const mockInvite: DBLeagueInvite = {
+        id: inviteId,
+        leagueId,
+        inviteeId: "invitee-uuid",
+        status: LEAGUE_INVITE_STATUSES.PENDING,
+        expiresAt: new Date(Date.now() + 86400000),
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+        type: LEAGUE_INVITE_TYPES.DIRECT,
+        inviterId: "inviter-uuid",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        token: null,
+      };
+
+      leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        leagueInvitesService.revoke(userId, inviteId),
+      ).rejects.toThrow(
+        new ForbiddenError("You are not a member of this league"),
+      );
+
+      expect(leagueInvitesQueryService.findById).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+      expect(
+        leagueMembersQueryService.findByLeagueAndUserId,
+      ).toHaveBeenCalledWith(leagueId, userId, undefined);
+      expect(leagueInvitesMutationService.delete).not.toHaveBeenCalled();
+    });
+
+    it("should throw ForbiddenError when user is not a commissioner", async () => {
+      // Arrange
+      const mockInvite: DBLeagueInvite = {
+        id: inviteId,
+        leagueId,
+        inviteeId: "invitee-uuid",
+        status: LEAGUE_INVITE_STATUSES.PENDING,
+        expiresAt: new Date(Date.now() + 86400000),
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+        type: LEAGUE_INVITE_TYPES.DIRECT,
+        inviterId: "inviter-uuid",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        token: null,
+      };
+      const mockMember: DBLeagueMember = {
+        userId,
+        leagueId,
+        role: LEAGUE_MEMBER_ROLES.MEMBER, // Not a commissioner
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember,
+      );
+
+      // Act & Assert
+      await expect(
+        leagueInvitesService.revoke(userId, inviteId),
+      ).rejects.toThrow(
+        new ForbiddenError("You are not a commissioner of this league"),
+      );
+
+      expect(leagueInvitesQueryService.findById).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+      expect(
+        leagueMembersQueryService.findByLeagueAndUserId,
+      ).toHaveBeenCalledWith(leagueId, userId, undefined);
+      expect(leagueInvitesMutationService.delete).not.toHaveBeenCalled();
+    });
+
+    it("should throw ForbiddenError when user is a member but not a commissioner", async () => {
+      // Arrange
+      const mockInvite: DBLeagueInvite = {
+        id: inviteId,
+        leagueId,
+        inviteeId: "invitee-uuid",
+        status: LEAGUE_INVITE_STATUSES.PENDING,
+        expiresAt: new Date(Date.now() + 86400000),
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+        type: LEAGUE_INVITE_TYPES.DIRECT,
+        inviterId: "inviter-uuid",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        token: null,
+      };
+      const mockMember: DBLeagueMember = {
+        userId,
+        leagueId,
+        role: LEAGUE_MEMBER_ROLES.MEMBER, // Member but not commissioner
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember,
+      );
+
+      // Act & Assert
+      await expect(
+        leagueInvitesService.revoke(userId, inviteId),
+      ).rejects.toThrow(
+        new ForbiddenError("You are not a commissioner of this league"),
+      );
+
+      expect(leagueInvitesQueryService.findById).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+      expect(
+        leagueMembersQueryService.findByLeagueAndUserId,
+      ).toHaveBeenCalledWith(leagueId, userId, undefined);
+      expect(leagueInvitesMutationService.delete).not.toHaveBeenCalled();
+    });
+
+    it("should work with different invite types", async () => {
+      // Arrange
+      const mockInvite: DBLeagueInvite = {
+        id: inviteId,
+        leagueId,
+        inviteeId: "invitee-uuid",
+        status: LEAGUE_INVITE_STATUSES.PENDING,
+        expiresAt: new Date(Date.now() + 86400000),
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+        type: LEAGUE_INVITE_TYPES.LINK, // Link invite type
+        inviterId: "inviter-uuid",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        token: "link-token",
+      };
+      const mockMember: DBLeagueMember = {
+        userId,
+        leagueId,
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember,
+      );
+      leagueInvitesMutationService.delete.mockResolvedValue();
+
+      // Act
+      await leagueInvitesService.revoke(userId, inviteId);
+
+      // Assert
+      expect(leagueInvitesQueryService.findById).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+      expect(
+        leagueMembersQueryService.findByLeagueAndUserId,
+      ).toHaveBeenCalledWith(leagueId, userId, undefined);
+      expect(leagueInvitesMutationService.delete).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+    });
+
+    it("should work with different invite statuses", async () => {
+      // Arrange
+      const mockInvite: DBLeagueInvite = {
+        id: inviteId,
+        leagueId,
+        inviteeId: "invitee-uuid",
+        status: LEAGUE_INVITE_STATUSES.ACCEPTED, // Already accepted invite
+        expiresAt: new Date(Date.now() + 86400000),
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+        type: LEAGUE_INVITE_TYPES.DIRECT,
+        inviterId: "inviter-uuid",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        token: null,
+      };
+      const mockMember: DBLeagueMember = {
+        userId,
+        leagueId,
+        role: LEAGUE_MEMBER_ROLES.COMMISSIONER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      leagueInvitesQueryService.findById.mockResolvedValue(mockInvite);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember,
+      );
+      leagueInvitesMutationService.delete.mockResolvedValue();
+
+      // Act
+      await leagueInvitesService.revoke(userId, inviteId);
+
+      // Assert
+      expect(leagueInvitesQueryService.findById).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+      expect(
+        leagueMembersQueryService.findByLeagueAndUserId,
+      ).toHaveBeenCalledWith(leagueId, userId, undefined);
+      expect(leagueInvitesMutationService.delete).toHaveBeenCalledWith(
+        inviteId,
+        undefined,
+      );
+    });
+  });
 });

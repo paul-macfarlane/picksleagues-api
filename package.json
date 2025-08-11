@@ -23,7 +23,7 @@
     "backlog:create": "backlog task create",
     "backlog:edit": "backlog task edit",
     "backlog:ui": "backlog browser",
-    "test": "vitest",
+    "test": "vitest run",
     "favicons": "node scripts/generate-favicons.js",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org paul-macfarlane --project picksleagues-api ./dist && sentry-cli sourcemaps upload --org paul-macfarlane --project picksleagues-api ./dist"
   },
