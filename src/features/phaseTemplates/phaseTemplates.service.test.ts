@@ -214,6 +214,7 @@ describe("PhaseTemplatesService.listByLeagueTypeIdOrSlug", () => {
 
     const result = await service.listByLeagueTypeIdOrSlug(
       LEAGUE_TYPE_SLUGS.PICK_EM,
+      { excludeStarted: true },
     );
 
     // Only template with future phase (tpl-2) should be included

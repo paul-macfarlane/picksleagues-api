@@ -4,6 +4,7 @@ import { container } from "../../lib/inversify.config.js";
 import { TYPES } from "../../lib/inversify.types.js";
 import { LeaguesService } from "../leagues/leagues.service.js";
 import { PhaseTemplatesService } from "../phaseTemplates/phaseTemplates.service.js";
+import { ListPhaseTemplatesQuerySchema } from "../phaseTemplates/phaseTemplates.types.js";
 import { LeagueTypesService } from "./leagueTypes.service.js";
 import { requireAuth } from "../../lib/auth.middleware.js";
 import { LeagueIncludeSchema } from "../leagues/leagues.types.js";
@@ -37,8 +38,12 @@ router.get(
     const typeIdOrSlug = LeagueTypeIdOrSlugSchema.parse(
       req.params.typeIdOrSlug,
     );
-    const templates =
-      await phaseTemplatesService.listByLeagueTypeIdOrSlug(typeIdOrSlug);
+
+    const query = ListPhaseTemplatesQuerySchema.parse(req.query);
+    const templates = await phaseTemplatesService.listByLeagueTypeIdOrSlug(
+      typeIdOrSlug,
+      { excludeStarted: query.excludeStarted },
+    );
 
     res.status(200).json(templates);
   },

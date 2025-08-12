@@ -18,3 +18,7 @@ export type DBPhaseTemplateUpdate = Partial<DBPhaseTemplateInsert>;
 export const GetPhaseTemplatesSchema = z.object({
   typeIdOrSlug: z.string().trim(),
 });
+
+export const ListPhaseTemplatesQuerySchema = z.object({
+  excludeStarted: z.coerce.boolean().optional().default(false),
+});

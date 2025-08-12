@@ -29,6 +29,7 @@ import {
 import { DBLeagueMember } from "../leagueMembers/leagueMembers.types.js";
 import { LeaguesUtilService } from "./leagues.util.service.js";
 import { LeagueMembersUtilService } from "../leagueMembers/leagueMembers.util.service.js";
+import { DBPhaseTemplate } from "../phaseTemplates/phaseTemplates.types.js";
 
 @injectable()
 export class LeaguesService {
@@ -248,6 +249,44 @@ export class LeaguesService {
         for (const league of populatedLeagues) {
           league.isInSeason =
             await this.leaguesUtilService.leagueSeasonInProgress(league);
+        }
+      }
+
+      if (includes.includes(LEAGUE_INCLUDES.START_PHASE_TEMPLATE)) {
+        const phaseTemplateByIdMap = new Map<string, DBPhaseTemplate>();
+        for (const league of populatedLeagues) {
+          const phaseTemplateId = league.startPhaseTemplateId;
+          let phaseTemplate = phaseTemplateByIdMap.get(phaseTemplateId) ?? null;
+          if (!phaseTemplate) {
+            phaseTemplate = await this.phaseTemplatesQueryService.findById(
+              phaseTemplateId,
+              dbOrTx,
+            );
+            if (phaseTemplate) {
+              phaseTemplateByIdMap.set(phaseTemplateId, phaseTemplate);
+            }
+          }
+          league.startPhaseTemplate =
+            phaseTemplateByIdMap.get(phaseTemplateId) ?? null;
+        }
+      }
+
+      if (includes.includes(LEAGUE_INCLUDES.END_PHASE_TEMPLATE)) {
+        const phaseTemplateByIdMap = new Map<string, DBPhaseTemplate>();
+        for (const league of populatedLeagues) {
+          const phaseTemplateId = league.endPhaseTemplateId;
+          let phaseTemplate = phaseTemplateByIdMap.get(phaseTemplateId) ?? null;
+          if (!phaseTemplate) {
+            phaseTemplate = await this.phaseTemplatesQueryService.findById(
+              phaseTemplateId,
+              dbOrTx,
+            );
+            if (phaseTemplate) {
+              phaseTemplateByIdMap.set(phaseTemplateId, phaseTemplate);
+            }
+          }
+          league.endPhaseTemplate =
+            phaseTemplateByIdMap.get(phaseTemplateId) ?? null;
         }
       }
     }

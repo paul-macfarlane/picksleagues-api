@@ -5,6 +5,7 @@ import {
   DBLeagueType,
 } from "../leagueTypes/leagueTypes.types.js";
 import { DBLeagueMember } from "../leagueMembers/leagueMembers.types.js";
+import { DBPhaseTemplate } from "../phaseTemplates/phaseTemplates.types.js";
 
 // Constants
 export enum PICK_EM_PICK_TYPES {
@@ -28,6 +29,8 @@ export enum LEAGUE_INCLUDES {
   IS_IN_SEASON = "is_in_season",
   LEAGUE_TYPE = "league_type",
   MEMBERS = "members",
+  START_PHASE_TEMPLATE = "start_phase_template",
+  END_PHASE_TEMPLATE = "end_phase_template",
 }
 
 // DB Types
@@ -41,6 +44,8 @@ export type PopulatedDBLeague = DBLeague & {
   isInSeason?: boolean;
   leagueType?: DBLeagueType | null;
   members?: DBLeagueMember[];
+  startPhaseTemplate?: DBPhaseTemplate | null;
+  endPhaseTemplate?: DBPhaseTemplate | null;
 };
 
 export type DBLeagueInsert = typeof leaguesTable.$inferInsert;
@@ -60,6 +65,8 @@ export const LeagueIncludeSchema = z
             LEAGUE_INCLUDES.LEAGUE_TYPE,
             LEAGUE_INCLUDES.MEMBERS,
             LEAGUE_INCLUDES.IS_IN_SEASON,
+            LEAGUE_INCLUDES.START_PHASE_TEMPLATE,
+            LEAGUE_INCLUDES.END_PHASE_TEMPLATE,
           ]),
         ),
       )

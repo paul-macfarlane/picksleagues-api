@@ -69,6 +69,7 @@ export class PhaseTemplatesService {
 
   async listByLeagueTypeIdOrSlug(
     typeIdOrSlug: string,
+    options: { excludeStarted?: boolean } = {},
     dbOrTx: DBOrTx = db,
   ): Promise<DBPhaseTemplate[]> {
     const isId = LeagueTypeIdSchema.safeParse(typeIdOrSlug).success;
@@ -94,6 +95,11 @@ export class PhaseTemplatesService {
       leagueType.sportLeagueId,
       dbOrTx,
     );
+
+    const excludeStarted = options.excludeStarted ?? false;
+    if (!excludeStarted) {
+      return allTemplates;
+    }
 
     // Find current (active) season for the sport league
     const currentSeason =
