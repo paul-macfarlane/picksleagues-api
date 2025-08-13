@@ -13,7 +13,7 @@ import { TeamsQueryService } from "../teams/teams.query.service.js";
 import { PhaseTemplatesQueryService } from "../phaseTemplates/phaseTemplates.query.service.js";
 import { PhasesUtilService } from "./phases.util.service.js";
 import { NotFoundError, ForbiddenError } from "../../lib/errors.js";
-import { DBPhase } from "./phases.types.js";
+import { DBPhase, PHASE_INCLUDES } from "./phases.types.js";
 import { DBLeague } from "../leagues/leagues.types.js";
 import {
   DBLeagueMember,
@@ -21,6 +21,7 @@ import {
 } from "../leagueMembers/leagueMembers.types.js";
 import { DBPhaseTemplate } from "../phaseTemplates/phaseTemplates.types.js";
 import { PHASE_TEMPLATE_TYPES } from "../phaseTemplates/phaseTemplates.types.js";
+import { EVENT_TYPES } from "../events/events.types.js";
 
 describe("PhasesService", () => {
   const phasesQueryService = mock<PhasesQueryService>();
@@ -218,6 +219,67 @@ describe("PhasesService", () => {
 
       expect(result.previousPhase).toEqual(mockPreviousPhase);
       expect(result.nextPhase).toEqual(mockNextPhase);
+    });
+
+    it("includes only future events when events.excludeStarted is requested", async () => {
+      const mockLeague: Partial<DBLeague> = {
+        id: "league-1",
+        startPhaseTemplateId: "start-template-1",
+        endPhaseTemplateId: "end-template-1",
+      };
+
+      const mockCurrentPhase: DBPhase = {
+        id: "phase-1",
+        seasonId: "season-1",
+        phaseTemplateId: "template-1",
+        sequence: 1,
+        startDate: new Date("2024-01-01"),
+        endDate: new Date("2024-01-07"),
+        pickLockTime: new Date("2024-01-07T18:00:00Z"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const now = new Date();
+      const past = new Date(now.getTime() - 60 * 60 * 1000);
+      const future = new Date(now.getTime() + 60 * 60 * 1000);
+
+      phasesUtilService.getCurrentOrNextPhaseForLeagueForUser.mockResolvedValue(
+        { id: mockCurrentPhase.id },
+      );
+      phasesQueryService.findById.mockResolvedValue(mockCurrentPhase);
+      leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
+      eventsQueryService.listByPhaseIds.mockResolvedValue([
+        {
+          id: "event-past",
+          phaseId: mockCurrentPhase.id,
+          startTime: past,
+          type: EVENT_TYPES.GAME,
+          homeTeamId: "home-1",
+          awayTeamId: "away-1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: "event-future",
+          phaseId: mockCurrentPhase.id,
+          startTime: future,
+          type: EVENT_TYPES.GAME,
+          homeTeamId: "home-2",
+          awayTeamId: "away-2",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]);
+
+      const result = await phasesService.getCurrentPhaseForLeague(
+        "user-1",
+        "league-1",
+        [PHASE_INCLUDES.EVENTS, PHASE_INCLUDES.EVENTS_EXCLUDE_STARTED],
+      );
+
+      expect(result.events).toBeDefined();
+      expect(result.events!.map((e) => e.id)).toEqual(["event-future"]);
     });
 
     it("should get phase by ID with events", async () => {
@@ -447,6 +509,76 @@ describe("PhasesService", () => {
       expect(phaseTemplatesQueryService.findById).toHaveBeenCalledWith(
         "template-1",
       );
+    });
+  });
+
+  describe("getPhaseByIdAndLeagueId", () => {
+    it("includes only future events when events.excludeStarted is requested", async () => {
+      const mockPhase: DBPhase = {
+        id: "phase-1",
+        seasonId: "season-1",
+        phaseTemplateId: "template-1",
+        sequence: 1,
+        startDate: new Date("2024-01-01"),
+        endDate: new Date("2024-01-07"),
+        pickLockTime: new Date("2024-01-07T18:00:00Z"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockLeague: Partial<DBLeague> = {
+        id: "league-1",
+        startPhaseTemplateId: "start-template-1",
+        endPhaseTemplateId: "end-template-1",
+      };
+
+      const mockMember: Partial<DBLeagueMember> = {
+        leagueId: "league-1",
+        userId: "user-1",
+        role: LEAGUE_MEMBER_ROLES.MEMBER,
+      };
+
+      const now = new Date();
+      const past = new Date(now.getTime() - 60 * 60 * 1000);
+      const future = new Date(now.getTime() + 60 * 60 * 1000);
+
+      phasesQueryService.findById.mockResolvedValue(mockPhase);
+      leaguesQueryService.findById.mockResolvedValue(mockLeague as DBLeague);
+      leagueMembersQueryService.findByLeagueAndUserId.mockResolvedValue(
+        mockMember as DBLeagueMember,
+      );
+      eventsQueryService.listByPhaseIds.mockResolvedValue([
+        {
+          id: "event-past",
+          phaseId: mockPhase.id,
+          startTime: past,
+          type: EVENT_TYPES.GAME,
+          homeTeamId: "home-1",
+          awayTeamId: "away-1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: "event-future",
+          phaseId: mockPhase.id,
+          startTime: future,
+          type: EVENT_TYPES.GAME,
+          homeTeamId: "home-2",
+          awayTeamId: "away-2",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]);
+
+      const result = await phasesService.getPhaseByIdAndLeagueId(
+        "user-1",
+        "phase-1",
+        "league-1",
+        [PHASE_INCLUDES.EVENTS, PHASE_INCLUDES.EVENTS_EXCLUDE_STARTED],
+      );
+
+      expect(result.events).toBeDefined();
+      expect(result.events!.map((e) => e.id)).toEqual(["event-future"]);
     });
   });
 });

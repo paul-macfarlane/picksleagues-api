@@ -428,7 +428,13 @@ export class PhasesService {
 
     // Events
     if (includes.includes(PHASE_INCLUDES.EVENTS)) {
-      const events = await this.eventsQueryService.listByPhaseIds([phase.id]);
+      let events = await this.eventsQueryService.listByPhaseIds([phase.id]);
+
+      // Optionally exclude events that have already started
+      if (includes.includes(PHASE_INCLUDES.EVENTS_EXCLUDE_STARTED)) {
+        const now = new Date();
+        events = events.filter((e) => new Date(e.startTime) > now);
+      }
 
       phase.events = events.map((event) => ({
         id: event.id,

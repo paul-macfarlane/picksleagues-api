@@ -11,6 +11,7 @@ export enum PHASE_INCLUDES {
   NEXT_PHASE = "nextPhase",
   PHASE_TEMPLATE = "phaseTemplate",
   EVENTS = "events",
+  EVENTS_EXCLUDE_STARTED = "events.excludeStarted",
   EVENTS_LIVE_SCORES = "events.liveScores",
   EVENTS_OUTCOMES = "events.outcomes",
   EVENTS_ODDS = "events.odds",
