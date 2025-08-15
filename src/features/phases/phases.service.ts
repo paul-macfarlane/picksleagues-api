@@ -436,16 +436,21 @@ export class PhasesService {
         events = events.filter((e) => new Date(e.startTime) > now);
       }
 
-      phase.events = events.map((event) => ({
-        id: event.id,
-        phaseId: event.phaseId,
-        startTime: event.startTime,
-        type: event.type,
-        homeTeamId: event.homeTeamId,
-        awayTeamId: event.awayTeamId,
-        createdAt: event.createdAt,
-        updatedAt: event.updatedAt,
-      }));
+      phase.events = events
+        .map((event) => ({
+          id: event.id,
+          phaseId: event.phaseId,
+          startTime: event.startTime,
+          type: event.type,
+          homeTeamId: event.homeTeamId,
+          awayTeamId: event.awayTeamId,
+          createdAt: event.createdAt,
+          updatedAt: event.updatedAt,
+        }))
+        .sort(
+          (a, b) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+        );
 
       // Handle nested includes for events
       // Live scores and outcomes for events

@@ -362,6 +362,21 @@ export class PicksService {
     });
   }
 
+  private _sortPicksByEventTime(picks: PopulatedPick[]): void {
+    // Only sort if picks have events populated
+    if (picks.length > 0 && picks[0].event) {
+      picks.sort((a, b) => {
+        const aTime = a.event?.startTime
+          ? new Date(a.event.startTime).getTime()
+          : 0;
+        const bTime = b.event?.startTime
+          ? new Date(b.event.startTime).getTime()
+          : 0;
+        return aTime - bTime;
+      });
+    }
+  }
+
   private async _populatePickIncludes(
     picks: PopulatedPick[],
     includes: string[],
@@ -480,6 +495,11 @@ export class PicksService {
           }
         }
       }
+    }
+
+    // Sort picks by event time if events were included
+    if (includes.includes(PICK_INCLUDES.EVENT)) {
+      this._sortPicksByEventTime(picks);
     }
   }
 }

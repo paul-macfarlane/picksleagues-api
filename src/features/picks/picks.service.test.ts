@@ -28,6 +28,7 @@ import { DBPhase } from "../phases/phases.types.js";
 import { DBEvent, EVENT_TYPES } from "../events/events.types.js";
 import { DBOdds } from "../odds/odds.types.js";
 import { DBPick } from "./picks.types.js";
+import { vi } from "vitest";
 
 describe("PicksService.submitPicks", () => {
   const picksQueryService = mock<PicksQueryService>();
@@ -62,6 +63,13 @@ describe("PicksService.submitPicks", () => {
       phasesUtilService,
       phasesQueryService,
     );
+
+    // Mock db.transaction
+    vi.mock("../../db", () => ({
+      db: {
+        transaction: vi.fn((callback) => callback()),
+      },
+    }));
 
     // reset mocks
     picksQueryService.findByUserIdAndLeagueIdAndEventIds.mockReset();
@@ -161,16 +169,19 @@ describe("PicksService.submitPicks", () => {
         teamId: "home-1",
         spread: null,
       }),
-      expect.anything(),
+      undefined,
     );
     expect(picksMutationService.create).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
+        leagueId: baseLeague.id,
+        userId: "user-1",
+        seasonId: basePhase.seasonId,
         eventId: "evt-2",
         teamId: "away-2",
         spread: null,
       }),
-      expect.anything(),
+      undefined,
     );
   });
 
@@ -232,11 +243,14 @@ describe("PicksService.submitPicks", () => {
     expect(picksMutationService.create).toHaveBeenCalledTimes(1);
     expect(picksMutationService.create).toHaveBeenCalledWith(
       expect.objectContaining({
+        leagueId: spreadLeague.id,
+        userId: "user-1",
+        seasonId: basePhase.seasonId,
         eventId: "evt-1",
         teamId: "home-1",
-        spread: -3.5,
+        spread: "-3.5",
       }),
-      expect.anything(),
+      undefined,
     );
   });
 
