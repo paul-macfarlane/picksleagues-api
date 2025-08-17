@@ -293,4 +293,20 @@ router.get(
   },
 );
 
+router.get(
+  "/:leagueId/standings/current/me",
+  async (req: Request, res: Response): Promise<void> => {
+    const leagueId = LeagueIdSchema.parse(req.params.leagueId);
+    const query = StandingsIncludesSchema.parse(req.query);
+
+    const standings = await standingsService.getCurrentStandingsForUser(
+      leagueId,
+      req.user!.id,
+      query,
+    );
+
+    res.status(200).json(standings);
+  },
+);
+
 export default router;

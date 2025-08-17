@@ -157,6 +157,56 @@ export class StandingsService {
     return populatedStandings;
   }
 
+  async getCurrentStandingsForUser(
+    leagueId: string,
+    userId: string,
+    includes?: z.infer<typeof StandingsIncludesSchema>,
+  ): Promise<PopulatedStandings> {
+    const member = await this.leagueMembersQueryService.findByLeagueAndUserId(
+      leagueId,
+      userId,
+    );
+    if (!member) {
+      throw new ForbiddenError("User is not a member of this league");
+    }
+
+    const league = await this.leaguesQueryService.findById(leagueId);
+    if (!league) {
+      throw new NotFoundError("League not found");
+    }
+
+    const leagueType = await this.leagueTypesQueryService.findById(
+      league.leagueTypeId,
+    );
+    if (!leagueType) {
+      throw new NotFoundError("League type not found");
+    }
+
+    const season =
+      await this.seasonsUtilService.findCurrentOrLatestSeasonForSportLeagueId(
+        leagueType.sportLeagueId,
+      );
+    if (!season) {
+      throw new NotFoundError("No current or latest season found");
+    }
+
+    const standings = await this.standingsQueryService.findByUserLeagueSeason(
+      userId,
+      leagueId,
+      season.id,
+    );
+    if (!standings) {
+      throw new NotFoundError("No standings found for user");
+    }
+
+    const [populatedStandings] = await this._populateStandings(
+      [standings],
+      includes,
+    );
+
+    return populatedStandings;
+  }
+
   private async calculateStandingsForLeague(leagueId: string): Promise<void> {
     return db.transaction(async (tx) => {
       const unassessedPicks =
