@@ -7,7 +7,7 @@ import {
   uuid,
   jsonb,
   integer,
-  decimal,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 import { LEAGUE_VISIBILITIES } from "../features/leagues/leagues.types.js";
 import {
@@ -443,11 +443,11 @@ export const oddsTable = pgTable("odds", {
       onDelete: "cascade",
     })
     .notNull(),
-  spreadHome: decimal("spread_home", { precision: 10, scale: 2 }),
-  spreadAway: decimal("spread_away", { precision: 10, scale: 2 }),
+  spreadHome: doublePrecision("spread_home"),
+  spreadAway: doublePrecision("spread_away"),
   moneylineHome: integer("moneyline_home"),
   moneylineAway: integer("moneyline_away"),
-  total: decimal("total", { precision: 10, scale: 2 }),
+  total: doublePrecision("total"),
   metadata: jsonb("metadata").default({}),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
@@ -635,7 +635,7 @@ export const picksTable = pgTable("picks", {
     })
     .notNull(),
   // optional, because picks could be ats, but could just be straight up
-  spread: decimal("spread", { precision: 10, scale: 2 }),
+  spread: doublePrecision("spread"),
   result: text("result", {
     enum: [PICK_RESULTS.WIN, PICK_RESULTS.LOSS, PICK_RESULTS.PUSH],
   }),
@@ -664,7 +664,8 @@ export const standingsTable = pgTable(
         onDelete: "cascade",
       })
       .notNull(),
-    points: integer("points").notNull(),
+    points: doublePrecision("points").notNull(),
+    rank: integer("rank").notNull().default(1),
     metadata: jsonb("metadata").notNull().default({}), // wins, losses, pushes, other league type specific stats
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")

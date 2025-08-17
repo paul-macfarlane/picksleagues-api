@@ -426,17 +426,17 @@ const generateOdds = (events: Array<{ id: string }>, sportsbookId: string) => {
     const moneylineAway = -moneylineHome; // If home is -150, away is +150
 
     // Generate realistic totals (typically between 35 and 55)
-    const total = (Math.random() * 20 + 35).toFixed(1); // 35.0 to 55.0
+    const total = Math.random() * 20 + 35; // 35.0 to 55.0
 
     odds.push({
       id: randomUUID(),
       eventId: event.id,
       sportsbookId,
-      spreadHome: spreadHome.toString(),
-      spreadAway: spreadAway.toString(),
+      spreadHome,
+      spreadAway,
       moneylineHome,
       moneylineAway,
-      total: total,
+      total,
       metadata: {},
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -460,8 +460,8 @@ const generatePicks = (
   odds: Array<{
     id: string;
     eventId: string;
-    spreadHome: string;
-    spreadAway: string;
+    spreadHome: number;
+    spreadAway: number;
   }>,
   phase: SeedingPhase,
   simulateWeek?: number,
@@ -530,7 +530,7 @@ const generatePicks = (
             PICK_EM_PICK_TYPES.SPREAD;
 
           // Set the spread based on the picked team and league type
-          let spread: string | null = null;
+          let spread: number | null = null;
           if (isATS && eventOdds) {
             if (randomTeamId === event.homeTeamId) {
               spread = eventOdds.spreadHome;

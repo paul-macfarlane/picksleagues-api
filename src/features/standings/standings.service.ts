@@ -172,6 +172,46 @@ export class StandingsService {
       for (const [userId, picks] of picksByUser) {
         await this.processUserPicks(userId, leagueId, picks, tx);
       }
+
+      // Get the season ID from the first pick
+      const seasonId = unassessedPicks[0].seasonId;
+
+      // Get all standings for this league and season
+      const standings = await this.standingsQueryService.findByLeagueSeason(
+        leagueId,
+        seasonId,
+        tx,
+      );
+
+      // Sort standings by points in descending order
+      const sortedStandings = standings.sort((a, b) => b.points - a.points);
+
+      // Update ranks
+      let currentRank = 1;
+      let currentPoints = sortedStandings[0]?.points ?? 0;
+      let sameRankCount = 0;
+
+      for (let i = 0; i < sortedStandings.length; i++) {
+        const standing = sortedStandings[i];
+
+        // If points are different from previous, update rank
+        if (standing.points < currentPoints) {
+          currentRank += sameRankCount;
+          currentPoints = standing.points;
+          sameRankCount = 1;
+        } else {
+          sameRankCount++;
+        }
+
+        // Update rank in database
+        await this.standingsMutationService.update(
+          standing.userId,
+          leagueId,
+          seasonId,
+          { rank: currentRank },
+          tx,
+        );
+      }
     });
   }
 

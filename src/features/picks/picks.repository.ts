@@ -181,7 +181,7 @@ export class PicksRepository {
       seasonId: row.seasonId,
       eventId: row.eventId,
       teamId: row.teamId,
-      spread: row.spread ? Number(row.spread) : null,
+      spread: row.spread,
       outcome: {
         homeScore: row.homeScore,
         awayScore: row.awayScore,

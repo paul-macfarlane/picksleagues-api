@@ -641,11 +641,11 @@ export class EventsService {
             const oddsData = {
               eventId: event.id,
               sportsbookId: defaultSportsbook.id,
-              spreadHome: spreadHome.toString(),
-              spreadAway: spreadAway.toString(),
+              spreadHome,
+              spreadAway,
               moneylineHome: defaultOdd.homeTeamOdds.moneyLine,
               moneylineAway: defaultOdd.awayTeamOdds.moneyLine,
-              total: defaultOdd.overUnder.toString(),
+              total: defaultOdd.overUnder,
             };
             let odds;
             if (existingOdds) {
