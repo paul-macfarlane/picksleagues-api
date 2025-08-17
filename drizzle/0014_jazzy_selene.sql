@@ -1,1 +1,0 @@
-ALTER TABLE "phases" ALTER COLUMN "pick_lock_time" DROP DEFAULT;

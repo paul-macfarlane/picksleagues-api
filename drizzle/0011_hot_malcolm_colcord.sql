@@ -1,1 +1,0 @@
-ALTER TABLE "live_scores" ADD COLUMN "period" integer NOT NULL;
