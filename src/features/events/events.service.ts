@@ -628,25 +628,16 @@ export class EventsService {
               tx,
             );
 
-            // Determine which team is the favorite based on the odds
-            const homeTeamIsFavorite = defaultOdd.homeTeamOdds.favorite;
-            const spreadValue = defaultOdd.spread;
-
-            // Calculate spread for home and away teams
-            // If home team is favorite, they give points (negative spread)
-            // If away team is favorite, they give points (positive spread)
-            const spreadHome = homeTeamIsFavorite ? spreadValue : -spreadValue;
-            const spreadAway = homeTeamIsFavorite ? -spreadValue : spreadValue;
-
             const oddsData = {
               eventId: event.id,
               sportsbookId: defaultSportsbook.id,
-              spreadHome,
-              spreadAway,
+              spreadHome: defaultOdd.spread,
+              spreadAway: -defaultOdd.spread,
               moneylineHome: defaultOdd.homeTeamOdds.moneyLine,
               moneylineAway: defaultOdd.awayTeamOdds.moneyLine,
               total: defaultOdd.overUnder,
             };
+
             let odds;
             if (existingOdds) {
               odds = await this.oddsMutationService.update(
