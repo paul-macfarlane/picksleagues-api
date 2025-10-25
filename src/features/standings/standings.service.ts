@@ -282,7 +282,6 @@ export class StandingsService {
       dbOrTx,
     );
 
-    let existingPoints = 0;
     let existingStandingsMetadata: PickEmStandingsMetadata = {
       wins: 0,
       losses: 0,
@@ -314,7 +313,6 @@ export class StandingsService {
         );
       }
 
-      existingPoints = standings.points;
       const metadataParseResult = PickEmStandingsMetadataSchema.safeParse(
         standings.metadata,
       );
@@ -339,8 +337,8 @@ export class StandingsService {
       );
     }
 
-    // Calculate new points
-    const newPoints = this.calculatePoints(existingStandingsMetadata);
+    // Calculate total points from accumulated metadata
+    const totalPoints = this.calculatePoints(existingStandingsMetadata);
 
     // Update standings
     await this.standingsMutationService.update(
@@ -348,7 +346,7 @@ export class StandingsService {
       leagueId,
       seasonId,
       {
-        points: existingPoints + newPoints,
+        points: totalPoints,
         metadata: existingStandingsMetadata,
       },
       dbOrTx,
