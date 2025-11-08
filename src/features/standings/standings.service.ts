@@ -211,58 +211,150 @@ export class StandingsService {
     return db.transaction(async (tx) => {
       const unassessedPicks =
         await this.picksQueryService.findUnassessedPicksForLeague(leagueId, tx);
-      if (unassessedPicks.length === 0) {
-        console.log(`No unassessed picks for league ${leagueId}`);
+
+      if (unassessedPicks.length > 0) {
+        const picksByUser = this.groupPicksByUser(unassessedPicks);
+
+        // Process picks for all users (filtering is now done at database level)
+        for (const [userId, picks] of picksByUser) {
+          await this.processUserPicks(userId, leagueId, picks, tx);
+        }
+      }
+
+      // After processing unassessed picks, recalculate ALL standings for this league
+      // to ensure data integrity (fixes any corrupted data from previous bugs)
+      const league = await this.leaguesQueryService.findById(leagueId, tx);
+      if (!league) {
+        console.log(`League ${leagueId} not found`);
         return;
       }
 
-      const picksByUser = this.groupPicksByUser(unassessedPicks);
-
-      // Process picks for all users (filtering is now done at database level)
-      for (const [userId, picks] of picksByUser) {
-        await this.processUserPicks(userId, leagueId, picks, tx);
-      }
-
-      // Get the season ID from the first pick
-      const seasonId = unassessedPicks[0].seasonId;
-
-      // Get all standings for this league and season
-      const standings = await this.standingsQueryService.findByLeagueSeason(
-        leagueId,
-        seasonId,
+      const leagueType = await this.leagueTypesQueryService.findById(
+        league.leagueTypeId,
         tx,
       );
+      if (!leagueType) {
+        console.log(`League type not found for league ${leagueId}`);
+        return;
+      }
 
-      // Sort standings by points in descending order
-      const sortedStandings = standings.sort((a, b) => b.points - a.points);
-
-      // Update ranks
-      let currentRank = 1;
-      let currentPoints = sortedStandings[0]?.points ?? 0;
-      let sameRankCount = 0;
-
-      for (let i = 0; i < sortedStandings.length; i++) {
-        const standing = sortedStandings[i];
-
-        // If points are different from previous, update rank
-        if (standing.points < currentPoints) {
-          currentRank += sameRankCount;
-          currentPoints = standing.points;
-          sameRankCount = 1;
-        } else {
-          sameRankCount++;
-        }
-
-        // Update rank in database
-        await this.standingsMutationService.update(
-          standing.userId,
-          leagueId,
-          seasonId,
-          { rank: currentRank },
+      const season =
+        await this.seasonsUtilService.findCurrentOrLatestSeasonForSportLeagueId(
+          leagueType.sportLeagueId,
           tx,
         );
+      if (!season) {
+        console.log(`No current or latest season found for league ${leagueId}`);
+        return;
       }
+
+      await this.recalculateStandingsFromAllPicks(leagueId, season.id, tx);
+
+      await this.updateRanks(leagueId, season.id, tx);
     });
+  }
+
+  private async recalculateStandingsFromAllPicks(
+    leagueId: string,
+    seasonId: string,
+    dbOrTx: DBOrTx,
+  ): Promise<void> {
+    const members = await this.leagueMembersQueryService.listByLeagueId(
+      leagueId,
+      dbOrTx,
+    );
+
+    for (const member of members) {
+      const allPicks = await this.picksQueryService.findByUserIdAndLeagueId(
+        member.userId,
+        leagueId,
+        dbOrTx,
+      );
+
+      const assessedPicks = allPicks.filter(
+        (pick) => pick.result !== null && pick.seasonId === seasonId,
+      );
+
+      const metadata: PickEmStandingsMetadata = {
+        wins: assessedPicks.filter((p) => p.result === PICK_RESULTS.WIN).length,
+        losses: assessedPicks.filter((p) => p.result === PICK_RESULTS.LOSS)
+          .length,
+        pushes: assessedPicks.filter((p) => p.result === PICK_RESULTS.PUSH)
+          .length,
+      };
+
+      const points = this.calculatePoints(metadata);
+
+      const existingStandings =
+        await this.standingsQueryService.findByUserLeagueSeason(
+          member.userId,
+          leagueId,
+          seasonId,
+          dbOrTx,
+        );
+
+      if (existingStandings) {
+        await this.standingsMutationService.update(
+          member.userId,
+          leagueId,
+          seasonId,
+          {
+            points,
+            metadata,
+          },
+          dbOrTx,
+        );
+      } else {
+        await this.standingsMutationService.create(
+          {
+            userId: member.userId,
+            leagueId,
+            seasonId,
+            points,
+            metadata,
+          },
+          dbOrTx,
+        );
+      }
+    }
+  }
+
+  private async updateRanks(
+    leagueId: string,
+    seasonId: string,
+    dbOrTx: DBOrTx,
+  ): Promise<void> {
+    const standings = await this.standingsQueryService.findByLeagueSeason(
+      leagueId,
+      seasonId,
+      dbOrTx,
+    );
+
+    const sortedStandings = standings.sort((a, b) => b.points - a.points);
+
+    let currentRank = 1;
+    let currentPoints = sortedStandings[0]?.points ?? 0;
+    let sameRankCount = 0;
+
+    for (let i = 0; i < sortedStandings.length; i++) {
+      const standing = sortedStandings[i];
+
+      if (standing.points < currentPoints) {
+        currentRank += sameRankCount;
+        currentPoints = standing.points;
+        sameRankCount = 1;
+      } else {
+        sameRankCount++;
+      }
+
+      await this.standingsMutationService.update(
+        standing.userId,
+        leagueId,
+        seasonId,
+        { rank: currentRank },
+        dbOrTx,
+      );
+    }
   }
 
   private async processUserPicks(
@@ -271,10 +363,8 @@ export class StandingsService {
     picks: UnassessedPick[],
     dbOrTx: DBOrTx,
   ): Promise<void> {
-    // Get the season ID from the first pick (all picks in a league should be from the same season)
     const seasonId = picks[0].seasonId;
 
-    // Get current standings or create new
     let standings = await this.standingsQueryService.findByUserLeagueSeason(
       userId,
       leagueId,
@@ -289,7 +379,6 @@ export class StandingsService {
     };
 
     if (!standings) {
-      // Create new standings record
       await this.standingsMutationService.create(
         {
           userId,
@@ -324,23 +413,19 @@ export class StandingsService {
       existingStandingsMetadata = metadataParseResult.data;
     }
 
-    // Calculate results for each pick
     const pickResults: Array<{ pickId: string; result: PICK_RESULTS }> = [];
     for (const pick of picks) {
       const result = this.calculatePickResult(pick);
       pickResults.push({ pickId: pick.id, result });
 
-      // Update metadata
       existingStandingsMetadata = this.updateMetadataWithResult(
         existingStandingsMetadata,
         result,
       );
     }
 
-    // Calculate total points from accumulated metadata
     const totalPoints = this.calculatePoints(existingStandingsMetadata);
 
-    // Update standings
     await this.standingsMutationService.update(
       userId,
       leagueId,
@@ -352,7 +437,6 @@ export class StandingsService {
       dbOrTx,
     );
 
-    // Update pick results
     for (const { pickId, result } of pickResults) {
       await this.picksMutationService.update(pickId, { result }, dbOrTx);
     }
