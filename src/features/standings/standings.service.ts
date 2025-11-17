@@ -389,29 +389,29 @@ export class StandingsService {
         },
         dbOrTx,
       );
-    } else {
-      standings = await this.standingsQueryService.findByUserLeagueSeason(
-        userId,
-        leagueId,
-        seasonId,
-        dbOrTx,
-      );
-      if (!standings) {
-        throw new NotFoundError(
-          `Failed to create standings for user ${userId} in league ${leagueId}`,
-        );
-      }
-
-      const metadataParseResult = PickEmStandingsMetadataSchema.safeParse(
-        standings.metadata,
-      );
-      if (!metadataParseResult.success) {
-        throw new InternalServerError(
-          `Failed to parse metadata for user ${userId} in league ${leagueId}`,
-        );
-      }
-      existingStandingsMetadata = metadataParseResult.data;
     }
+
+    standings = await this.standingsQueryService.findByUserLeagueSeason(
+      userId,
+      leagueId,
+      seasonId,
+      dbOrTx,
+    );
+    if (!standings) {
+      throw new NotFoundError(
+        `Failed to find or create standings for user ${userId} in league ${leagueId}`,
+      );
+    }
+
+    const metadataParseResult = PickEmStandingsMetadataSchema.safeParse(
+      standings.metadata,
+    );
+    if (!metadataParseResult.success) {
+      throw new InternalServerError(
+        `Failed to parse metadata for user ${userId} in league ${leagueId}`,
+      );
+    }
+    existingStandingsMetadata = metadataParseResult.data;
 
     const pickResults: Array<{ pickId: string; result: PICK_RESULTS }> = [];
     for (const pick of picks) {
